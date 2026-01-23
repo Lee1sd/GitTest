@@ -24,6 +24,8 @@ class TeumsaeApp {
             if (typeof placesData !== 'undefined') {
                 this.places = placesData;
                 this.filteredPlaces = [...this.places];
+                this.renderCategoryFilters();
+                this.renderMoodFilters();
                 this.renderPlaces();
             }
         }
@@ -55,6 +57,8 @@ class TeumsaeApp {
         });
 
         this.filteredPlaces = [...this.places];
+        this.renderCategoryFilters();
+        this.renderMoodFilters();
         this.renderPlaces();
         console.log(`Loaded ${this.places.length} places from Firestore.`);
     }
@@ -96,24 +100,10 @@ class TeumsaeApp {
             });
         }
 
-        // 카테고리 필터 클릭 이벤트
-        this.categoryBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // 카테고리는 하나만 선택 가능
-                this.categoryBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.currentCategory = btn.dataset.category;
-                this.filterPlaces();
-            });
-        });
+        // 카테고리 필터 클릭 이벤트 -> renderCategoryFilters()에서 처리됨
 
-        // 분위기 태그 클릭 이벤트 (다중 선택 가능)
-        this.moodTags.forEach(tag => {
-            tag.addEventListener('click', () => {
-                tag.classList.toggle('active');
-                this.filterPlaces();
-            });
-        });
+
+        // 분위기 태그 클릭 이벤트 -> renderMoodFilters()에서 처리됨
 
         // 스크롤 이벤트 (헤더 스타일 변경 및 요소 등장 효과)
         window.addEventListener('scroll', () => this.handleScroll());
@@ -229,9 +219,9 @@ class TeumsaeApp {
                 place.description.toLowerCase().includes(this.searchQuery) ||
                 place.tags.some(tag => tag.includes(this.searchQuery));
 
-            // 3. 분위기 태그 일치 여부 (선택된 태그 중 하나라도 포함되면 통과)
+            // 3. 분위기 태그 일치 여부 (선택된 태그를 모두 포함해야 통과 - AND 조건)
             const moodMatch = activeMoods.length === 0 ||
-                activeMoods.some(mood =>
+                activeMoods.every(mood =>
                     place.tags.some(tag => tag.includes(mood)) ||
                     place.description.includes(mood)
                 );
@@ -240,6 +230,79 @@ class TeumsaeApp {
         });
 
         this.renderPlaces(); // 필터링 결과 렌더링
+    }
+
+
+    // 카테고리 필터 버튼 동적 생성
+    renderCategoryFilters() {
+        const filterContainer = document.getElementById('category-filters');
+        if (!filterContainer) return;
+
+        // 1. 현재 데이터에서 사용된 카테고리 추출 (중복 제거)
+        const uniqueCategories = new Set(['전체']);
+        this.places.forEach(place => {
+            if (place.category) uniqueCategories.add(place.category);
+        });
+
+        // 2. 버튼 HTML 생성
+        filterContainer.innerHTML = Array.from(uniqueCategories).map(category => {
+            const isActive = category === this.currentCategory;
+            return `<button class="filter-btn ${isActive ? 'active' : ''}" data-category="${category}">${category}</button>`;
+        }).join('');
+
+        // 3. 이벤트 리스너 다시 연결
+        const newCategoryBtns = filterContainer.querySelectorAll('.filter-btn');
+        newCategoryBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // UI 업데이트
+                newCategoryBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // 상태 업데이트 및 필터링
+                this.currentCategory = btn.dataset.category;
+                this.filterPlaces();
+            });
+        });
+    }
+
+    // 분위기 필터 버튼 동적 생성
+    renderMoodFilters() {
+        const filterContainer = document.getElementById('mood-filters');
+        if (!filterContainer) return;
+
+        // 1. 현재 데이터에서 사용된 태그 추출 확인
+        const tagCounts = {};
+        this.places.forEach(place => {
+            if (place.tags && Array.isArray(place.tags)) {
+                place.tags.forEach(tag => {
+                    const cleanTag = tag.replace('#', '').trim();
+                    if (cleanTag) {
+                        tagCounts[cleanTag] = (tagCounts[cleanTag] || 0) + 1;
+                    }
+                });
+            }
+        });
+
+        // 2. 많이 사용된 상위 태그 추출 (예: 8개) 또는 전체
+        // 여기서는 등장 횟수가 1 이상인 모든 태그를 중복 없이 정렬하여 표시
+        const sortedTags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
+
+        // 너무 많으면 상위 10개만 표시 (선택적)
+        const displayTags = sortedTags.slice(0, 10);
+
+        // 3. 버튼 HTML 생성 (기존 활성화 상태 유지 노력은 복잡하므로 초기화)
+        filterContainer.innerHTML = displayTags.map(tag => {
+            return `<button class="filter-btn" data-mood="${tag}">${tag}</button>`;
+        }).join('');
+
+        // 4. 이벤트 리스너 다시 연결
+        const newMoodBtns = filterContainer.querySelectorAll('.filter-btn');
+        newMoodBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('active');
+                this.filterPlaces();
+            });
+        });
     }
 
     // 장소 카드 렌더링

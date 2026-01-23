@@ -7,6 +7,8 @@ class TeumsaeApp {
         this.savedPlaces = this.loadSavedPlaces(); // 로컬 스토리지에서 저장된 장소 로드
         this.currentCategory = "전체"; // 현재 선택된 카테고리
         this.searchQuery = ""; // 검색어
+        this.currentReviewPlaceId = null; // 현재 리뷰 작성 중인 장소 ID
+        this.reviewRating = 0; // 현재 리뷰 평점
 
         this.init(); // 앱 초기화
     }
@@ -37,6 +39,14 @@ class TeumsaeApp {
         this.modalBackdrop = document.getElementById('place-modal-backdrop'); // 모달 배경
         this.modalCloseBtn = document.getElementById('place-modal-close'); // 닫기 버튼
         this.modalAddBtn = document.getElementById('modal-add-btn'); // 모달 내 추가 버튼
+        
+        // 리뷰 모달
+        this.reviewModalBackdrop = document.getElementById('review-modal-backdrop');
+        this.reviewModalCloseBtn = document.getElementById('review-modal-close');
+        this.reviewSubmitBtn = document.getElementById('review-submit-btn');
+        this.reviewForm = document.getElementById('review-form');
+        this.stars = document.querySelectorAll('.star');
+        this.reviewStarsContainer = document.getElementById('star-rating');
     }
 
     // 이벤트 리스너 설정
@@ -90,6 +100,60 @@ class TeumsaeApp {
                 if (e.target === this.modalBackdrop) {
                     this.closePlaceModal();
                 }
+            });
+        }
+
+
+        // 리뷰 달기 버튼 클릭 이벤트
+        const reviewBtn = document.getElementById('modal-review-btn');
+        if (reviewBtn) {
+            reviewBtn.addEventListener('click', () => {
+                // 현재 열린 장소 ID 가져오기 (openPlaceModal에서 저장하거나 현재 상태에서 추론)
+                // 하지만 this.currentPlaceId 같은 상태가 없으므로, 
+                // openPlaceModal에서 currentPlaceId를 설정하도록 수정 필요.
+                // 일단 여기서는 openReviewModal을 호출.
+                if (this.currentPlaceId) {
+                    this.openReviewModal(this.currentPlaceId);
+                }
+            });
+        }
+
+        // 리뷰 모달 닫기 이벤트
+        if (this.reviewModalCloseBtn) {
+            this.reviewModalCloseBtn.addEventListener('click', () => this.closeReviewModal());
+        }
+        if (this.reviewModalBackdrop) {
+            this.reviewModalBackdrop.addEventListener('click', (e) => {
+                if (e.target === this.reviewModalBackdrop) {
+                    this.closeReviewModal();
+                }
+            });
+        }
+
+        // 별점 클릭 이벤트
+        if (this.reviewStarsContainer) {
+            this.stars.forEach(star => {
+                star.addEventListener('click', (e) => {
+                    const value = parseInt(star.dataset.value);
+                    this.setRating(value);
+                });
+            });
+        }
+
+        // 파일 업로드 미리보기 텍스트 변경
+        const fileInput = document.getElementById('review-image');
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => {
+                const fileName = e.target.files[0]?.name || '클릭하여 이미지를 업로드하세요';
+                document.getElementById('file-name').textContent = fileName;
+            });
+        }
+
+        // 리뷰 제출 이벤트
+        if (this.reviewSubmitBtn) {
+            this.reviewSubmitBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.submitReview();
             });
         }
     }
@@ -382,6 +446,7 @@ class TeumsaeApp {
 
     // 장소 상세 모달 열기
     openPlaceModal(id) {
+        this.currentPlaceId = id; // 현재 보고 있는 장소 ID 저장
         const place = this.places.find(p => p.id === id);
         if (!place) return;
 
@@ -432,6 +497,9 @@ class TeumsaeApp {
         // 모달 내부 스크롤 시 배경 스크롤 전파 방지
         this.modalBackdrop.addEventListener('wheel', this.preventScroll, { passive: false });
         this.modalBackdrop.addEventListener('touchmove', this.preventScroll, { passive: false });
+
+        // 리뷰 목록 렌더링
+        this.renderReviews(id);
     }
 
     // 스크롤 이벤트 전파 방지 핸들러
@@ -452,7 +520,138 @@ class TeumsaeApp {
 
             this.modalBackdrop.removeEventListener('wheel', this.preventScroll);
             this.modalBackdrop.removeEventListener('touchmove', this.preventScroll);
+            
+            this.currentPlaceId = null; // ID 초기화
         }
+    }
+
+    // --- 리뷰 관련 메서드 ---
+
+    openReviewModal(placeId) {
+        this.currentReviewPlaceId = placeId;
+        this.closePlaceModal(); // 기존 상세 모달 닫기
+        
+        // 모달 열기
+        if (this.reviewModalBackdrop) {
+            this.reviewModalBackdrop.classList.add('active');
+            this.reviewModalBackdrop.style.display = 'flex'; // backdrop이 보이도록
+        }
+    }
+
+    closeReviewModal() {
+        if (this.reviewModalBackdrop) {
+            this.reviewModalBackdrop.classList.remove('active');
+            this.reviewModalBackdrop.style.display = 'none';
+        }
+        
+        // 폼 초기화
+        if (this.reviewForm) this.reviewForm.reset();
+        this.setRating(0);
+        document.getElementById('file-name').textContent = '클릭하여 이미지를 업로드하세요';
+        this.currentReviewPlaceId = null;
+    }
+
+    setRating(value) {
+        this.reviewRating = value;
+        document.getElementById('review-rating').value = value;
+        
+        this.stars.forEach(star => {
+            const starValue = parseInt(star.dataset.value);
+            if (starValue <= value) {
+                star.setAttribute('fill', '#D4AF37'); // 채워진 별 색상
+                star.setAttribute('stroke', '#D4AF37');
+            } else {
+                star.setAttribute('fill', 'none');
+                star.setAttribute('stroke', '#D4AF37'); // 빈 별 색상
+            }
+        });
+    }
+
+    submitReview() {
+        const title = document.getElementById('review-title').value;
+        const content = document.getElementById('review-content').value;
+        const rating = this.reviewRating;
+        const imageFile = document.getElementById('review-image').files[0];
+
+        if (!title || !content || rating === 0) {
+            this.showToast('제목, 내용, 별점을 모두 입력해주세요.');
+            return;
+        }
+
+        const saveAndReload = (imageData) => {
+            const review = {
+                id: Date.now(),
+                placeId: this.currentReviewPlaceId,
+                title,
+                content,
+                rating,
+                imageName: imageFile ? imageFile.name : null,
+                imageData: imageData, // Base64 이미지 데이터
+                date: new Date().toLocaleDateString(),
+                author: 'Guest'
+            };
+
+            const reviews = JSON.parse(localStorage.getItem('teumsae_reviews') || '[]');
+            reviews.push(review);
+            localStorage.setItem('teumsae_reviews', JSON.stringify(reviews));
+
+            this.showToast('리뷰가 성공적으로 등록되었습니다!');
+            
+            const savedPlaceId = this.currentReviewPlaceId;
+            this.closeReviewModal();
+
+            setTimeout(() => {
+                this.openPlaceModal(savedPlaceId);
+            }, 300);
+        };
+
+        if (imageFile) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                saveAndReload(e.target.result);
+            };
+            reader.readAsDataURL(imageFile);
+        } else {
+            saveAndReload(null);
+        }
+    }
+
+    renderReviews(placeId) {
+        const reviews = JSON.parse(localStorage.getItem('teumsae_reviews') || '[]');
+        const placeReviews = reviews.filter(r => r.placeId === placeId);
+        const listContainer = document.getElementById('modal-reviews-list');
+        
+        if (!listContainer) return;
+
+        if (placeReviews.length === 0) {
+            listContainer.innerHTML = '<p style="color: rgba(255,255,255,0.5); padding: 20px; text-align: center;">아직 등록된 리뷰가 없습니다.</p>';
+            return;
+        }
+
+        listContainer.innerHTML = placeReviews.map(review => `
+            <div class="review-item" style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <div>
+                        <span style="font-weight: bold; color: var(--text-color); margin-right: 10px;">${review.author || 'Guest'}</span>
+                        <span style="font-size: 0.85rem; color: rgba(255,255,255,0.4);">${review.date}</span>
+                    </div>
+                    <div style="color: #D4AF37;">
+                        ${this.generateStars(review.rating)}
+                    </div>
+                </div>
+                <h4 style="color: white; margin-bottom: 8px; font-size: 1.1rem;">${review.title}</h4>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6; font-size: 0.95rem;">${review.content}</p>
+                ${review.imageData ? 
+                    `<div style="margin-top: 15px;">
+                        <img src="${review.imageData}" alt="Review Image" style="max-width: 100%; max-height: 300px; border-radius: 8px; object-fit: cover;">
+                    </div>` : 
+                    (review.imageName ? `<div style="margin-top: 15px; margin-bottom: 5px; font-size: 0.85rem; color: var(--accent-color);">📷 사진 첨부됨: ${review.imageName}</div>` : '')}
+            </div>
+        `).join('');
+    }
+
+    generateStars(rating) {
+        return '★'.repeat(rating) + '☆'.repeat(5 - rating);
     }
 }
 

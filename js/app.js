@@ -149,8 +149,12 @@ class TeumsaeApp {
         const fileInput = document.getElementById('review-image');
         if (fileInput) {
             fileInput.addEventListener('change', (e) => {
-                const fileName = e.target.files[0]?.name || '클릭하여 이미지를 업로드하세요';
-                document.getElementById('file-name').textContent = fileName;
+                const count = e.target.files.length;
+                let text = '클릭하여 이미지를 업로드하세요';
+                if (count === 1) text = e.target.files[0].name;
+                else if (count > 1) text = `${count}개의 파일이 선택됨`;
+                
+                document.getElementById('file-name').textContent = text;
             });
         }
 
@@ -588,22 +592,36 @@ class TeumsaeApp {
         const title = document.getElementById('review-title').value;
         const content = document.getElementById('review-content').value;
         const rating = this.reviewRating;
-        const imageFile = document.getElementById('review-image').files[0];
+        const imageFiles = document.getElementById('review-image').files;
 
         if (!title || !content || rating === 0) {
             this.showToast('제목, 내용, 별점을 모두 입력해주세요.');
             return;
         }
 
-        const saveAndReload = (imageData) => {
+        const processFiles = Array.from(imageFiles).map(file => {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve({
+                    name: file.name,
+                    data: e.target.result
+                });
+                reader.readAsDataURL(file);
+            });
+        });
+
+        Promise.all(processFiles).then(images => {
             const review = {
                 id: Date.now(),
                 placeId: this.currentReviewPlaceId,
                 title,
                 content,
                 rating,
-                imageName: imageFile ? imageFile.name : null,
-                imageData: imageData, // Base64 이미지 데이터
+                images: images, // [{name, data}, ...]
+                // Legacy support (optional, can be removed if new data structure is definitive)
+                imageName: images.length > 0 ? images[0].name : null,
+                imageData: images.length > 0 ? images[0].data : null, 
+                
                 date: new Date().toLocaleDateString(),
                 author: 'Guest'
             };
@@ -620,17 +638,7 @@ class TeumsaeApp {
             setTimeout(() => {
                 this.openPlaceModal(savedPlaceId);
             }, 300);
-        };
-
-        if (imageFile) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                saveAndReload(e.target.result);
-            };
-            reader.readAsDataURL(imageFile);
-        } else {
-            saveAndReload(null);
-        }
+        });
     }
 
     renderReviews(placeId) {
@@ -658,15 +666,42 @@ class TeumsaeApp {
                 </div>
                 <h4 style="color: white; margin-bottom: 8px; font-size: 1.1rem;">${review.title}</h4>
                 <p style="color: rgba(255,255,255,0.8); line-height: 1.6; font-size: 0.95rem;">${review.content}</p>
-                ${review.imageData ? 
-                    `<div style="margin-top: 15px;">
-                        <img src="${review.imageData}" alt="Review Image" 
-                             style="max-width: 100%; max-height: 300px; border-radius: 8px; object-fit: cover; cursor: pointer;"
-                             onclick="app.openImageModal('${review.imageData}')">
-                    </div>` : 
-                    (review.imageName ? `<div style="margin-top: 15px; margin-bottom: 5px; font-size: 0.85rem; color: var(--accent-color);">📷 사진 첨부됨: ${review.imageName}</div>` : '')}
+                ${this.renderReviewImages(review)}
             </div>
         `).join('');
+    }
+
+    renderReviewImages(review) {
+        // New format: review.images array
+        if (review.images && review.images.length > 0) {
+            return `
+                <div style="margin-top: 15px; display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px;">
+                    ${review.images.map(img => `
+                        <img src="${img.data}" alt="${img.name}" 
+                             style="width: 100px; height: 100px; border-radius: 8px; object-fit: cover; cursor: pointer; flex-shrink: 0;"
+                             onclick="app.openImageModal('${img.data}')">
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // Legacy format: single imageData
+        if (review.imageData) {
+            return `
+                <div style="margin-top: 15px;">
+                    <img src="${review.imageData}" alt="Review Image" 
+                         style="max-width: 100%; max-height: 300px; border-radius: 8px; object-fit: cover; cursor: pointer;"
+                         onclick="app.openImageModal('${review.imageData}')">
+                </div>
+            `;
+        }
+        
+        // Legacy format: single imageName only
+        if (review.imageName) {
+            return `<div style="margin-top: 15px; margin-bottom: 5px; font-size: 0.85rem; color: var(--accent-color);">📷 사진 첨부됨: ${review.imageName}</div>`;
+        }
+
+        return '';
     }
 
     generateStars(rating) {

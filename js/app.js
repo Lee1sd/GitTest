@@ -47,6 +47,11 @@ class TeumsaeApp {
         this.reviewForm = document.getElementById('review-form');
         this.stars = document.querySelectorAll('.star');
         this.reviewStarsContainer = document.getElementById('star-rating');
+
+        // 이미지 모달
+        this.imageModalBackdrop = document.getElementById('image-modal-backdrop');
+        this.imageModalImg = document.getElementById('image-modal-img');
+        this.imageModalCloseBtn = document.getElementById('image-modal-close');
     }
 
     // 이벤트 리스너 설정
@@ -154,6 +159,18 @@ class TeumsaeApp {
             this.reviewSubmitBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.submitReview();
+            });
+        }
+
+        // 이미지 모달 닫기
+        if (this.imageModalCloseBtn) {
+            this.imageModalCloseBtn.addEventListener('click', () => this.closeImageModal());
+        }
+        if (this.imageModalBackdrop) {
+            this.imageModalBackdrop.addEventListener('click', (e) => {
+                if (e.target === this.imageModalBackdrop) {
+                    this.closeImageModal();
+                }
             });
         }
     }
@@ -643,7 +660,9 @@ class TeumsaeApp {
                 <p style="color: rgba(255,255,255,0.8); line-height: 1.6; font-size: 0.95rem;">${review.content}</p>
                 ${review.imageData ? 
                     `<div style="margin-top: 15px;">
-                        <img src="${review.imageData}" alt="Review Image" style="max-width: 100%; max-height: 300px; border-radius: 8px; object-fit: cover;">
+                        <img src="${review.imageData}" alt="Review Image" 
+                             style="max-width: 100%; max-height: 300px; border-radius: 8px; object-fit: cover; cursor: pointer;"
+                             onclick="app.openImageModal('${review.imageData}')">
                     </div>` : 
                     (review.imageName ? `<div style="margin-top: 15px; margin-bottom: 5px; font-size: 0.85rem; color: var(--accent-color);">📷 사진 첨부됨: ${review.imageName}</div>` : '')}
             </div>
@@ -652,6 +671,20 @@ class TeumsaeApp {
 
     generateStars(rating) {
         return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+    }
+
+    // --- 이미지 확대 모달 메서드 ---
+    openImageModal(src) {
+        if (this.imageModalBackdrop && this.imageModalImg) {
+            this.imageModalImg.src = src;
+            this.imageModalBackdrop.classList.add('active');
+        }
+    }
+
+    closeImageModal() {
+        if (this.imageModalBackdrop) {
+            this.imageModalBackdrop.classList.remove('active');
+        }
     }
 }
 

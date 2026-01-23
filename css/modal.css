@@ -237,6 +237,16 @@
     padding: 20px 40px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(30, 30, 30, 0.98);
+    display: flex;
+    gap: 15px;
+}
+
+.place-modal__footer #modal-add-btn {
+    flex: 2;
+}
+
+.place-modal__footer #modal-review-btn {
+    flex: 1;
 }
 
 /* Mobile Responsive */

@@ -1,0 +1,1510 @@
+/* Page Styles - 틈새 */
+
+/* ===== INTRO SECTION ===== */
+.intro {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg,
+            var(--color-primary-dark) 0%,
+            var(--color-primary) 50%,
+            var(--color-primary-light) 100%);
+    background-size: 400% 400%;
+    animation: gradientFlow 15s ease infinite;
+    overflow: hidden;
+}
+
+.intro__bg-pattern {
+    position: absolute;
+    inset: 0;
+    opacity: 0.1;
+    background-image:
+        radial-gradient(circle at 20% 50%, var(--color-white) 1px, transparent 1px),
+        radial-gradient(circle at 80% 50%, var(--color-white) 1px, transparent 1px);
+    background-size: 60px 60px;
+}
+
+.intro__content {
+    position: relative;
+    text-align: center;
+    padding: var(--space-8);
+    max-width: 800px;
+}
+
+.intro__subtitle {
+    font-family: var(--font-serif);
+    font-size: var(--text-lg);
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: var(--space-4);
+    opacity: 0;
+    animation: fadeInUp 0.8s ease 0.2s forwards;
+}
+
+.intro__title {
+    font-family: var(--font-serif);
+    font-size: var(--text-7xl);
+    font-weight: var(--font-bold);
+    color: var(--color-white);
+    margin-bottom: var(--space-6);
+    opacity: 0;
+    animation: fadeInUp 0.8s ease 0.4s forwards;
+    text-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+}
+
+.intro__desc {
+    font-size: var(--text-xl);
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.8;
+    margin-bottom: var(--space-10);
+    opacity: 0;
+    animation: fadeInUp 0.8s ease 0.6s forwards;
+}
+
+.intro__cta {
+    opacity: 0;
+    animation: fadeInUp 0.8s ease 0.8s forwards;
+}
+
+.intro__scroll {
+    position: absolute;
+    bottom: var(--space-10);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: var(--text-sm);
+    animation: scrollIndicator 2s ease-in-out infinite;
+}
+
+.intro__scroll-icon {
+    width: 24px;
+    height: 40px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    position: relative;
+}
+
+.intro__scroll-icon::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 2px;
+    animation: scrollIndicator 2s ease-in-out infinite;
+}
+
+/* Decorative floating elements */
+.intro__float {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    animation: float 6s ease-in-out infinite;
+}
+
+.intro__float--1 {
+    width: 300px;
+    height: 300px;
+    top: -100px;
+    right: -100px;
+    animation-delay: 0s;
+}
+
+.intro__float--2 {
+    width: 200px;
+    height: 200px;
+    bottom: 100px;
+    left: -50px;
+    animation-delay: 2s;
+}
+
+.intro__float--3 {
+    width: 150px;
+    height: 150px;
+    top: 50%;
+    right: 10%;
+    animation-delay: 4s;
+}
+
+/* ===== MAIN SECTION ===== */
+.main {
+    padding-top: var(--space-24);
+    background: var(--color-light);
+}
+
+.main__hero {
+    text-align: center;
+    padding: var(--space-16) 0;
+    position: relative;
+    /* Ensure hero is relative for absolute positioning */
+}
+
+.scroll-indicator {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    animation: bounce 2s infinite;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.scroll-indicator span {
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    font-weight: 600;
+}
+
+@keyframes bounce {
+
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        transform: translateX(-50%) translateY(0);
+    }
+
+    40% {
+        transform: translateX(-50%) translateY(-10px);
+    }
+
+    60% {
+        transform: translateX(-50%) translateY(-5px);
+    }
+}
+
+.main__title {
+    font-family: var(--font-serif);
+    font-size: var(--text-4xl);
+    color: var(--color-dark);
+    margin-bottom: var(--space-4);
+}
+
+.main__title span {
+    color: var(--color-primary);
+}
+
+.main__subtitle {
+    font-size: var(--text-lg);
+    color: var(--color-gray);
+    margin-bottom: var(--space-10);
+}
+
+/* Search Section */
+.main__search {
+    max-width: 600px;
+    margin: 0 auto var(--space-12);
+}
+
+/* Filters */
+.main__filters {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    margin-bottom: var(--space-12);
+}
+
+.filter-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.filter-section__label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    color: var(--color-dark);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Places Grid */
+.places-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-8);
+    padding-bottom: var(--space-20);
+}
+
+/* ===== DETAIL PAGE ===== */
+.detail {
+    min-height: 100vh;
+}
+
+.detail__hero {
+    position: relative;
+    height: 60vh;
+    overflow: hidden;
+}
+
+.detail__hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.detail__hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom,
+            transparent 0%,
+            rgba(0, 0, 0, 0.3) 60%,
+            rgba(0, 0, 0, 0.7) 100%);
+}
+
+.detail__hero-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--space-12);
+    color: var(--color-white);
+}
+
+.detail__back {
+    position: absolute;
+    top: var(--space-6);
+    left: var(--space-6);
+    z-index: 10;
+}
+
+.detail__category {
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    color: var(--color-accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: var(--space-3);
+}
+
+.detail__title {
+    font-family: var(--font-serif);
+    font-size: var(--text-5xl);
+    font-weight: var(--font-bold);
+    margin-bottom: var(--space-4);
+}
+
+.detail__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    font-size: var(--text-base);
+    opacity: 0.9;
+}
+
+.detail__congestion {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    background: var(--color-quiet);
+    border-radius: var(--radius-full);
+    font-weight: var(--font-semibold);
+}
+
+.detail__congestion--normal {
+    background: var(--color-normal);
+    color: var(--color-dark);
+}
+
+.detail__congestion--crowded {
+    background: var(--color-crowded);
+}
+
+.detail__content {
+    padding: var(--space-12);
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.detail__section {
+    margin-bottom: var(--space-12);
+}
+
+.detail__section-title {
+    font-size: var(--text-xl);
+    font-weight: var(--font-bold);
+    color: var(--color-dark);
+    margin-bottom: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.detail__description {
+    font-size: var(--text-lg);
+    line-height: 2;
+    color: var(--color-gray);
+}
+
+.detail__features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+}
+
+.detail__gallery {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+}
+
+.detail__gallery-item {
+    aspect-ratio: 1;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform var(--transition-base);
+}
+
+.detail__gallery-item:hover {
+    transform: scale(1.02);
+}
+
+.detail__gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.detail__info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+}
+
+.detail__info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--color-secondary-light);
+    border-radius: var(--radius-lg);
+}
+
+.detail__info-icon {
+    font-size: var(--text-xl);
+    color: var(--color-primary);
+}
+
+.detail__info-label {
+    font-size: var(--text-sm);
+    color: var(--color-gray);
+    margin-bottom: var(--space-1);
+}
+
+.detail__info-value {
+    font-weight: var(--font-semibold);
+    color: var(--color-dark);
+}
+
+.detail__add-btn {
+    position: fixed;
+    bottom: var(--space-8);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: var(--z-fixed);
+}
+
+/* ===== PLANNER PAGE ===== */
+.planner {
+    min-height: 100vh;
+    padding-top: 80px;
+    background: var(--color-light);
+}
+
+.planner__header {
+    text-align: center;
+    padding: var(--space-12) 0;
+}
+
+.planner__title {
+    font-family: var(--font-serif);
+    font-size: var(--text-4xl);
+    color: var(--color-dark);
+    margin-bottom: var(--space-3);
+}
+
+.planner__subtitle {
+    font-size: var(--text-lg);
+    color: var(--color-gray);
+}
+
+.planner__content {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: var(--space-8);
+    padding-bottom: var(--space-12);
+}
+
+.planner__sidebar {
+    background: var(--color-white);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    height: fit-content;
+    position: sticky;
+    top: 100px;
+}
+
+.planner__sidebar-title {
+    font-size: var(--text-lg);
+    font-weight: var(--font-bold);
+    margin-bottom: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.planner__saved-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.planner__saved-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--color-secondary-light);
+    border-radius: var(--radius-lg);
+    cursor: grab;
+    transition: all var(--transition-fast);
+}
+
+.planner__saved-item:hover {
+    background: var(--color-secondary);
+}
+
+.planner__saved-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.planner__saved-image {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+}
+
+.planner__saved-info {
+    flex: 1;
+}
+
+.planner__saved-name {
+    font-weight: var(--font-semibold);
+    font-size: var(--text-sm);
+    margin-bottom: var(--space-1);
+}
+
+.planner__saved-category {
+    font-size: var(--text-xs);
+    color: var(--color-gray);
+}
+
+.planner__timeline {
+    background: var(--color-white);
+    border-radius: var(--radius-xl);
+    padding: var(--space-8);
+}
+
+.planner__timeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-8);
+}
+
+.planner__date-picker {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.planner__date-input {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-secondary-dark);
+    border-radius: var(--radius-lg);
+    font-size: var(--text-base);
+}
+
+.planner__timeline-items {
+    position: relative;
+    padding-left: var(--space-8);
+}
+
+.planner__timeline-items::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--color-secondary);
+}
+
+.planner__timeline-item {
+    position: relative;
+    padding: var(--space-5);
+    margin-bottom: var(--space-6);
+    background: var(--color-secondary-light);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-base);
+}
+
+.planner__timeline-item::before {
+    content: '';
+    position: absolute;
+    left: calc(-1 * var(--space-8) + 4px);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    background: var(--color-primary);
+    border: 3px solid var(--color-white);
+    border-radius: 50%;
+    box-shadow: var(--shadow-md);
+}
+
+.planner__timeline-item:hover {
+    background: var(--color-secondary);
+}
+
+.planner__timeline-time {
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    color: var(--color-primary);
+    margin-bottom: var(--space-2);
+}
+
+.planner__timeline-place {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.planner__timeline-image {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+}
+
+.planner__timeline-info h4 {
+    font-size: var(--text-base);
+    font-weight: var(--font-bold);
+    margin-bottom: var(--space-1);
+}
+
+.planner__timeline-info p {
+    font-size: var(--text-sm);
+    color: var(--color-gray);
+}
+
+.planner__empty {
+    text-align: center;
+    padding: var(--space-16);
+    color: var(--color-gray);
+}
+
+.planner__empty-icon {
+    font-size: var(--text-6xl);
+    margin-bottom: var(--space-4);
+    opacity: 0.3;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+    .planner__content {
+        grid-template-columns: 1fr;
+    }
+
+    .planner__sidebar {
+        position: relative;
+        top: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .intro__title {
+        font-size: var(--text-5xl);
+    }
+
+    .intro__desc {
+        font-size: var(--text-lg);
+    }
+
+    .main__title {
+        font-size: var(--text-3xl);
+    }
+
+    .places-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .detail__title {
+        font-size: var(--text-3xl);
+    }
+
+    .detail__hero {
+        height: 50vh;
+    }
+
+    .detail__content {
+        padding: var(--space-6);
+    }
+
+    .detail__gallery {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .detail__info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .header__nav {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .intro__title {
+        font-size: var(--text-4xl);
+    }
+
+    .container {
+        padding: 0 var(--space-4);
+    }
+
+    .btn-lg {
+        padding: var(--space-4) var(--space-6);
+        font-size: var(--text-base);
+    }
+}
+
+/* ===== HANOK THEME INTRO ===== */
+
+/* 한옥 테마 배경 */
+.intro--hanok {
+    background: linear-gradient(135deg,
+            var(--color-night-sky) 0%,
+            var(--color-twilight) 30%,
+            #3D2D40 60%,
+            #4A3528 100%);
+    background-size: 400% 400%;
+    animation: hanokGradientFlow 25s ease infinite;
+}
+
+@keyframes hanokGradientFlow {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* 한옥 패턴 배경 */
+.hanok-pattern {
+    background-image:
+        radial-gradient(circle at 25% 25%, rgba(255, 200, 100, 0.03) 1px, transparent 1px),
+        radial-gradient(circle at 75% 75%, rgba(255, 180, 80, 0.02) 1px, transparent 1px);
+    background-size: 40px 40px, 60px 60px;
+    opacity: 0.5;
+}
+
+/* 창호지 문 스타일 */
+.hanji-door {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 120px;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.hanji-door--left {
+    left: 0;
+    transform: perspective(800px) rotateY(15deg);
+    transform-origin: left center;
+}
+
+.hanji-door--right {
+    right: 0;
+    transform: perspective(800px) rotateY(-15deg);
+    transform-origin: right center;
+}
+
+.hanji-frame {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg,
+            var(--color-hanok-wood) 0%,
+            var(--color-hanok-wood-light) 50%,
+            var(--color-hanok-wood) 100%);
+    padding: 8px;
+    box-shadow:
+        inset 0 0 20px rgba(0, 0, 0, 0.3),
+        4px 0 20px rgba(0, 0, 0, 0.4);
+}
+
+.hanji-door--right .hanji-frame {
+    box-shadow:
+        inset 0 0 20px rgba(0, 0, 0, 0.3),
+        -4px 0 20px rgba(0, 0, 0, 0.4);
+}
+
+.hanji-grid {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(6, 1fr);
+    gap: 6px;
+}
+
+.hanji-cell {
+    background: linear-gradient(135deg,
+            var(--color-hanji-warm) 0%,
+            var(--color-hanji) 50%,
+            rgba(245, 230, 211, 0.9) 100%);
+    border-radius: 2px;
+    box-shadow:
+        inset 0 0 30px rgba(255, 200, 120, 0.2),
+        inset 0 0 60px rgba(255, 180, 100, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.hanji-cell::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-linear-gradient(0deg,
+            transparent,
+            transparent 3px,
+            rgba(200, 180, 160, 0.1) 3px,
+            rgba(200, 180, 160, 0.1) 4px),
+        repeating-linear-gradient(90deg,
+            transparent,
+            transparent 5px,
+            rgba(200, 180, 160, 0.08) 5px,
+            rgba(200, 180, 160, 0.08) 6px);
+    opacity: 0.5;
+}
+
+/* 창호지를 통해 비치는 따뜻한 빛 */
+.hanji-cell::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center,
+            rgba(255, 200, 100, 0.15) 0%,
+            transparent 70%);
+    animation: hanjiGlow 4s ease-in-out infinite;
+}
+
+@keyframes hanjiGlow {
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+}
+
+/* 따뜻한 빛 효과 */
+.warm-glow {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(60px);
+    animation: warmGlowPulse 6s ease-in-out infinite;
+}
+
+.warm-glow--1 {
+    width: 400px;
+    height: 400px;
+    top: 20%;
+    left: 30%;
+    background: radial-gradient(circle, rgba(255, 180, 80, 0.2) 0%, transparent 70%);
+    animation-delay: 0s;
+}
+
+.warm-glow--2 {
+    width: 300px;
+    height: 300px;
+    bottom: 20%;
+    right: 25%;
+    background: radial-gradient(circle, rgba(255, 140, 60, 0.15) 0%, transparent 70%);
+    animation-delay: 2s;
+}
+
+.warm-glow--3 {
+    width: 250px;
+    height: 250px;
+    top: 50%;
+    left: 60%;
+    background: radial-gradient(circle, rgba(255, 200, 100, 0.12) 0%, transparent 70%);
+    animation-delay: 4s;
+}
+
+@keyframes warmGlowPulse {
+
+    0%,
+    100% {
+        opacity: 0.6;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}
+
+/* 등불 스타일 */
+.lantern {
+    position: absolute;
+    z-index: 10;
+    animation: lanternSway 4s ease-in-out infinite;
+}
+
+.lantern--1 {
+    top: 8%;
+    left: 15%;
+    animation-delay: 0s;
+}
+
+.lantern--2 {
+    top: 12%;
+    right: 20%;
+    animation-delay: 1.5s;
+}
+
+.lantern--3 {
+    top: 5%;
+    left: 45%;
+    animation-delay: 3s;
+}
+
+@keyframes lanternSway {
+
+    0%,
+    100% {
+        transform: rotate(-2deg) translateX(0);
+    }
+
+    25% {
+        transform: rotate(1deg) translateX(3px);
+    }
+
+    50% {
+        transform: rotate(2deg) translateX(0);
+    }
+
+    75% {
+        transform: rotate(-1deg) translateX(-3px);
+    }
+}
+
+/* 등불 빛 효과 */
+.lantern-light {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(ellipse at center top,
+            rgba(255, 180, 80, 0.4) 0%,
+            rgba(255, 140, 60, 0.2) 30%,
+            transparent 70%);
+    filter: blur(15px);
+    animation: lanternLightFlicker 2s ease-in-out infinite;
+}
+
+@keyframes lanternLightFlicker {
+
+    0%,
+    100% {
+        opacity: 0.8;
+        transform: translateX(-50%) scale(1);
+    }
+
+    25% {
+        opacity: 0.9;
+        transform: translateX(-50%) scale(1.05);
+    }
+
+    50% {
+        opacity: 0.7;
+        transform: translateX(-50%) scale(0.95);
+    }
+
+    75% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.02);
+    }
+}
+
+/* 떠다니는 불씨 효과 */
+.ember {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+            var(--color-lantern-core) 0%,
+            var(--color-ember) 50%,
+            transparent 100%);
+    pointer-events: none;
+    animation: emberFloat 8s ease-in-out infinite;
+    box-shadow:
+        0 0 6px rgba(255, 180, 80, 0.6),
+        0 0 12px rgba(255, 140, 60, 0.3);
+}
+
+.ember--1 {
+    left: 20%;
+    bottom: 30%;
+    animation-delay: 0s;
+    animation-duration: 7s;
+}
+
+.ember--2 {
+    left: 35%;
+    bottom: 40%;
+    animation-delay: 1s;
+    animation-duration: 9s;
+    width: 3px;
+    height: 3px;
+}
+
+.ember--3 {
+    right: 25%;
+    bottom: 35%;
+    animation-delay: 2s;
+    animation-duration: 8s;
+}
+
+.ember--4 {
+    right: 40%;
+    bottom: 25%;
+    animation-delay: 3s;
+    animation-duration: 10s;
+    width: 5px;
+    height: 5px;
+}
+
+.ember--5 {
+    left: 50%;
+    bottom: 50%;
+    animation-delay: 4s;
+    animation-duration: 6s;
+    width: 3px;
+    height: 3px;
+}
+
+.ember--6 {
+    right: 15%;
+    bottom: 45%;
+    animation-delay: 5s;
+    animation-duration: 11s;
+}
+
+.ember--7 {
+    left: 10%;
+    bottom: 55%;
+    animation-delay: 6s;
+    animation-duration: 8s;
+    width: 2px;
+    height: 2px;
+}
+
+.ember--8 {
+    right: 30%;
+    bottom: 60%;
+    animation-delay: 7s;
+    animation-duration: 9s;
+    width: 4px;
+    height: 4px;
+}
+
+@keyframes emberFloat {
+    0% {
+        transform: translateY(0) translateX(0) scale(1);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: translateY(-100px) translateX(20px) scale(0.8);
+        opacity: 0.6;
+    }
+
+    90% {
+        opacity: 0.3;
+    }
+
+    100% {
+        transform: translateY(-200px) translateX(-10px) scale(0.4);
+        opacity: 0;
+    }
+}
+
+/* 한옥 테마 버튼 */
+.btn-hanok {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-5) var(--space-8);
+    background: linear-gradient(135deg,
+            var(--color-hanok-wood) 0%,
+            var(--color-hanok-wood-light) 100%);
+    color: var(--color-hanji);
+    border: 2px solid var(--color-hanok-red);
+    border-radius: var(--radius-lg);
+    font-family: var(--font-serif);
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-hanok::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg,
+            transparent 0%,
+            rgba(255, 200, 100, 0.1) 50%,
+            transparent 100%);
+    opacity: 0;
+    transition: opacity var(--transition-base);
+}
+
+.btn-hanok:hover {
+    transform: translateY(-3px);
+    box-shadow:
+        0 8px 30px rgba(255, 140, 60, 0.3),
+        0 4px 15px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border-color: var(--color-lantern-glow);
+}
+
+.btn-hanok:hover::before {
+    opacity: 1;
+}
+
+.btn-hanok svg {
+    transition: transform var(--transition-base);
+}
+
+.btn-hanok:hover svg {
+    transform: translateX(5px);
+}
+
+/* 한옥 테마 스크롤 아이콘 */
+.hanok-scroll {
+    border-color: rgba(245, 230, 211, 0.4) !important;
+}
+
+.hanok-scroll::before {
+    background: var(--color-hanji) !important;
+}
+
+.intro--hanok .intro__scroll {
+    color: rgba(245, 230, 211, 0.6);
+}
+
+/* 한옥 테마 텍스트 스타일 */
+.intro--hanok .intro__subtitle {
+    color: var(--color-hanji);
+    opacity: 0.8;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.intro--hanok .intro__title {
+    color: var(--color-hanji-warm);
+    text-shadow:
+        0 4px 30px rgba(255, 180, 100, 0.4),
+        0 2px 10px rgba(0, 0, 0, 0.5);
+    letter-spacing: 0.1em;
+}
+
+.intro--hanok .intro__desc {
+    color: rgba(245, 230, 211, 0.85);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 반응형 - 한옥 테마 */
+@media (max-width: 768px) {
+    .hanji-door {
+        width: 100px;
+    }
+
+    .lantern--1 {
+        left: 8%;
+        top: 8%;
+    }
+
+    .lantern--2 {
+        right: 8%;
+        top: 12%;
+    }
+
+    .lantern--3,
+    .lantern--4,
+    .lantern--5 {
+        display: none;
+    }
+
+    .lantern svg {
+        width: 40px;
+        height: 60px;
+    }
+
+    .btn-wood-frame {
+        padding: var(--space-4) var(--space-12);
+    }
+}
+
+@media (max-width: 480px) {
+    .hanji-door {
+        width: 60px;
+    }
+
+    .hanji-grid {
+        grid-template-rows: repeat(4, 1fr);
+    }
+
+    .lantern svg {
+        width: 30px;
+        height: 45px;
+    }
+
+    .intro--hanok .intro__title {
+        font-size: var(--text-4xl);
+    }
+
+    .btn-wood-frame {
+        padding: var(--space-3) var(--space-8);
+        font-size: var(--text-base);
+    }
+}
+
+/* ===== 창호지 격자 디테일 ===== */
+.hanji-lattice {
+    position: absolute;
+    inset: 4px;
+    pointer-events: none;
+}
+
+/* 창호지 격자 패턴 - 전통 정(井)자 문양 */
+.hanji-lattice::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        /* 세로 격자 */
+        linear-gradient(90deg,
+            transparent 0%,
+            transparent calc(50% - 1px),
+            rgba(74, 55, 40, 0.4) calc(50% - 1px),
+            rgba(74, 55, 40, 0.4) calc(50% + 1px),
+            transparent calc(50% + 1px),
+            transparent 100%),
+        /* 가로 격자 */
+        linear-gradient(0deg,
+            transparent 0%,
+            transparent calc(33% - 1px),
+            rgba(74, 55, 40, 0.35) calc(33% - 1px),
+            rgba(74, 55, 40, 0.35) calc(33% + 1px),
+            transparent calc(33% + 1px),
+            transparent calc(66% - 1px),
+            rgba(74, 55, 40, 0.35) calc(66% - 1px),
+            rgba(74, 55, 40, 0.35) calc(66% + 1px),
+            transparent calc(66% + 1px),
+            transparent 100%);
+}
+
+/* 문 손잡이 */
+.door-handle {
+    position: absolute;
+    width: 12px;
+    height: 28px;
+    background: linear-gradient(180deg,
+            #8B7355 0%,
+            #5D4E37 50%,
+            #3D3225 100%);
+    border-radius: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    box-shadow:
+        inset 0 2px 4px rgba(255, 255, 255, 0.2),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.3),
+        2px 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.hanji-door--left .door-handle {
+    right: 15px;
+}
+
+.hanji-door--right .door-handle {
+    left: 15px;
+}
+
+/* 문 손잡이 장식 */
+.door-handle::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background: radial-gradient(circle, #C9A86C 0%, #8B7355 100%);
+    border-radius: 50%;
+    box-shadow: 0 6px 0 #8B7355;
+}
+
+/* ===== 등불 부유 위치 (다양화) ===== */
+.lantern--1 {
+    top: 5%;
+    left: 12%;
+    animation: lanternFloat1 6s ease-in-out infinite;
+}
+
+.lantern--2 {
+    top: 15%;
+    right: 15%;
+    animation: lanternFloat2 7s ease-in-out infinite;
+    animation-delay: 1s;
+}
+
+.lantern--3 {
+    top: 8%;
+    left: 42%;
+    animation: lanternFloat3 5s ease-in-out infinite;
+    animation-delay: 2s;
+}
+
+.lantern--4 {
+    top: 20%;
+    left: 25%;
+    animation: lanternFloat2 8s ease-in-out infinite;
+    animation-delay: 0.5s;
+}
+
+.lantern--5 {
+    top: 12%;
+    right: 35%;
+    animation: lanternFloat1 6.5s ease-in-out infinite;
+    animation-delay: 3s;
+}
+
+/* 등불 부유 애니메이션 - 다양한 패턴 */
+@keyframes lanternFloat1 {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(-1deg);
+    }
+
+    25% {
+        transform: translateY(-12px) rotate(1deg);
+    }
+
+    50% {
+        transform: translateY(-5px) rotate(-0.5deg);
+    }
+
+    75% {
+        transform: translateY(-15px) rotate(0.5deg);
+    }
+}
+
+@keyframes lanternFloat2 {
+
+    0%,
+    100% {
+        transform: translateY(0) translateX(0) rotate(0.5deg);
+    }
+
+    33% {
+        transform: translateY(-10px) translateX(5px) rotate(-1deg);
+    }
+
+    66% {
+        transform: translateY(-18px) translateX(-3px) rotate(1deg);
+    }
+}
+
+@keyframes lanternFloat3 {
+
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+    }
+
+    50% {
+        transform: translateY(-20px) scale(1.02);
+    }
+}
+
+/* 등불 빛 크기 조정 */
+.lantern-light--small {
+    width: 60px;
+    height: 60px;
+}
+
+/* ===== 나무 프레임 버튼 (CSS 구현) ===== */
+.btn-wood-frame {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-5) var(--space-10);
+    color: var(--color-hanji-warm);
+    text-decoration: none;
+    font-family: var(--font-serif);
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    position: relative;
+    border: none;
+    background: transparent;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* 나무 프레임 외곽 */
+.btn-wood-frame::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+            #6B4423 0%,
+            #4A3018 15%,
+            #5D3A1A 50%,
+            #4A3018 85%,
+            #6B4423 100%);
+    border-radius: 8px;
+    border: 3px solid #3D2517;
+    box-shadow:
+        inset 0 2px 4px rgba(255, 200, 150, 0.2),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.3),
+        0 4px 15px rgba(0, 0, 0, 0.4),
+        0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 0;
+}
+
+/* 나무 질감 패턴 */
+.btn-wood-frame::after {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    background:
+        repeating-linear-gradient(90deg,
+            transparent 0px,
+            transparent 3px,
+            rgba(139, 90, 43, 0.12) 3px,
+            rgba(139, 90, 43, 0.12) 5px),
+        linear-gradient(180deg,
+            rgba(70, 45, 20, 0.95) 0%,
+            rgba(55, 32, 12, 0.98) 50%,
+            rgba(70, 45, 20, 0.95) 100%);
+    border-radius: 4px;
+    border: 2px solid #5D3A1A;
+    box-shadow:
+        inset 0 0 20px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 200, 150, 0.1);
+    z-index: 1;
+}
+
+.btn-wood-frame__text {
+    position: relative;
+    z-index: 2;
+}
+
+.btn-wood-frame__arrow {
+    position: relative;
+    z-index: 2;
+    transition: transform var(--transition-base);
+}
+
+/* 호버 효과 */
+.btn-wood-frame:hover {
+    transform: scale(1.03) translateY(-2px);
+}
+
+.btn-wood-frame:hover::before {
+    box-shadow:
+        inset 0 2px 4px rgba(255, 200, 150, 0.3),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.3),
+        0 8px 25px rgba(255, 150, 50, 0.3),
+        0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.btn-wood-frame:hover::after {
+    background:
+        repeating-linear-gradient(90deg,
+            transparent 0px,
+            transparent 3px,
+            rgba(139, 90, 43, 0.15) 3px,
+            rgba(139, 90, 43, 0.15) 5px),
+        linear-gradient(180deg,
+            rgba(80, 50, 22, 0.95) 0%,
+            rgba(60, 38, 15, 0.98) 50%,
+            rgba(80, 50, 22, 0.95) 100%);
+}
+
+.btn-wood-frame:hover .btn-wood-frame__arrow {
+    transform: translateX(5px);
+}
+
+/* 활성 상태 */
+.btn-wood-frame:active {
+    transform: scale(1.01);
+}
+
+.btn-wood-frame:active::after {
+    box-shadow:
+        inset 0 2px 15px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 200, 150, 0.05);
+}

@@ -1,0 +1,393 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+/* ===== 틈새 (Teumsae) 리디자인 테마 - 공통 스타일 ===== */
+:root {
+    /* 배경색: 기와 진회색 */
+    --bg-color: #2C2C2C;
+
+    /* 텍스트 색상: 한지 흰색 */
+    --text-color: #F4F4F0;
+
+    /* 강조 색상: 차분한 금색 */
+    --accent-color: #D4AF37;
+
+    /* 테두리 색상: 투명도 있는 흰색 */
+    --border-color: rgba(255, 255, 255, 0.1);
+
+    /* 폰트 설정 */
+    --font-serif: 'Noto Serif KR', serif;
+    --font-sans: 'Noto Sans KR', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-sans);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+html {
+    overflow-y: scroll;
+    /* 레이아웃 밀림 방지를 위해 스크롤바 강제 표시 */
+}
+
+/* 다크 테마 스크롤바 커스텀 */
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    border: 3px solid var(--bg-color);
+    /* 여백 효과를 위한 테두리 */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-serif);
+    font-weight: 700;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* 레이아웃 컨테이너 (최대 너비 1200px) */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* 헤더 (상단 네비게이션) */
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 20px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
+    transition: background 0.3s ease;
+    width: 100%;
+}
+
+/* 스크롤 시 헤더 스타일 (배경색 추가) */
+.header.scrolled,
+.header.map-open {
+    background: rgba(44, 44, 44, 0.95);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.header__logo {
+    font-family: var(--font-serif);
+    font-size: 28px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+/* 로고 텍스트 그라데이션 효과 */
+.header__logo .logo-teum,
+.header__logo .logo-sae {
+    background: linear-gradient(135deg, #D4AF37 0%, #F5E6A3 50%, #D4AF37 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* 로고 중앙 장식 라인 */
+/* 로고 중앙 장식 라인 */
+.header__logo .logo-gap {
+    display: inline-block;
+    width: 6px;
+    height: 20px;
+    margin: 0 3px;
+    background: linear-gradient(180deg, transparent 0%, rgba(212, 175, 55, 0.4) 50%, transparent 100%);
+    border-radius: 2px;
+    position: relative;
+}
+
+.header__logo:hover {
+    transform: scale(1.02);
+}
+
+.header__logo:hover .logo-gap {
+    background: linear-gradient(180deg, transparent 0%, rgba(212, 175, 55, 0.7) 50%, transparent 100%);
+}
+
+.header__nav {
+    display: flex;
+    gap: 30px;
+    justify-self: center;
+    /* Grid에서 중앙 정렬 */
+}
+
+.header__link {
+    color: rgba(244, 244, 240, 0.8);
+    font-size: 16px;
+    transition: color 0.3s;
+}
+
+.header__link:hover {
+    color: var(--text-color);
+}
+
+.header__link.active {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+/* 지도 토글 버튼 */
+.header__map-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(244, 244, 240, 0.8);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-sans);
+}
+
+.header__map-btn svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.3s ease;
+}
+
+.header__map-btn .chevron {
+    width: 14px;
+    height: 14px;
+    margin-left: 2px;
+}
+
+.header__map-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.header__map-btn.active {
+    background: var(--accent-color);
+    color: #1A1A1A;
+    border-color: var(--accent-color);
+    font-weight: 600;
+}
+
+.header__map-btn.active .chevron {
+    transform: rotate(180deg);
+}
+
+.header__inner {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    /* 좌: 로고, 중: 네비, 우: 컨트롤 */
+    align-items: center;
+    width: 100%;
+}
+
+/* 우측 컨트롤 영역 (지도 버튼 + 유저 메뉴) */
+.header__controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    justify-self: end;
+}
+
+/* 사용자 메뉴 (우측 상단) */
+.user-menu {
+    position: relative;
+}
+
+.user-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.user-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.user-avatar {
+    width: 24px;
+    height: 24px;
+    background: #D4AF37;
+    color: #2C2C2C;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* 사용자 드롭다운 메뉴 */
+.user-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: rgba(35, 35, 35, 0.98);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 12px;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    min-width: 200px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+.user-menu:hover .user-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-dropdown-header {
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+}
+
+.user-dropdown-header .user-email {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 4px;
+}
+
+.user-dropdown-header .user-greeting {
+    font-size: 14px;
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+.user-dropdown-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 4px 0;
+}
+
+.user-dropdown-item {
+    padding: 12px 16px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    transition: all 0.2s ease;
+}
+
+.user-dropdown-item:hover {
+    background: rgba(212, 175, 55, 0.1);
+    color: var(--accent-color);
+}
+
+.user-dropdown-item svg {
+    width: 18px;
+    height: 18px;
+    opacity: 0.7;
+}
+
+.user-dropdown-item:hover svg {
+    opacity: 1;
+}
+
+.user-dropdown-item.logout {
+    color: rgba(255, 100, 100, 0.8);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-dropdown-item.logout:hover {
+    background: rgba(255, 100, 100, 0.1);
+    color: #ff6b6b;
+}
+
+/* 버튼 스타일 오버라이드 (일관성 유지) */
+.btn-primary {
+    background: linear-gradient(135deg, #D4AF37 0%, #F5E6A3 50%, #D4AF37 100%);
+    color: #1A1A1A;
+    /* 금색 바탕에는 어두운 색 텍스트 */
+    font-weight: 700;
+    border: none;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #E4B584 0%, #FFF3C4 50%, #E4B584 100%);
+    color: #1A1A1A;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #D4AF37 0%, #F5E6A3 50%, #D4AF37 100%);
+    color: #1A1A1A;
+    border-color: transparent;
+}
+
+/* 지도 오버레이 */
+.map-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: 990;
+    /* 헤더(1000) 바로 아래 */
+    background-color: var(--bg-color);
+    transform: translateY(-100%);
+    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+    /* 부드러운 슬라이드 */
+    will-change: transform;
+}
+
+.map-overlay.open {
+    transform: translateY(0);
+}
+
+.map-overlay iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}

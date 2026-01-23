@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="틈새 - 장소 상세 정보">
+    <title>장소 상세 | 틈새</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <!-- Detail Page Container -->
+    <div class="detail" id="detail">
+        <!-- Hero Section -->
+        <section class="detail__hero">
+            <img src="" alt="" class="detail__hero-image" id="hero-image">
+            <div class="detail__hero-overlay"></div>
+
+            <!-- Back Button -->
+            <a href="main.html" class="detail__back btn btn-glass btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+            </a>
+
+            <div class="detail__hero-content container">
+                <span class="detail__category" id="detail-category">카테고리</span>
+                <h1 class="detail__title" id="detail-title">장소 이름</h1>
+                <div class="detail__meta">
+                    <span class="detail__congestion" id="detail-congestion">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        <span id="congestion-text">한산</span>
+                    </span>
+                    <span id="detail-address">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" style="display:inline; vertical-align: middle; margin-right: 4px;">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                            <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        주소
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Content Section -->
+        <div class="detail__content">
+            <!-- Description -->
+            <section class="detail__section reveal">
+                <h2 class="detail__section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10 9 9 9 8 9" />
+                    </svg>
+                    소개
+                </h2>
+                <p class="detail__description" id="detail-description">
+                    상세 설명이 여기에 표시됩니다.
+                </p>
+            </section>
+
+            <!-- Features -->
+            <section class="detail__section reveal">
+                <h2 class="detail__section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 11 12 14 22 4" />
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                    </svg>
+                    특징
+                </h2>
+                <div class="detail__features" id="detail-features">
+                    <!-- Features will be rendered here -->
+                </div>
+            </section>
+
+            <!-- Gallery -->
+            <section class="detail__section reveal">
+                <h2 class="detail__section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    갤러리
+                </h2>
+                <div class="detail__gallery" id="detail-gallery">
+                    <!-- Gallery images will be rendered here -->
+                </div>
+            </section>
+
+            <!-- Info -->
+            <section class="detail__section reveal">
+                <h2 class="detail__section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                    </svg>
+                    방문 정보
+                </h2>
+                <div class="detail__info-grid" id="detail-info">
+                    <div class="detail__info-item">
+                        <span class="detail__info-icon">🕐</span>
+                        <div>
+                            <p class="detail__info-label">운영 시간</p>
+                            <p class="detail__info-value" id="info-hours">-</p>
+                        </div>
+                    </div>
+                    <div class="detail__info-item">
+                        <span class="detail__info-icon">💰</span>
+                        <div>
+                            <p class="detail__info-label">입장료</p>
+                            <p class="detail__info-value" id="info-admission">-</p>
+                        </div>
+                    </div>
+                    <div class="detail__info-item">
+                        <span class="detail__info-icon">📍</span>
+                        <div>
+                            <p class="detail__info-label">주소</p>
+                            <p class="detail__info-value" id="info-address">-</p>
+                        </div>
+                    </div>
+                    <div class="detail__info-item">
+                        <span class="detail__info-icon">⭐</span>
+                        <div>
+                            <p class="detail__info-label">평점</p>
+                            <p class="detail__info-value" id="info-rating">-</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Add to Plan Button -->
+        <button class="detail__add-btn btn btn-accent btn-lg" id="add-to-plan">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12h14" />
+            </svg>
+            일정에 추가
+        </button>
+    </div>
+
+    <!-- Image Modal -->
+    <div class="modal-backdrop" id="image-modal-backdrop">
+        <div class="modal" id="image-modal"
+            style="padding: 0; max-width: 90vw; max-height: 90vh; background: transparent;">
+            <img src="" alt="" id="modal-image"
+                style="max-width: 100%; max-height: 90vh; border-radius: var(--radius-xl);">
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/detail.js"></script>
+</body>
+
+</html>

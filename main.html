@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="틈새 - 서울의 혼잡한 장소를 피해 한적한 장소를 찾아 여행 계획을 짜는 사이트">
+    <title>장소 탐색 | 틈새</title>
+
+    <!-- 파비콘 (아이콘) -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+
+    <!-- 스타일시트 연결 -->
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+
+    <link rel="stylesheet" href="css/pages.css">
+    <link rel="stylesheet" href="css/modal.css">
+    <link rel="stylesheet" href="css/theme.css">
+
+    <style>
+        /* 히어로 섹션 (메인 배너) */
+        .main__hero {
+            position: relative;
+            height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: url('images/hanok_header_v2.jpg') no-repeat center center / cover;
+            margin-bottom: 20px;
+        }
+
+        .main__hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            /* 이미지 위에 얇은 어두운 막을 씌워 텍스트 가독성 확보 */
+            z-index: 1;
+        }
+
+        .main__hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(to bottom, transparent, var(--bg-color));
+            /* 하단으로 갈수록 배경색과 자연스럽게 이어지도록 그라데이션 처리 */
+            z-index: 1;
+        }
+
+        .hero__content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .main__title {
+            font-size: 4rem;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .main__title span {
+            font-weight: bold;
+            background: linear-gradient(135deg, #D4AF37 0%, #F5E6A3 50%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .main__title .hero-gap {
+            display: inline-block;
+            width: 10px;
+            height: 50px;
+            margin: 0 4px;
+            background: linear-gradient(180deg, transparent 0%, rgba(212, 175, 55, 0.5) 50%, transparent 100%);
+            border-radius: 3px;
+            vertical-align: middle;
+        }
+
+        .main__subtitle {
+            font-size: 1.2rem;
+            color: rgba(244, 244, 240, 0.9);
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        /* 검색 박스 스타일 */
+        .search-box {
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 15px 0;
+            margin-bottom: 50px;
+            transition: border-color 0.3s;
+            background: transparent;
+            position: relative;
+        }
+
+        .search-box:focus-within {
+            border-bottom-color: var(--text-color);
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            padding: 12px 25px;
+            margin-bottom: 0;
+            transition: all 0.3s ease;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-box:focus-within {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--text-color);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .search-box__icon {
+            color: rgba(255, 255, 255, 0.7);
+            margin-right: 15px;
+        }
+
+        .search-box__input {
+            background: none;
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 1.1rem;
+            color: var(--text-color);
+            font-family: var(--font-serif);
+        }
+
+        .search-box__input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .main__filters {
+            margin-top: 15px;
+            margin-bottom: 0;
+        }
+
+        .filter-section {
+            margin-bottom: 2px;
+        }
+
+        .filter-section__label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 4px;
+            letter-spacing: 2px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.6);
+            padding: 6px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+            color: var(--text-color);
+        }
+
+        .filter-btn.active {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        /* 콘텐츠 영역 - 필터와 장소 목록을 포함하는 컨테이너 */
+        .content-area {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* 장소 그리드 (반응형 카드 배치) */
+        .places-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+            padding-bottom: 60px;
+        }
+
+        /* 장소 카드 스타일 */
+        .place-card {
+            background: #333;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .place-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .place-card__image {
+            height: 200px;
+            background: #444;
+            overflow: hidden;
+        }
+
+        .place-card__image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .place-card__content {
+            padding: 20px;
+        }
+
+        .place-card__title {
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
+
+        .place-card__desc {
+            font-size: 0.9rem;
+            color: rgba(244, 244, 240, 0.6);
+            margin-bottom: 15px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* 분할 뷰 / 지도 토글 로직 */
+        .split-view-container {
+            display: flex;
+            gap: 20px;
+            position: relative;
+        }
+
+        .list-panel {
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .list-panel.shrunk {
+            width: 50%;
+        }
+
+        .map-panel {
+            display: none;
+            width: 50%;
+            position: sticky;
+            top: 100px;
+            height: calc(100vh - 120px);
+            background: #222;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .map-panel.active {
+            display: block;
+        }
+
+        /* 하단 푸터 */
+        .footer {
+            background: #111;
+            padding: 60px 0;
+            margin-top: 60px;
+            border-top: 1px solid var(--border-color);
+            color: rgba(255, 255, 255, 0.4);
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 헤더 (상단 네비게이션) -->
+    <header class="header">
+        <div class="container">
+            <div class="header__inner">
+                <a href="main.html" class="header__logo"><span class="logo-teum">틈</span><span
+                        class="logo-gap"></span><span class="logo-sae">새</span></a>
+                <nav class="header__nav">
+                    <a href="main.html#places" class="header__link hover-underline" id="nav-explore">장소 탐색</a>
+                    <a href="recommend.html" class="header__link hover-underline">AI 추천</a>
+                    <a href="planner.html" class="header__link hover-underline">여행 계획</a>
+                </nav>
+                <div class="header__controls">
+                    <button class="header__map-btn" onclick="toggleMap()" aria-label="지도 보기/닫기">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                            <line x1="8" y1="2" x2="8" y2="18"></line>
+                            <line x1="16" y1="6" x2="16" y2="22"></line>
+                        </svg>
+                        <span>지도</span>
+                        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="user-menu" id="user-menu">
+                        <button class="user-btn">
+                            <span class="user-avatar" id="user-avatar">G</span>
+                            <span id="user-name">게스트</span>
+                        </button>
+                        <!-- 사용자 드롭다운 메뉴 (마우스 오버 시 표시) -->
+                        <div class="user-dropdown">
+                            <div class="user-dropdown-header">
+                                <div class="user-greeting">환영합니다!</div>
+                                <div class="user-email" id="user-email">guest@teumsae.kr</div>
+                            </div>
+                            <a href="planner.html" class="user-dropdown-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                    <line x1="16" y1="2" x2="16" y2="6" />
+                                    <line x1="8" y1="2" x2="8" y2="6" />
+                                    <line x1="3" y1="10" x2="21" y2="10" />
+                                </svg>
+                                내 여행 계획
+                            </a>
+                            <a href="#" class="user-dropdown-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path
+                                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                </svg>
+                                저장한 장소
+                            </a>
+                            <a href="recommend.html" class="user-dropdown-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                AI 추천받기
+                            </a>
+                            <div class="user-dropdown-divider"></div>
+                            <a href="#" class="user-dropdown-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="3" />
+                                    <path
+                                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                                </svg>
+                                설정
+                            </a>
+                            <a href="#" class="user-dropdown-item logout" onclick="logout()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                    <polyline points="16 17 21 12 16 7" />
+                                    <line x1="21" y1="12" x2="9" y2="12" />
+                                </svg>
+                                로그아웃
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- 히어로 섹션 (메인 배너) -->
+        <section class="main__hero">
+            <div class="hero__content reveal">
+                <h1 class="main__title">소음 속의 <span>틈</span><span class="hero-gap"></span><span>새</span></h1>
+                <p class="main__subtitle">서울 속 당신만의 고즈넉한 쉼터를 찾아보세요</p>
+            </div>
+            <div class="scroll-indicator">
+                <span>SCROLL</span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M7 13l5 5 5-5M7 6l5 5 5-5" />
+                </svg>
+            </div>
+        </section>
+
+        <!-- 메인 콘텐츠 영역 -->
+        <div class="container">
+            <div class="split-view-container">
+                <!-- 리스트 패널 (좌측) -->
+                <div class="list-panel" id="content-panel">
+
+                    <!-- 검색 박스 -->
+                    <div id="places-search-container"
+                        style="font-size: 0.75rem; color: var(--accent-color); margin-bottom: 0.5rem; letter-spacing: 2px; font-weight: 600;">
+                        SEARCH PLACES</div>
+                    <div class="search-box reveal delay-200">
+                        <svg class="search-box__icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" class="search-box__input" placeholder="장소, 분위기, 지역을 검색해보세요 (예: 경복궁, 야경)">
+                    </div>
+
+                    <!-- 콘텐츠 영역 (필터 + 장소 목록) -->
+                    <div class="content-area">
+                        <!-- 필터 섹션 (카테고리 및 분위기) -->
+                        <div class="main__filters reveal delay-400">
+                            <div class="filter-section">
+                                <h3 class="filter-section__label">카테고리</h3>
+                                <div class="filter-buttons" id="category-filters">
+                                    <button class="filter-btn active" data-category="전체">전체</button>
+                                    <button class="filter-btn" data-category="자연">자연</button>
+                                    <button class="filter-btn" data-category="문화">문화</button>
+                                    <button class="filter-btn" data-category="산책">산책</button>
+                                    <button class="filter-btn" data-category="역사">역사</button>
+                                    <button class="filter-btn" data-category="카페">카페</button>
+                                    <button class="filter-btn" data-category="야경">야경</button>
+                                    <button class="filter-btn" data-category="감성">감성</button>
+                                </div>
+                            </div>
+
+                            <div class="filter-section">
+                                <h3 class="filter-section__label">분위기</h3>
+                                <div class="filter-buttons" id="mood-filters">
+                                    <button class="filter-btn" data-mood="조용한">조용한</button>
+                                    <button class="filter-btn" data-mood="한적한">한적한</button>
+                                    <button class="filter-btn" data-mood="감성적인">감성적인</button>
+                                    <button class="filter-btn" data-mood="힐링">힐링</button>
+                                    <button class="filter-btn" data-mood="야경">야경</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 장소 목록 그리드 (JS로 동적 생성됨) -->
+                        <div class="places-grid" id="places-grid">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <!-- 지도 패널 (우측, 토글 가능) -->
+                <div class="map-panel" id="map-panel">
+                    <div id="map-view" style="width: 100%; height: 100%; background: #2C2C2C;">
+                        <!-- 지도 iframe 임베드 -->
+                        <iframe id="map-iframe"
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d101903.72871963792!2d126.92297529726561!3d37.52664539999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x357ca28b61c565cd%3A0x858aedb4e4ea83eb!2sSeoul!5e0!3m2!1sen!2skr!4v1708000000000!5m2!1sen!2skr"
+                            style="width: 100%; height: 100%; border: 0;" allowfullscreen="" loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 하단 푸터 -->
+    <footer class="footer">
+        <div class="footer__content">
+            <h3>틈새 Teumsae</h3>
+            <p>Seoul's Hidden Sanctuary</p>
+            <div style="margin-top: 20px;">
+                &copy; 2026 Teumsae. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+
+
+    <!-- 장소 상세 정보 모달 (팝업) -->
+    <div class="place-modal-backdrop" id="place-modal-backdrop">
+        <div class="place-modal" id="place-modal">
+            <button class="place-modal__close" id="place-modal-close" aria-label="닫기">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+
+            <div class="place-modal__hero">
+                <img src="" alt="" class="place-modal__image" id="modal-hero-image">
+                <div class="place-modal__overlay"></div>
+                <div class="place-modal__header">
+                    <span class="place-modal__category" id="modal-category">카테고리</span>
+                    <h2 class="place-modal__title" id="modal-title">장소 이름</h2>
+                    <div class="place-modal__meta">
+                        <span class="place-modal__congestion" id="modal-congestion">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                            </svg>
+                            <span id="modal-congestion-text">혼잡도</span>
+                        </span>
+                        <span class="place-modal__address" id="modal-address">주소</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="place-modal__content">
+                <div class="place-modal__section">
+                    <h3 class="place-modal__section-title">소개</h3>
+                    <p class="place-modal__desc" id="modal-description">설명</p>
+                </div>
+
+                <div class="place-modal__section">
+                    <h3 class="place-modal__section-title">특징</h3>
+                    <div class="place-modal__tags" id="modal-tags">
+                        <!-- Tags populated by JS -->
+                    </div>
+                </div>
+
+                <div class="place-modal__section">
+                    <h3 class="place-modal__section-title">방문 정보</h3>
+                    <div class="place-modal__info-grid">
+                        <div class="place-modal__info-item">
+                            <span class="icon">🕐</span>
+                            <div>
+                                <span class="label">운영 시간</span>
+                                <span class="value" id="modal-hours">-</span>
+                            </div>
+                        </div>
+                        <div class="place-modal__info-item">
+                            <span class="icon">💰</span>
+                            <div>
+                                <span class="label">입장료</span>
+                                <span class="value" id="modal-admission">-</span>
+                            </div>
+                        </div>
+                        <div class="place-modal__info-item">
+                            <span class="icon">⭐</span>
+                            <div>
+                                <span class="label">평점</span>
+                                <span class="value" id="modal-rating">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="place-modal__section" id="modal-gallery-section">
+                    <h3 class="place-modal__section-title">갤러리</h3>
+                    <div class="place-modal__gallery" id="modal-gallery">
+                        <!-- Images populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="place-modal__footer">
+                <button class="btn btn-primary btn-full" id="modal-add-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14M5 12h14" />
+                    </svg>
+                    내 여행 일정에 담기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 스크립트 연결 -->
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        // 로그인 상태 확인
+        function checkAuth() {
+            const user = localStorage.getItem('teumsae_user') || sessionStorage.getItem('teumsae_user');
+            if (!user) {
+                // 비로그인 시 게스트 모드 처리
+                return { isGuest: true };
+            }
+            return JSON.parse(user);
+        }
+
+        // 헤더의 사용자 정보 업데이트
+        function updateUserInfo(user) {
+            const avatar = document.getElementById('user-avatar');
+            const name = document.getElementById('user-name');
+            if (!avatar || !name) return;
+
+            if (user.isGuest) {
+                avatar.textContent = 'G';
+                name.textContent = 'Guest';
+            } else {
+                const initial = user.email ? user.email.charAt(0).toUpperCase() : 'U';
+                avatar.textContent = initial;
+                name.textContent = user.name || user.email.split('@')[0];
+            }
+        }
+
+        // 로그아웃 처리
+        function logout() {
+            localStorage.removeItem('teumsae_user');
+            sessionStorage.removeItem('teumsae_user');
+            window.location.href = 'login.html';
+        }
+
+        // 페이지 로드 완료 시 실행
+        document.addEventListener('DOMContentLoaded', function () {
+            const user = checkAuth();
+            if (user) {
+                updateUserInfo(user);
+            }
+            // 스크롤 이벤트 감지 (헤더 스타일 변경)
+            const header = document.querySelector('.header');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+
+            // 장소 목록 렌더링 (app.js 연결 확인용 등)
+            if (typeof renderPlaceList === 'function') renderPlaceList();
+        });
+
+
+    </script>
+    <script src="js/logout.js"></script>
+    <script src="js/map-toggle.js"></script>
+
+    <!-- 지도 오버레이 -->
+    <div id="map-overlay" class="map-overlay">
+        <iframe src="" frameborder="0" loading="lazy"></iframe>
+    </div>
+</body>
+
+</html>

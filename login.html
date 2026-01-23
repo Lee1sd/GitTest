@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="틈새 - 로그인">
+    <title>로그인 | 틈새</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏮</text></svg>">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/pages.css">
+
+    <style>
+        /* ===== 로그인 페이지 - 다크 글래스 테마 ===== */
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1A1A1A 0%, #2C2C2C 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 배경 조명 효과 */
+        .login-page::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 1000px;
+            height: 1000px;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* 등불 장식 (기존 애니메이션 유지) */
+        .login-lantern {
+            position: absolute;
+            animation: loginLanternFloat 8s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        @keyframes loginLanternFloat {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            25% {
+                transform: translateY(-8px) rotate(1deg);
+            }
+
+            50% {
+                transform: translateY(-4px) rotate(-0.5deg);
+            }
+
+            75% {
+                transform: translateY(-10px) rotate(0.5deg);
+            }
+        }
+
+        .login-lantern--1 {
+            top: 8%;
+            left: 12%;
+            animation-delay: 0s;
+        }
+
+        .login-lantern--2 {
+            top: 15%;
+            right: 15%;
+            animation-delay: 2s;
+        }
+
+        .login-lantern--3 {
+            top: 30%;
+            left: 6%;
+            animation-delay: 1s;
+            opacity: 0.7;
+        }
+
+        .login-lantern--4 {
+            top: 25%;
+            right: 8%;
+            animation-delay: 3s;
+            opacity: 0.8;
+        }
+
+        /* 등불 색상 다크 테마 조정 */
+        .login-lantern ellipse[fill="#5A3D2B"] {
+            fill: #2C1810;
+        }
+
+        .login-lantern path[fill] {
+            filter: brightness(0.9);
+        }
+
+        .login-lantern-light {
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(ellipse at center top, rgba(255, 180, 80, 0.3) 0%, transparent 70%);
+            filter: blur(12px);
+            animation: lanternLightFlicker 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        /* 불똥 효과 (기존 유지) */
+        .ember {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: radial-gradient(circle, rgba(255, 200, 100, 0.9) 0%, transparent 100%);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: emberFloat 6s ease-in-out infinite;
+            z-index: 2;
+        }
+
+        @keyframes emberFloat {
+            0% {
+                opacity: 0;
+                transform: translateY(0) translateX(0) scale(0.5);
+            }
+
+            20% {
+                opacity: 1;
+                transform: translateY(-30px) translateX(10px) scale(1);
+            }
+
+            80% {
+                opacity: 0.6;
+                transform: translateY(-80px) translateX(-5px) scale(0.8);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-120px) translateX(15px) scale(0.3);
+            }
+        }
+
+        .ember--1 {
+            top: 60%;
+            left: 20%;
+            animation-delay: 0s;
+        }
+
+        .ember--2 {
+            top: 65%;
+            left: 35%;
+            animation-delay: 1s;
+            width: 3px;
+            height: 3px;
+        }
+
+        .ember--3 {
+            top: 55%;
+            right: 25%;
+            animation-delay: 2s;
+        }
+
+        .ember--4 {
+            top: 70%;
+            right: 30%;
+            animation-delay: 0.5s;
+            width: 5px;
+            height: 5px;
+        }
+
+        .ember--5 {
+            top: 62%;
+            left: 50%;
+            animation-delay: 3s;
+            width: 3px;
+            height: 3px;
+        }
+
+        .ember--6 {
+            top: 58%;
+            right: 20%;
+            animation-delay: 1.5s;
+        }
+
+        /* Body Override to prevent white background */
+        body {
+            background-color: #1A1A1A !important;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        /* 뒤로가기 버튼 스타일 (수정됨) */
+        .back-link {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            padding: 10px 20px;
+            background: rgba(44, 44, 44, 0.5);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 30px;
+            color: rgba(244, 244, 240, 0.8);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .back-link:hover {
+            background: rgba(44, 44, 44, 0.8);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        /* ===== 다크 글래스 카드 컨테이너 ===== */
+        .login-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 420px;
+            padding: 40px;
+            background: rgba(30, 30, 30, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-logo {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            font-weight: bold;
+        }
+
+        /* 로고 텍스트 스타일 */
+        .login-logo-text {
+            background: linear-gradient(135deg, #D4AF37 0%, #F5E6A3 50%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .login-logo-gap {
+            display: inline-block;
+            width: 8px;
+            height: 36px;
+            background: linear-gradient(180deg, transparent 0%, rgba(212, 175, 55, 0.5) 50%, transparent 100%);
+            border-radius: 2px;
+        }
+
+        .login-subtitle {
+            font-family: 'Times New Roman', serif;
+            /* or Noto Serif KR if loaded */
+            font-size: 0.95rem;
+            color: rgba(244, 244, 240, 0.6);
+            letter-spacing: 1px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.9);
+            /* Lighter color for better visibility */
+            font-weight: 500;
+            margin-left: 4px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .login-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .remember-me input {
+            accent-color: var(--accent-color);
+        }
+
+        .forgot-password {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .forgot-password:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
+        .login-submit {
+            margin-top: 10px;
+            padding: 14px;
+            background: linear-gradient(135deg, #D4AF37 0%, #B8960B 100%);
+            color: #1A1A1A;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .login-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .login-divider {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 25px 0;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.85rem;
+        }
+
+        .login-divider::before,
+        .login-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        }
+
+        .social-login {
+            display: flex;
+            gap: 15px;
+        }
+
+        .social-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .social-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .login-footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .login-footer a {
+            color: var(--accent-color);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: #ff6b6b;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: none;
+            margin-bottom: 10px;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .guest-btn {
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+            padding: 12px;
+            background: transparent;
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .guest-btn:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            background: rgba(212, 175, 55, 0.05);
+        }
+    </style>
+    <script>
+        function continueAsGuest() {
+            // Save guest session
+            const guestUser = {
+                name: '게스트',
+                email: 'guest@teumsae.kr',
+                isGuest: true
+            };
+            localStorage.setItem('teumsae_user', JSON.stringify(guestUser));
+            // Redirect to main page
+            window.location.href = 'main.html';
+        }
+    </script>
+</head>
+
+<body>
+    <!-- Back Button (Updated) -->
+    <a href="index.html" class="back-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+        <span>뒤로가기</span>
+    </a>
+
+    <main class="login-page">
+        <!-- 등불 (기존 애니메이션, 2개만 활성화) -->
+        <div class="login-lantern login-lantern--1">
+            <svg viewBox="0 0 50 65" width="50" height="65">
+                <ellipse cx="25" cy="8" rx="11" ry="4" fill="#5A3D2B" />
+                <path d="M14 8 Q9 32 14 55 L36 55 Q41 32 36 8 Z" fill="url(#ll1)" />
+                <ellipse cx="25" cy="56" rx="11" ry="3" fill="#5A3D2B" />
+                <defs>
+                    <radialGradient id="ll1" cx="50%" cy="30%" r="80%">
+                        <stop offset="0%" stop-color="#FFE8CC" />
+                        <stop offset="40%" stop-color="#FFA726" />
+                        <stop offset="80%" stop-color="#EF6C00" />
+                        <stop offset="100%" stop-color="#7B3F00" />
+                    </radialGradient>
+                </defs>
+            </svg>
+            <div class="login-lantern-light"></div>
+        </div>
+        <div class="login-lantern login-lantern--2">
+            <svg viewBox="0 0 45 60" width="45" height="60">
+                <ellipse cx="22.5" cy="7" rx="10" ry="3.5" fill="#5A3D2B" />
+                <path d="M12.5 7 Q8 30 12.5 50 L32.5 50 Q37 30 32.5 7 Z" fill="url(#ll2)" />
+                <ellipse cx="22.5" cy="51" rx="10" ry="3" fill="#5A3D2B" />
+                <defs>
+                    <radialGradient id="ll2" cx="50%" cy="30%" r="80%">
+                        <stop offset="0%" stop-color="#FFECB3" />
+                        <stop offset="40%" stop-color="#FFCA28" />
+                        <stop offset="80%" stop-color="#FF8F00" />
+                        <stop offset="100%" stop-color="#6D4C00" />
+                    </radialGradient>
+                </defs>
+            </svg>
+            <div class="login-lantern-light"></div>
+        </div>
+
+        <!-- 불똥 효과 (유지) -->
+        <div class="ember ember--1"></div>
+        <div class="ember ember--2"></div>
+        <div class="ember ember--3"></div>
+        <div class="ember ember--4"></div>
+
+        <!-- Glassmorphism Card -->
+        <div class="login-container">
+            <div class="login-header">
+                <h1 class="login-logo">
+                    <span class="login-logo-text">틈</span>
+                    <span class="login-logo-gap"></span>
+                    <span class="login-logo-text">새</span>
+                </h1>
+                <p class="login-subtitle">서울의 숨은 여유를 찾아보세요</p>
+            </div>
+
+            <form class="login-form" id="login-form">
+                <div class="error-message" id="error-message">이메일 또는 비밀번호를 확인해주세요.</div>
+                <div class="form-group">
+                    <label class="form-label" for="email">이메일</label>
+                    <input type="email" id="email" class="form-input" placeholder="example@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">비밀번호</label>
+                    <input type="password" id="password" class="form-input" placeholder="비밀번호" required>
+                </div>
+                <div class="login-options">
+                    <label class="remember-me"><input type="checkbox" id="remember"><span>로그인 상태 유지</span></label>
+                    <a href="#" class="forgot-password">비밀번호 찾기</a>
+                </div>
+                <button type="submit" class="login-submit">틈새 입장하기</button>
+            </form>
+
+            <div class="login-divider">또는</div>
+
+            <div class="social-login">
+                <button class="social-btn" title="구글 로그인">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                        <path
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                            fill="#4285F4" />
+                        <path
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                            fill="#34A853" />
+                        <path
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                            fill="#FBBC05" />
+                        <path
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                            fill="#EA4335" />
+                    </svg>
+                    <!-- 구글 -->
+                </button>
+
+            </div>
+
+            <button class="guest-btn" onclick="continueAsGuest()">
+                게스트로 둘러보기
+            </button>
+
+
+            <div class="login-footer">
+                계정이 없으신가요? <a href="#">회원가입</a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
+            if (email && password) {
+                const userData = { email, isLoggedIn: true, loginTime: new Date().toISOString() };
+                (remember ? localStorage : sessionStorage).setItem('teumsae_user', JSON.stringify(userData));
+                window.location.href = 'main.html';
+            } else {
+                document.getElementById('error-message').classList.add('show');
+            }
+        });
+
+        function socialLogin(provider) {
+            localStorage.setItem('teumsae_user', JSON.stringify({
+                email: `user@${provider}.com`, provider, isLoggedIn: true, loginTime: new Date().toISOString()
+            }));
+            window.location.href = 'main.html';
+        }
+
+        function guestLogin() {
+            sessionStorage.setItem('teumsae_user', JSON.stringify({
+                email: 'guest@teumsae.com', isGuest: true, isLoggedIn: true, loginTime: new Date().toISOString()
+            }));
+            window.location.href = 'main.html';
+        }
+
+        window.onload = function () {
+            const user = localStorage.getItem('teumsae_user') || sessionStorage.getItem('teumsae_user');
+            if (user && JSON.parse(user).isLoggedIn) window.location.href = 'main.html';
+        };
+    </script>
+</body>
+
+</html>

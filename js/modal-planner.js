@@ -3,6 +3,15 @@ class ModalPlanner {
         this.currentPlace = null;
         this.plan = this.loadPlan();
 
+        // Initialize elements to null safely
+        this.elements = {};
+
+        // Try to bind if already available (for safety), but main binding will happen via rebind()
+        this.rebind();
+    }
+
+    // Call this after modal HTML is injected into DOM
+    rebind() {
         this.elements = {
             sidebar: document.getElementById('modal-planner-sidebar'),
             date: document.getElementById('mini-plan-date'),

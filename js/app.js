@@ -12,7 +12,14 @@ class TeumsaeApp {
     }
 
     async init() {
-        this.cacheDOMElements();
+        this.cacheDOMElements(); // Cache basic elements first
+
+        // Load the modal component dynamically
+        await this.loadModalComponent();
+
+        // Re-cache modal elements after loading
+        this.cacheModalElements();
+
         this.bindEvents();
 
         // Firestore 데이터 로드 시도
@@ -33,6 +40,47 @@ class TeumsaeApp {
         this.initScrollEffects();
         this.initIntroAnimation();
         this.checkHash();
+        this.checkUrlParams(); // Check for ?id=...
+    }
+
+    // Load modal HTML from component file
+    async loadModalComponent() {
+        try {
+            const response = await fetch('components/place-modal.html');
+            if (!response.ok) throw new Error('Failed to load modal component');
+            const html = await response.text();
+            document.getElementById('modal-container').innerHTML = html;
+
+            // Re-bind ModalPlanner elements now that DOM exists
+            if (this.modalPlanner) {
+                this.modalPlanner.rebind();
+            } else if (window.modalPlanner) {
+                window.modalPlanner.rebind();
+            }
+        } catch (error) {
+            console.error('Error loading modal component:', error);
+        }
+    }
+
+    // Cache modal-specific DOM elements
+    cacheModalElements() {
+        this.modalBackdrop = document.getElementById('place-modal-backdrop');
+        this.modalCloseBtn = document.getElementById('place-modal-close');
+        this.modalAddBtn = document.getElementById('modal-add-btn');
+    }
+
+    // Check URL parameters for direct place access
+    checkUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        const id = parseInt(params.get('id'));
+        if (id) {
+            // Wait slightly for data to be ready
+            setTimeout(() => {
+                this.openPlaceModal(id);
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }, 500);
+        }
     }
 
     // Firestore에서 데이터 가져오기
@@ -61,6 +109,9 @@ class TeumsaeApp {
         this.renderMoodFilters();
         this.renderPlaces();
         console.log(`Loaded ${this.places.length} places from Firestore.`);
+
+        // Re-check URL params after data load (in case data took longer)
+        this.checkUrlParams();
     }
 
     // 자주 사용하는 DOM 요소를 변수에 저장하여 성능 최적화
@@ -76,9 +127,7 @@ class TeumsaeApp {
         this.header = document.querySelector('.header');
 
         // 모달 (팝업)
-        this.modalBackdrop = document.getElementById('place-modal-backdrop'); // 모달 배경
-        this.modalCloseBtn = document.getElementById('place-modal-close'); // 닫기 버튼
-        this.modalAddBtn = document.getElementById('modal-add-btn'); // 모달 내 추가 버튼
+        // Other elements cached in cacheModalElements()
     }
 
     // 이벤트 리스너 설정
@@ -663,17 +712,21 @@ class TeumsaeApp {
 // 앱 초기화: DOM이 로드되면 인스턴스 생성
 let app;
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Initialize ReviewManager and ModalPlanner globally first (so they are available)
+    if (typeof ReviewManager !== 'undefined') {
+        window.reviewManager = new ReviewManager();
+    }
+    if (typeof ModalPlanner !== 'undefined') {
+        window.modalPlanner = new ModalPlanner();
+    }
+
+    // 2. Initialize App
     window.app = new TeumsaeApp();
-    // Assign to local variable if needed for console debugging convenience, though window.app covers it.
+
+    // Assign to local variable
     let app = window.app;
 
-    // 리뷰 매니저 연결
-    if (typeof ReviewManager !== 'undefined') {
-        app.reviewManager = new ReviewManager();
-    }
-
-    // 모달 플래너 연결
-    if (typeof ModalPlanner !== 'undefined') {
-        app.modalPlanner = new ModalPlanner();
-    }
+    // Attach helpers to app instance for convenience
+    app.reviewManager = window.reviewManager;
+    app.modalPlanner = window.modalPlanner;
 });

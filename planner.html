@@ -315,6 +315,24 @@
                         </button>
                     </div>
                 </div>
+                     <!--todolist-->
+                <aside class="planner_Todo">
+                    <div class="todo-add">
+                    <h5>todolist</h5>
+                        <button class="todo-add-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </button>
+                     </div>   
+                     
+                     <!--체크 박스 쌓일 영역-->
+                     <div class="todo-list">
+                        </div>
+                </aside>
+                
             </div>
         </div>
     </main>
@@ -371,6 +389,33 @@
                 }
             });
         });
+
+        /* ===== todo ===== */
+        const addBtn = document.querySelector('.todo-add-btn');
+        const todoList = document.querySelector('.todo-list');
+
+        addBtn.addEventListener('click', () => {
+            const item = document.createElement('div');
+            item.className = 'todo-item';
+
+            item.innerHTML = `
+      <label class="todo-label">
+        <input type="checkbox" />
+        <input type="text" class="todo-text" placeholder="할 일을 입력하세요" />
+      </label>
+      <button class="todo-delete-btn">✕</button>
+    `;
+
+            // 삭제 버튼 동작
+            item.querySelector('.todo-delete-btn').addEventListener('click', () => {
+                item.remove();
+            });
+
+            todoList.appendChild(item);
+
+            // 추가되자마자 입력 포커스
+            item.querySelector('.todo-text').focus();
+        });
     </script>
     <script src="js/logout.js"></script>
     <script src="js/map-toggle.js"></script>
@@ -380,5 +425,6 @@
         <iframe src="" frameborder="0" loading="lazy"></iframe>
     </div>
 </body>
+
 
 </html>

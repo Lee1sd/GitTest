@@ -375,7 +375,7 @@ class TeumsaeApp {
         <div class="place-card__image">
           <img src="${place.images[0]}" alt="${place.name}" loading="lazy">
           <button class="place-card__save ${this.isSaved(place.id) ? 'saved' : ''}" 
-                  onclick="app.toggleSave(${place.id}, event)"
+                  onclick="window.app.toggleSave(${place.id}, event)"
                   aria-label="저장하기">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="${this.isSaved(place.id) ? 'currentColor' : 'none'}" 
                  stroke="currentColor" stroke-width="2">

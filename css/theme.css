@@ -83,7 +83,7 @@ a {
     left: 0;
     right: 0;
     z-index: 1000;
-    padding: 20px 0;
+    padding: 5px 0;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -108,33 +108,41 @@ a {
     transition: all 0.3s ease;
 }
 
-/* 로고 텍스트 그라데이션 효과 */
+/* 로고 텍스트 그라데이션 효과 (헤더/푸터 공통) */
 .header__logo .logo-teum,
-.header__logo .logo-sae {
+.header__logo .logo-sae,
+.footer__logo .logo-teum,
+.footer__logo .logo-sae {
     background: linear-gradient(135deg, #D4AF37 0%, #F5E6A3 50%, #D4AF37 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
-/* 로고 중앙 장식 라인 */
-/* 로고 중앙 장식 라인 */
-.header__logo .logo-gap {
-    display: inline-block;
-    width: 6px;
-    height: 20px;
-    margin: 0 3px;
-    background: linear-gradient(180deg, transparent 0%, rgba(212, 175, 55, 0.4) 50%, transparent 100%);
-    border-radius: 2px;
-    position: relative;
+/* New Logo Image Style */
+.logo-img {
+    height: 60px;
+    width: auto;
+    transition: transform 0.3s ease;
 }
 
-.header__logo:hover {
-    transform: scale(1.02);
+.header__logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    justify-self: start;
+    /* Prevent stretching in Grid */
 }
 
-.header__logo:hover .logo-gap {
-    background: linear-gradient(180deg, transparent 0%, rgba(212, 175, 55, 0.7) 50%, transparent 100%);
+.header__logo:hover .logo-img {
+    transform: scale(1.1);
+}
+
+/* Remove old gap styles if replacing */
+.header__logo .logo-gap,
+.footer__logo .logo-gap {
+    display: none;
 }
 
 .header__nav {
@@ -146,7 +154,7 @@ a {
 
 .header__link {
     color: rgba(244, 244, 240, 0.8);
-    font-size: 16px;
+    font-size: 18px;
     transition: color 0.3s;
 }
 
@@ -390,4 +398,71 @@ a {
     width: 100%;
     height: 100%;
     border: none;
+}
+
+/* ===== 공통 푸터 스타일 (Footer) ===== */
+.footer {
+    background: #111;
+    padding: 40px 0;
+    margin-top: 0;
+    /* Removing the gap */
+    border-top: none;
+    /* Explicitly removed */
+    color: rgba(255, 255, 255, 0.4);
+    text-align: center;
+}
+
+.footer__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding-top: 0;
+    /* Removed extra padding */
+}
+
+.footer__logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    /* Slightly smaller logo */
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    /* Reduced margin */
+    font-family: var(--font-serif);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.footer__desc {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 1.5rem;
+    /* Reduced margin */
+    letter-spacing: 1px;
+}
+
+.footer__links {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 1.5rem;
+    /* Reduced margin */
+}
+
+.footer__links a {
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.2s;
+}
+
+.footer__links a:hover {
+    color: var(--accent-color);
+}
+
+.footer__copy {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
 }

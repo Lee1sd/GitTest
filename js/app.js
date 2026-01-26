@@ -2,31 +2,120 @@
 // TeumsaeApp: 메인 페이지의 기능(장소 필터링, 검색, 모달 등)을 담당하는 클래스
 class TeumsaeApp {
     constructor() {
-        this.places = placesData; // 전체 장소 데이터
-        this.filteredPlaces = [...placesData]; // 필터링된 장소 데이터 (초기값은 전체)
-        this.savedPlaces = this.loadSavedPlaces(); // 로컬 스토리지에서 저장된 장소 로드
-        this.currentCategory = "전체"; // 현재 선택된 카테고리
-        this.searchQuery = ""; // 검색어
-        
-        // ReviewManager 인스턴스 생성
-        // 메인 html에서 review.js가 먼저 로드되어야 함
-        if (typeof ReviewManager !== 'undefined') {
-            this.reviewManager = new ReviewManager(this);
-        } else {
-            console.warn('ReviewManager not found. Review functionality may not work.');
-        }
+        this.places = []; // 초기값 빈 배열
+        this.filteredPlaces = [];
+        this.savedPlaces = this.loadSavedPlaces();
+        this.currentCategory = "전체";
+        this.searchQuery = "";
 
-        this.init(); // 앱 초기화
+        this.init();
     }
 
-    // 초기화 메서드
-    init() {
-        this.cacheDOMElements(); // DOM 요소 캐싱
-        this.bindEvents(); // 이벤트 리스너 바인딩
-        this.renderPlaces(); // 장소 목록 렌더링
-        this.initScrollEffects(); // 스크롤 효과 초기화
-        this.initIntroAnimation(); // 인트로 애니메이션 초기화 (CSS 기반)
-        this.checkHash(); // URL 해시 확인 (특정 섹션으로 이동)
+    async init() {
+        this.cacheDOMElements(); // Cache basic elements first
+
+        // Load the modal component dynamically
+        await this.loadModalComponent();
+
+        // Re-cache modal elements after loading
+        this.cacheModalElements();
+
+        this.bindEvents();
+
+        // Firestore 데이터 로드 시도
+        try {
+            await this.fetchPlacesFromFirestore();
+        } catch (error) {
+            console.error("Firestore loading failed, falling back to local data:", error);
+            // 실패 시 기존 data.js의 placesData 사용 (Fallback)
+            if (typeof placesData !== 'undefined') {
+                this.places = placesData;
+                this.filteredPlaces = [...this.places];
+                this.renderCategoryFilters();
+                this.renderMoodFilters();
+                this.renderPlaces();
+            }
+        }
+
+        this.initScrollEffects();
+        this.initIntroAnimation();
+        this.checkHash();
+        this.checkUrlParams(); // Check for ?id=...
+    }
+
+    // Load modal HTML from component file
+    async loadModalComponent() {
+        try {
+            const response = await fetch('components/place-modal.html');
+            if (!response.ok) throw new Error('Failed to load modal component');
+            const html = await response.text();
+            document.getElementById('modal-container').innerHTML = html;
+
+            // Re-bind ModalPlanner and ReviewManager elements now that DOM exists
+            if (this.modalPlanner) {
+                this.modalPlanner.rebind();
+            } else if (window.modalPlanner) {
+                window.modalPlanner.rebind();
+            }
+            
+            if (window.reviewManager) {
+                window.reviewManager.rebind();
+            }
+        } catch (error) {
+            console.error('Error loading modal component:', error);
+        }
+    }
+
+    // Cache modal-specific DOM elements
+    cacheModalElements() {
+        this.modalBackdrop = document.getElementById('place-modal-backdrop');
+        this.modalCloseBtn = document.getElementById('place-modal-close');
+        this.modalAddBtn = document.getElementById('modal-add-btn');
+    }
+
+    // Check URL parameters for direct place access
+    checkUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        const id = parseInt(params.get('id'));
+        if (id) {
+            // Wait slightly for data to be ready
+            setTimeout(() => {
+                this.openPlaceModal(id);
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }, 500);
+        }
+    }
+
+    // Firestore에서 데이터 가져오기
+    async fetchPlacesFromFirestore() {
+        if (!db) throw new Error("Firestore not initialized");
+
+        const snapshot = await db.collection('places').get();
+        if (snapshot.empty) {
+            console.warn("No matching documents.");
+            return;
+        }
+
+        this.places = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            // id 필드가 숫자인 경우 처리
+            const place = {
+                ...data,
+                id: parseInt(data.id) || data.id // ID 호환성 유지
+            };
+            this.places.push(place);
+        });
+
+        this.filteredPlaces = [...this.places];
+        this.renderCategoryFilters();
+        this.renderMoodFilters();
+        this.renderPlaces();
+        console.log(`Loaded ${this.places.length} places from Firestore.`);
+
+        // Re-check URL params after data load (in case data took longer)
+        this.checkUrlParams();
     }
 
     // 자주 사용하는 DOM 요소를 변수에 저장하여 성능 최적화
@@ -42,14 +131,7 @@ class TeumsaeApp {
         this.header = document.querySelector('.header');
 
         // 모달 (팝업)
-        this.modalBackdrop = document.getElementById('place-modal-backdrop'); // 모달 배경
-        this.modalCloseBtn = document.getElementById('place-modal-close'); // 닫기 버튼
-        this.modalAddBtn = document.getElementById('modal-add-btn'); // 모달 내 추가 버튼
-        
-        // 이미지 모달
-        this.imageModalBackdrop = document.getElementById('image-modal-backdrop');
-        this.imageModalImg = document.getElementById('image-modal-img');
-        this.imageModalCloseBtn = document.getElementById('image-modal-close');
+        // Other elements cached in cacheModalElements()
     }
 
     // 이벤트 리스너 설정
@@ -71,24 +153,10 @@ class TeumsaeApp {
             });
         }
 
-        // 카테고리 필터 클릭 이벤트
-        this.categoryBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // 카테고리는 하나만 선택 가능
-                this.categoryBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.currentCategory = btn.dataset.category;
-                this.filterPlaces();
-            });
-        });
+        // 카테고리 필터 클릭 이벤트 -> renderCategoryFilters()에서 처리됨
 
-        // 분위기 태그 클릭 이벤트 (다중 선택 가능)
-        this.moodTags.forEach(tag => {
-            tag.addEventListener('click', () => {
-                tag.classList.toggle('active');
-                this.filterPlaces();
-            });
-        });
+
+        // 분위기 태그 클릭 이벤트 -> renderMoodFilters()에서 처리됨
 
         // 스크롤 이벤트 (헤더 스타일 변경 및 요소 등장 효과)
         window.addEventListener('scroll', () => this.handleScroll());
@@ -102,28 +170,6 @@ class TeumsaeApp {
                 // 배경 클릭 시 닫기
                 if (e.target === this.modalBackdrop) {
                     this.closePlaceModal();
-                }
-            });
-        }
-
-        // 리뷰 달기 버튼 클릭 이벤트
-        const reviewBtn = document.getElementById('modal-review-btn');
-        if (reviewBtn) {
-            reviewBtn.addEventListener('click', () => {
-                if (this.currentPlaceId && this.reviewManager) {
-                    this.reviewManager.open(this.currentPlaceId);
-                }
-            });
-        }
-
-        // 이미지 모달 닫기
-        if (this.imageModalCloseBtn) {
-            this.imageModalCloseBtn.addEventListener('click', () => this.closeImageModal());
-        }
-        if (this.imageModalBackdrop) {
-            this.imageModalBackdrop.addEventListener('click', (e) => {
-                if (e.target === this.imageModalBackdrop) {
-                    this.closeImageModal();
                 }
             });
         }
@@ -215,20 +261,23 @@ class TeumsaeApp {
         const activeMoods = [...document.querySelectorAll('.filter-btn[data-mood].active')]
             .map(tag => tag.dataset.mood);
 
+        const query = this.searchQuery.replace('#', '').trim(); // 검색어에서 # 제거 및 공백 제거
+
         this.filteredPlaces = this.places.filter(place => {
             // 1. 카테고리 일치 여부
             const categoryMatch = this.currentCategory === "전체" ||
                 place.category === this.currentCategory;
 
             // 2. 검색어 포함 여부 (이름, 설명, 태그)
-            const searchMatch = !this.searchQuery ||
-                place.name.toLowerCase().includes(this.searchQuery) ||
-                place.description.toLowerCase().includes(this.searchQuery) ||
-                place.tags.some(tag => tag.includes(this.searchQuery));
+            // 태그 검색 기능 강화: 검색어가 태그 중 하나라도 포함하거나 일치하면 매칭
+            const searchMatch = !query ||
+                place.name.toLowerCase().includes(query) ||
+                place.description.toLowerCase().includes(query) ||
+                place.tags.some(tag => tag.toLowerCase().includes(query));
 
-            // 3. 분위기 태그 일치 여부 (선택된 태그 중 하나라도 포함되면 통과)
+            // 3. 분위기 태그 일치 여부 (선택된 태그를 모두 포함해야 통과 - AND 조건)
             const moodMatch = activeMoods.length === 0 ||
-                activeMoods.some(mood =>
+                activeMoods.every(mood =>
                     place.tags.some(tag => tag.includes(mood)) ||
                     place.description.includes(mood)
                 );
@@ -237,6 +286,112 @@ class TeumsaeApp {
         });
 
         this.renderPlaces(); // 필터링 결과 렌더링
+    }
+
+
+    // 카테고리 필터 버튼 동적 생성
+    renderCategoryFilters() {
+        const filterContainer = document.getElementById('category-filters');
+        if (!filterContainer) return;
+
+        // 1. 현재 데이터에서 사용된 카테고리 추출 (중복 제거)
+        const uniqueCategories = new Set(['전체']);
+        this.places.forEach(place => {
+            if (place.category) uniqueCategories.add(place.category);
+        });
+
+        // 2. 버튼 HTML 생성
+        filterContainer.innerHTML = Array.from(uniqueCategories).map(category => {
+            const isActive = category === this.currentCategory;
+            return `<button class="filter-btn ${isActive ? 'active' : ''}" data-category="${category}">${category}</button>`;
+        }).join('');
+
+        // 3. 이벤트 리스너 다시 연결
+        const newCategoryBtns = filterContainer.querySelectorAll('.filter-btn');
+        newCategoryBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // UI 업데이트
+                newCategoryBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // 상태 업데이트 및 필터링
+                this.currentCategory = btn.dataset.category;
+                this.filterPlaces();
+            });
+        });
+    }
+
+    // 분위기 필터 버튼 동적 생성 (더보기 기능 추가)
+    renderMoodFilters() {
+        const filterContainer = document.getElementById('mood-filters');
+        if (!filterContainer) return;
+
+        // 1. 현재 데이터에서 사용된 태그 추출 확인
+        const tagCounts = {};
+        this.places.forEach(place => {
+            if (place.tags && Array.isArray(place.tags)) {
+                place.tags.forEach(tag => {
+                    const cleanTag = tag.replace('#', '').trim();
+                    if (cleanTag) {
+                        tagCounts[cleanTag] = (tagCounts[cleanTag] || 0) + 1;
+                    }
+                });
+            }
+        });
+
+        // 2. 많이 사용된 순으로 정렬
+        const sortedTags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
+
+        // 3. 버튼 렌더링 함수 (내부 함수로 정의하여 상태 유지)
+        const renderBtns = (showAll = false) => {
+            const initialCount = 10; // 처음에 보여줄 개수
+            const displayTags = showAll ? sortedTags : sortedTags.slice(0, initialCount);
+
+            // 태그 버튼 HTML 생성
+            let html = displayTags.map(tag => {
+                // 이미 활성화된 태그인지 확인 (재렌더링 시 상태 유지)
+                const isActive = document.querySelector(`.filter-btn[data-mood="${tag}"].active`);
+                return `<button class="filter-btn ${isActive ? 'active' : ''}" data-mood="${tag}">${tag}</button>`;
+            }).join('');
+
+            // '더 보기' 또는 '접기' 버튼 추가
+            if (sortedTags.length > initialCount) {
+                if (showAll) {
+                    html += `<button class="filter-btn more-btn" id="filter-show-less" style="color: var(--accent-color); border-color: var(--accent-color);">− 접기</button>`;
+                } else {
+                    html += `<button class="filter-btn more-btn" id="filter-show-more" style="color: var(--accent-color); border-color: var(--accent-color);">+ 더 보기</button>`;
+                }
+            }
+
+            filterContainer.innerHTML = html;
+
+            // 이벤트 리스너 연결
+            filterContainer.querySelectorAll('.filter-btn[data-mood]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    btn.classList.toggle('active');
+                    this.filterPlaces();
+                });
+            });
+
+            // 더 보기 버튼 이벤트
+            const moreBtn = document.getElementById('filter-show-more');
+            if (moreBtn) {
+                moreBtn.addEventListener('click', () => {
+                    renderBtns(true); // 전체 보기로 다시 렌더링
+                });
+            }
+
+            // 접기 버튼 이벤트
+            const lessBtn = document.getElementById('filter-show-less');
+            if (lessBtn) {
+                lessBtn.addEventListener('click', () => {
+                    renderBtns(false); // 요약 보기로 다시 렌더링
+                });
+            }
+        };
+
+        // 초기 렌더링
+        renderBtns(false);
     }
 
     // 장소 카드 렌더링
@@ -260,7 +415,7 @@ class TeumsaeApp {
         <div class="place-card__image">
           <img src="${place.images[0]}" alt="${place.name}" loading="lazy">
           <button class="place-card__save ${this.isSaved(place.id) ? 'saved' : ''}" 
-                  onclick="app.toggleSave(${place.id}, event)"
+                  onclick="window.app.toggleSave(${place.id}, event)"
                   aria-label="저장하기">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="${this.isSaved(place.id) ? 'currentColor' : 'none'}" 
                  stroke="currentColor" stroke-width="2">
@@ -269,14 +424,17 @@ class TeumsaeApp {
           </button>
         </div>
         <div class="place-card__content">
-          <span class="place-card__badge ${this.getCongestionClass(place.congestion)}">
-            ${this.getCongestionText(place.congestion)}
+          <span class="place-card__badge ${this.getCongestionClass(place.congestion ? (place.congestion.level || place.congestion) : 'normal')}">
+            ${this.getCongestionText(place.congestion ? (place.congestion.level || place.congestion) : 'normal')}
           </span>
           <span class="place-card__category">${place.category}</span>
           <h3 class="place-card__title">${place.name}</h3>
           <p class="place-card__desc">${place.shortDesc}</p>
           <div class="place-card__tags">
-            ${place.tags.slice(0, 3).map(tag => `<span class="tag">#${tag}</span>`).join('')}
+            ${place.tags.slice(0, 3).map(tag => {
+            const cleanTag = tag.replace(/^#+/, ''); // Remove existing hashes
+            return `<span class="tag">#${cleanTag}</span>`;
+        }).join('')}
           </div>
         </div>
       </article>
@@ -417,7 +575,6 @@ class TeumsaeApp {
 
     // 장소 상세 모달 열기
     openPlaceModal(id) {
-        this.currentPlaceId = id; // 현재 보고 있는 장소 ID 저장
         const place = this.places.find(p => p.id === id);
         if (!place) return;
 
@@ -428,31 +585,124 @@ class TeumsaeApp {
         document.getElementById('modal-address').textContent = place.address;
 
         // 혼잡도 표시
+        // 혼잡도 표시
         const congestionText = document.getElementById('modal-congestion-text');
         const congestionSpan = document.getElementById('modal-congestion');
-        // 클래스 초기화
+
+        // 클래스 초기화 (기본 클래스 유지)
         congestionSpan.className = 'place-modal__congestion';
 
-        congestionText.textContent = this.getCongestionText(place.congestion);
+        // 텍스트 설정
+        if (congestionText) {
+            congestionText.textContent = this.getCongestionText(place.congestion ? (place.congestion.level || place.congestion) : 'normal');
+        } else {
+            // If structure changed and text span is gone, set directly (fallback)
+            congestionSpan.textContent = this.getCongestionText(place.congestion ? (place.congestion.level || place.congestion) : 'normal');
+        }
 
-        // 혼잡도별 색상 클래스 적용
-        if (place.congestion === 'normal') congestionSpan.classList.add('place-card__badge--normal');
-        if (place.congestion === 'crowded') congestionSpan.classList.add('place-card__badge--crowded');
+        // 혼잡도 레벨 가져오기
+        const level = place.congestion ? (place.congestion.level || place.congestion) : 'normal';
 
-        // 텍스트 색상 클래스 (기존 로직 유지)
-        if (place.congestion === 'normal') congestionSpan.classList.add('text-accent');
-        if (place.congestion === 'crowded') congestionSpan.classList.add('text-primary');
+        // 혼잡도별 색상 클래스 적용 (Components.css 스타일 재사용)
+        // Reset classes first but keep base
+        congestionSpan.className = 'place-modal__congestion';
+
+        if (level === 'normal') {
+            congestionSpan.classList.add('place-card__badge--normal');
+        } else if (level === 'crowded') {
+            congestionSpan.classList.add('place-card__badge--crowded');
+        } else if (level === 'quiet') {
+            congestionSpan.classList.add('place-card__badge--quiet');
+        } else {
+            congestionSpan.classList.add('place-card__badge--normal'); // Default
+        }
 
         document.getElementById('modal-description').textContent = place.description;
 
         // 태그 목록
         const tagsContainer = document.getElementById('modal-tags');
-        tagsContainer.innerHTML = place.tags.map(tag => `<span class="place-tag">#${tag}</span>`).join('');
+        if (tagsContainer) {
+            tagsContainer.innerHTML = place.tags.map(tag =>
+                `<span class="place-tag">${tag.startsWith('#') ? tag : '#' + tag}</span>`
+            ).join('');
+        }
 
-        // 상세 정보
-        document.getElementById('modal-hours').textContent = place.hours;
-        document.getElementById('modal-admission').textContent = place.admission;
-        document.getElementById('modal-rating').textContent = place.rating;
+        // 주요 특징 (Features)
+        const featuresContainer = document.getElementById('modal-features');
+        if (featuresContainer) {
+            if (place.features && place.features.length > 0) {
+                featuresContainer.innerHTML = place.features.map(feature =>
+                    `<div class="feature-item">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        ${feature}
+                     </div>`
+                ).join('');
+                document.getElementById('modal-features-section').style.display = 'block';
+            } else {
+                const featSection = document.getElementById('modal-features-section');
+                if (featSection) featSection.style.display = 'none';
+            }
+        }
+
+        // 상세 정보 (Visit Info)
+        const details = place.details || {};
+
+        document.getElementById('modal-hours').textContent = details.hours || place.hours || '정보 없음';
+        document.getElementById('modal-admission').textContent = details.fee || place.fee || '정보 없음';
+
+        const recTimeEl = document.getElementById('modal-recommend-time');
+        if (recTimeEl) recTimeEl.textContent = place.recommendTime || '정보 없음';
+
+        const capEl = document.getElementById('modal-capacity');
+        if (capEl) {
+            capEl.textContent = details.capacity
+                ? `최대 ${parseInt(details.capacity).toLocaleString()}명`
+                : (place.congestion ? `${parseInt(place.congestion.ppltnMax).toLocaleString()}명 수용 가능` : '정보 없음');
+        }
+
+        // 홈페이지 링크
+        const homepageLink = document.getElementById('modal-homepage');
+        if (homepageLink) {
+            if (details.homepage) {
+                homepageLink.href = details.homepage;
+                homepageLink.textContent = '웹사이트 방문';
+                // Find parent .place-modal__info-item and show it
+                homepageLink.closest('.place-modal__info-item').style.display = 'flex';
+            } else {
+                // Find parent .place-modal__info-item and hide it
+                homepageLink.closest('.place-modal__info-item').style.display = 'none';
+            }
+        }
+
+        // 혼잡도 메시지 (현장 상황)
+        const msgEl = document.getElementById('modal-congestion-msg');
+        if (msgEl) {
+            msgEl.textContent = place.congestion ? place.congestion.msg : '실시간 데이터 없음';
+        }
+
+        // 평점
+        const rating = place.stats ? place.stats.rating : (place.rating || 0);
+        document.getElementById('modal-rating').textContent = rating > 0 ? `★ ${rating}` : '0.0';
+
+        // 주변 맛집 (Nearby Restaurants)
+        const restaurantsContainer = document.getElementById('modal-restaurants');
+        if (restaurantsContainer) {
+            if (place.nearbyRestaurants && place.nearbyRestaurants.length > 0) {
+                restaurantsContainer.innerHTML = place.nearbyRestaurants.map(rest => `
+                    <a href="${rest.url || '#'}" target="_blank" class="restaurant-card">
+                        <div class="restaurant-name">${rest.name}</div>
+                        <div class="restaurant-meta">
+                            <span class="restaurant-category">${rest.category}</span>
+                            <span>${rest.distance ? rest.distance + 'm' : ''}</span>
+                        </div>
+                    </a>
+                `).join('');
+            } else {
+                restaurantsContainer.innerHTML = '<p style="color: rgba(255,255,255,0.5); font-size: 0.9rem;">주변 맛집 정보가 없습니다.</p>';
+            }
+        }
 
         // 갤러리 이미지
         const galleryContainer = document.getElementById('modal-gallery');
@@ -469,9 +719,14 @@ class TeumsaeApp {
         this.modalBackdrop.addEventListener('wheel', this.preventScroll, { passive: false });
         this.modalBackdrop.addEventListener('touchmove', this.preventScroll, { passive: false });
 
-        // 리뷰 목록 렌더링
-        if (typeof ReviewManager !== 'undefined') {
-            ReviewManager.renderReviews(id, 'modal-reviews-list');
+        // 리뷰 데이터 로드
+        if (this.reviewManager) {
+            this.reviewManager.loadForPlace(id);
+        }
+
+        // 플래너 사이드바 업데이트
+        if (this.modalPlanner) {
+            this.modalPlanner.updateForPlace(place);
         }
     }
 
@@ -493,22 +748,6 @@ class TeumsaeApp {
 
             this.modalBackdrop.removeEventListener('wheel', this.preventScroll);
             this.modalBackdrop.removeEventListener('touchmove', this.preventScroll);
-            
-            this.currentPlaceId = null; // ID 초기화
-        }
-    }
-
-    // --- 이미지 확대 모달 메서드 ---
-    openImageModal(src) {
-        if (this.imageModalBackdrop && this.imageModalImg) {
-            this.imageModalImg.src = src;
-            this.imageModalBackdrop.classList.add('active');
-        }
-    }
-
-    closeImageModal() {
-        if (this.imageModalBackdrop) {
-            this.imageModalBackdrop.classList.remove('active');
         }
     }
 }
@@ -516,7 +755,21 @@ class TeumsaeApp {
 // 앱 초기화: DOM이 로드되면 인스턴스 생성
 let app;
 document.addEventListener('DOMContentLoaded', () => {
-    app = new TeumsaeApp();
-    // Expose app to window for inline onclick handlers (e.g. image modal)
-    window.app = app;
+    // 1. Initialize ReviewManager and ModalPlanner globally first (so they are available)
+    if (typeof ReviewManager !== 'undefined') {
+        window.reviewManager = new ReviewManager();
+    }
+    if (typeof ModalPlanner !== 'undefined') {
+        window.modalPlanner = new ModalPlanner();
+    }
+
+    // 2. Initialize App
+    window.app = new TeumsaeApp();
+
+    // Assign to local variable
+    let app = window.app;
+
+    // Attach helpers to app instance for convenience
+    app.reviewManager = window.reviewManager;
+    app.modalPlanner = window.modalPlanner;
 });

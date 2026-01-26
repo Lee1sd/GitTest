@@ -305,13 +305,15 @@
     <header class="header">
         <div class="container">
             <div class="header__inner">
-                <a href="main.html" class="header__logo">
+                <a href="index.html" class="header__logo">
                     <img src="images/logo.png" alt="틈새 Teumsae" class="logo-img">
                 </a>
                 <nav class="header__nav">
                     <a href="explore.html" class="header__link active hover-underline">장소 탐색</a>
-                    <a href="recommend.html" class="header__link hover-underline">AI 추천</a>
-                    <a href="planner.html" class="header__link hover-underline">여행 계획</a>
+                    <a href="recommend.html" class="header__link hover-underline"
+                        onclick="AuthGuard.handleProtectedLink(event, 'recommend.html')">AI 추천</a>
+                    <a href="planner.html" class="header__link hover-underline"
+                        onclick="AuthGuard.handleProtectedLink(event, 'planner.html')">여행 계획</a>
                 </nav>
                 <div class="header__controls">
                     <button class="header__map-btn" onclick="toggleMap()" aria-label="지도 보기/닫기">
@@ -325,10 +327,15 @@
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </button>
-                    <div class="user-menu" id="user-menu">
+
+                    <!-- Login Button (Visible when logged out) -->
+                    <a href="login.html" id="login-btn" class="btn btn-primary btn-sm" style="display: none;">로그인</a>
+
+                    <!-- User Menu (Visible when logged in) -->
+                    <div class="user-menu" id="user-menu" style="display: none;">
                         <button class="user-btn">
-                            <span class="user-avatar" id="user-avatar">G</span>
-                            <span id="user-name">게스트</span>
+                            <span class="user-avatar" id="user-avatar">U</span>
+                            <span id="user-name">User</span>
                         </button>
                         <div class="user-dropdown">
                             <div class="user-dropdown-header">
@@ -442,7 +449,7 @@
     <!-- 푸터 -->
     <footer class="footer">
         <div class="footer__content">
-            <a href="main.html" class="footer__logo">
+            <a href="index.html" class="footer__logo">
                 <img src="images/logo.png" alt="틈새 Teumsae" class="logo-img">
             </a>
             <p class="footer__desc">Seoul's Hidden Sanctuary</p>
@@ -470,41 +477,19 @@
     <script src="js/reviews.js?v=1"></script>
     <script src="js/modal-planner.js?v=1"></script>
     <script src="js/app.js?v=3"></script>
+    <script src="js/auth-guard.js"></script>
     <script src="js/logout.js"></script>
     <script src="js/map-toggle.js"></script>
 
     <script>
         // 로그인 상태 확인 & 헤더 처리
-        function checkAuth() {
-            const user = localStorage.getItem('teumsae_user') || sessionStorage.getItem('teumsae_user');
-            if (!user) return { isGuest: true };
-            return JSON.parse(user);
-        }
-
-        function updateUserInfo(user) {
-            const avatar = document.getElementById('user-avatar');
-            const name = document.getElementById('user-name');
-            if (!avatar || !name) return;
-
-            if (user.isGuest) {
-                avatar.textContent = 'G';
-                name.textContent = 'Guest';
-            } else {
-                const initial = user.email ? user.email.charAt(0).toUpperCase() : 'U';
-                avatar.textContent = initial;
-                name.textContent = user.name || user.email.split('@')[0];
-            }
-        }
-
-        function logout() {
-            localStorage.removeItem('teumsae_user');
-            sessionStorage.removeItem('teumsae_user');
-            window.location.href = 'login.html';
-        }
-
         document.addEventListener('DOMContentLoaded', function () {
-            const user = checkAuth();
-            if (user) updateUserInfo(user);
+            if (window.AuthGuard) {
+                AuthGuard.updateHeaderUI();
+            }
+            // User info update handled by AuthGuard now
+
+            // Scroll header effect
 
             // Scroll header effect
             const header = document.querySelector('.header');

@@ -139,13 +139,15 @@
     <header class="header">
         <div class="container">
             <div class="header__inner">
-                <a href="main.html" class="header__logo">
+                <a href="index.html" class="header__logo">
                     <img src="images/logo.png" alt="틈새 Teumsae" class="logo-img">
                 </a>
                 <nav class="header__nav">
                     <a href="explore.html" class="header__link hover-underline">장소 탐색</a>
-                    <a href="recommend.html" class="header__link hover-underline">AI 추천</a>
-                    <a href="planner.html" class="header__link hover-underline" style="color: var(--accent-color);">여행
+                    <a href="recommend.html" class="header__link hover-underline"
+                        onclick="AuthGuard.handleProtectedLink(event, 'recommend.html')">AI 추천</a>
+                    <a href="planner.html" class="header__link hover-underline" style="color: var(--accent-color);"
+                        onclick="AuthGuard.handleProtectedLink(event, 'planner.html')">여행
                         계획</a>
                 </nav>
                 <div class="header__controls">
@@ -160,10 +162,15 @@
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </button>
-                    <div class="user-menu" id="user-menu">
+
+                    <!-- Login Button (Visible when logged out) -->
+                    <a href="login.html" id="login-btn" class="btn btn-primary btn-sm" style="display: none;">로그인</a>
+
+                    <!-- User Menu (Visible when logged in) -->
+                    <div class="user-menu" id="user-menu" style="display: none;">
                         <button class="user-btn">
-                            <span class="user-avatar" id="user-avatar">G</span>
-                            <span id="user-name">게스트</span>
+                            <span class="user-avatar" id="user-avatar">U</span>
+                            <span id="user-name">User</span>
                         </button>
                         <div class="user-dropdown">
                             <div class="user-dropdown-header">
@@ -249,7 +256,7 @@
                         style="display: none; text-align: center; padding: 2rem; color: var(--color-gray);">
                         <p style="font-size: 2rem; margin-bottom: 0.5rem;">📍</p>
                         <p>저장된 장소가 없습니다</p>
-                        <a href="main.html" class="btn btn-primary btn-sm" style="margin-top: 1rem;">장소 둘러보기</a>
+                        <a href="index.html" class="btn btn-primary btn-sm" style="margin-top: 1rem;">장소 둘러보기</a>
                     </div>
                 </aside>
 
@@ -323,7 +330,7 @@
     <!-- 푸터 -->
     <footer class="footer">
         <div class="footer__content">
-            <a href="main.html" class="footer__logo">
+            <a href="index.html" class="footer__logo">
                 <img src="images/logo.png" alt="틈새 Teumsae" class="logo-img">
             </a>
             <p class="footer__desc">Seoul's Hidden Sanctuary</p>
@@ -344,46 +351,16 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="js/firebase-config.js?v=4"></script>
-
+    <script src="js/auth-guard.js"></script>
     <script src="js/data.js"></script>
     <script src="js/planner.js"></script>
     <script>
-        // Check login state
-        function checkAuth() {
-            const user = localStorage.getItem('teumsae_user') || sessionStorage.getItem('teumsae_user');
-            if (!user) {
-                // Allow guest for now
-                return { isGuest: true };
-            }
-            return JSON.parse(user);
-        }
-
-        // Update user info in header
-        function updateUserInfo(user) {
-            const avatar = document.getElementById('user-avatar');
-            const name = document.getElementById('user-name');
-            if (!avatar || !name) return;
-
-            if (user.isGuest) {
-                avatar.textContent = 'G';
-                name.textContent = 'Guest';
-            } else {
-                const initial = user.email ? user.email.charAt(0).toUpperCase() : 'U';
-                avatar.textContent = initial;
-                name.textContent = user.name || user.email.split('@')[0];
-            }
-        }
-
-        function logout() {
-            localStorage.removeItem('teumsae_user');
-            sessionStorage.removeItem('teumsae_user');
-            window.location.href = 'login.html';
-        }
-
+        // Check login state and update UI
         document.addEventListener('DOMContentLoaded', () => {
-            const user = checkAuth();
-            if (user) {
-                updateUserInfo(user);
+            if (window.AuthGuard) {
+                // Page-level protection for planner.html
+                AuthGuard.checkPageAuth();
+                AuthGuard.updateHeaderUI();
             }
 
             // Add scroll listener for header

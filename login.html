@@ -322,17 +322,6 @@
             background: rgba(212, 175, 55, 0.05);
         }
     </style>
-    <script>
-        function continueAsGuest() {
-            const guestUser = {
-                name: '게스트',
-                email: 'guest@teumsae.kr',
-                isGuest: true
-            };
-            localStorage.setItem('teumsae_user', JSON.stringify(guestUser));
-            window.location.href = 'main.html';
-        }
-    </script>
 </head>
 
 <body>
@@ -515,7 +504,7 @@
                     </svg>
                 </button>
             </div>
-            <button class="guest-btn" onclick="continueAsGuest()">
+            <button type="button" class="guest-btn" onclick="continueAsGuest()">
                 게스트로 둘러보기
             </button>
             <div class="login-footer">
@@ -533,7 +522,7 @@
             if (email && password) {
                 const userData = { email, isLoggedIn: true, loginTime: new Date().toISOString() };
                 (remember ? localStorage : sessionStorage).setItem('teumsae_user', JSON.stringify(userData));
-                window.location.href = 'main.html';
+                window.location.href = 'index.html';
             } else {
                 document.getElementById('error-message').classList.add('show');
             }
@@ -543,16 +532,24 @@
             localStorage.setItem('teumsae_user', JSON.stringify({
                 email: `user@${provider}.com`, provider, isLoggedIn: true, loginTime: new Date().toISOString()
             }));
-            window.location.href = 'main.html';
+            window.location.href = 'index.html';
         }
 
-        function guestLogin() {
-            continueAsGuest();
+        function continueAsGuest() {
+            const guestUser = {
+                email: 'guest@teumsae.kr',
+                name: '게스트',
+                isGuest: true,
+                isLoggedIn: true,
+                loginTime: new Date().toISOString()
+            };
+            sessionStorage.setItem('teumsae_user', JSON.stringify(guestUser));
+            window.location.href = 'index.html';
         }
 
         window.onload = function () {
             const user = localStorage.getItem('teumsae_user') || sessionStorage.getItem('teumsae_user');
-            if (user && JSON.parse(user).isLoggedIn) window.location.href = 'main.html';
+            if (user && JSON.parse(user).isLoggedIn) window.location.href = 'index.html';
         };
     </script>
 </body>

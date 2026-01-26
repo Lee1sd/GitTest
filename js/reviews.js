@@ -4,7 +4,8 @@ class ReviewManager {
     constructor() {
         this.currentPlaceId = null;
         this.reviews = [];
-        this.mediaFiles = []; // Array of { type, data } objects (Base64)
+        // 업로드 대기 파일 목록: { type: 'image'|'video', file: File, previewUrl: string }
+        this.mediaFiles = [];
     }
 
     // Call this after modal HTML is injected into DOM
@@ -57,14 +58,45 @@ class ReviewManager {
         this.toggleForm(false);
         
         try {
-            // Load reviews from localStorage
-            const storageKey = `reviews_${placeId}`;
-            const storedReviews = localStorage.getItem(storageKey);
-            
-            this.reviews = storedReviews ? JSON.parse(storedReviews) : [];
-            
-            // Sort by date desc
-            this.reviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            // ✅ Firestore에서 리뷰 로드
+            if (!window.db) throw new Error('Firebase(db) 초기화가 필요합니다.');
+
+            const snap = await window.db
+                .collection('reviews')
+                .where('placeId', '==', placeId)
+                .orderBy('createdAt', 'desc')
+                .limit(50)
+                .get();
+
+            this.reviews = snap.docs.map(d => {
+                const data = d.data() || {};
+                // createdAt: Firestore Timestamp -> ISO
+                let createdAt = data.createdAt;
+                if (createdAt && typeof createdAt.toDate === 'function') {
+                    createdAt = createdAt.toDate().toISOString();
+                }
+
+                // media: [{url,type,...}] or legacy [url]
+                let media = data.media || [];
+                if (Array.isArray(media) && media.length > 0) {
+                    if (typeof media[0] === 'string') {
+                        media = media.map(u => ({ type: 'image', url: u }));
+                    } else {
+                        media = media
+                            .map(m => ({ type: m?.type || 'image', url: m?.url }))
+                            .filter(m => !!m.url);
+                    }
+                } else {
+                    media = [];
+                }
+
+                return {
+                    id: d.id,
+                    ...data,
+                    createdAt,
+                    media
+                };
+            });
 
             this.updateStats();
             this.renderReviews();
@@ -84,6 +116,10 @@ class ReviewManager {
     }
 
     resetForm() {
+        // 기존 previewUrl 정리
+        try {
+            this.mediaFiles.forEach(m => m?.previewUrl && URL.revokeObjectURL(m.previewUrl));
+        } catch (e) {}
         this.mediaFiles = [];
         if (this.elements.inputs.title) this.elements.inputs.title.value = '';
         this.elements.inputs.text.value = '';
@@ -98,30 +134,16 @@ class ReviewManager {
         if (files.length === 0) return;
 
         files.forEach(file => {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                let base64Data = e.target.result;
-                const isVideo = file.type.startsWith('video');
-                
-                // Compress image if it's not a video
-                if (!isVideo) {
-                    try {
-                        base64Data = await this.compressImage(base64Data);
-                    } catch (err) {
-                        console.error("Image compression failed, using original:", err);
-                    }
-                }
+            const isVideo = file.type.startsWith('video');
+            const previewUrl = URL.createObjectURL(file);
 
-                // Add to internal array
-                this.mediaFiles.push({
-                    type: isVideo ? 'video' : 'image',
-                    data: base64Data
-                });
+            this.mediaFiles.push({
+                type: isVideo ? 'video' : 'image',
+                file,
+                previewUrl
+            });
 
-                // Add to UI
-                this.addPreviewItem(base64Data, isVideo, this.mediaFiles.length - 1);
-            };
-            reader.readAsDataURL(file);
+            this.addPreviewItem(previewUrl, isVideo, this.mediaFiles.length - 1);
         });
     }
 
@@ -169,16 +191,24 @@ class ReviewManager {
         removeBtn.className = 'preview-remove';
         removeBtn.innerHTML = '×';
         removeBtn.onclick = () => {
+            // mediaFiles에서도 제거
+            const removed = this.mediaFiles.splice(index, 1)[0];
+            if (removed?.previewUrl) {
+                try { URL.revokeObjectURL(removed.previewUrl); } catch (e) {}
+            }
             item.remove();
-            // Note: Actual removal from this.mediaFiles is tricky with just simple index.
-            // For this prototype, we'll keep the data in array but filter it on submit 
-            // or just accept that "removed from UI" doesn't mean "removed from memory" perfectly
-            // until submit logic re-reads UI or we implement better tracking.
-            // Better approach for prototype:
-            // Just let it be, or implement ID-based removal. 
-            // For simplicity here: We won't remove from `this.mediaFiles` to keep logic simple,
-            // (User might re-upload). Ideally should match UI. 
-            // Let's rely on clearing everything on Reset.
+            // 남은 항목들의 remove 버튼 index 재정렬
+            const items = Array.from(this.elements.preview.querySelectorAll('.preview-item'));
+            items.forEach((it, i) => {
+                const btn = it.querySelector('.preview-remove');
+                if (btn) btn.onclick = () => {
+                    const rem = this.mediaFiles.splice(i, 1)[0];
+                    if (rem?.previewUrl) {
+                        try { URL.revokeObjectURL(rem.previewUrl); } catch (e) {}
+                    }
+                    it.remove();
+                };
+            });
         };
 
         item.appendChild(mediaEl);
@@ -186,7 +216,7 @@ class ReviewManager {
         this.elements.preview.appendChild(item);
     }
 
-    submitReview() {
+    async submitReview() {
         // Validation
         const ratingInput = document.querySelector('input[name="rating"]:checked');
         const rating = ratingInput ? parseInt(ratingInput.value) : 0;
@@ -206,33 +236,64 @@ class ReviewManager {
             return;
         }
 
-        // Prepare Data
-        const reviewData = {
-            id: Date.now().toString(), // Simple ID
-            placeId: this.currentPlaceId,
-            userId: 'guest',
-            userName: '게스트', // In real app, get from Auth
-            title: title,
-            rating: rating,
-            content: text,
-            media: this.mediaFiles.map(m => m.data), // Save Base64 strings
-            createdAt: new Date().toISOString()
-        };
-
         try {
-            // Save to localStorage
-            this.reviews.unshift(reviewData); // Add to beginning
-            const storageKey = `reviews_${this.currentPlaceId}`;
-            localStorage.setItem(storageKey, JSON.stringify(this.reviews));
+            if (!window.db) throw new Error('Firebase(db) 초기화가 필요합니다.');
+
+            // 버튼 중복 클릭 방지
+            if (this.elements.btnSubmit) {
+                this.elements.btnSubmit.disabled = true;
+                this.elements.btnSubmit.textContent = '등록 중...';
+            }
+
+            // 1) Firestore에 리뷰 문서 생성
+            const baseReview = {
+                placeId: this.currentPlaceId,
+                userId: 'guest',
+                userName: '게스트',
+                title,
+                rating,
+                content: text,
+                media: [],
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            const docRef = await window.db.collection('reviews').add(baseReview);
+
+            // 2) Storage에 파일 업로드(있다면)
+            const uploaded = [];
+            const storage = window.storage || (firebase.storage ? firebase.storage() : null);
+            if (storage && this.mediaFiles.length > 0) {
+                for (let i = 0; i < this.mediaFiles.length; i++) {
+                    const m = this.mediaFiles[i];
+                    if (!m?.file) continue;
+                    const safeName = (m.file.name || `file_${i}`).replace(/[\\/]/g, '_');
+                    const path = `reviews/${this.currentPlaceId}/${docRef.id}/${Date.now()}_${safeName}`;
+                    const ref = storage.ref(path);
+                    await ref.put(m.file);
+                    const url = await ref.getDownloadURL();
+                    uploaded.push({
+                        type: m.type,
+                        url,
+                        path,
+                        name: safeName
+                    });
+                }
+            }
+
+            // 3) 업로드 결과를 Firestore 문서에 반영
+            if (uploaded.length > 0) {
+                await docRef.update({ media: uploaded });
+            }
 
             alert('리뷰가 등록되었습니다!');
-            this.loadForPlace(this.currentPlaceId); // Reload UI
+            await this.loadForPlace(this.currentPlaceId);
         } catch (error) {
-            console.error("Error saving review:", error);
-            if (error.name === 'QuotaExceededError') {
-                 alert('저장 공간이 부족하여 이미지 저장이 불가능할 수 있습니다.');
-            } else {
-                alert('리뷰 등록 실패: ' + error.message);
+            console.error('Error saving review:', error);
+            alert('리뷰 등록 실패: ' + (error?.message || error));
+        } finally {
+            if (this.elements.btnSubmit) {
+                this.elements.btnSubmit.disabled = false;
+                this.elements.btnSubmit.textContent = '등록하기';
             }
         }
     }
@@ -283,11 +344,12 @@ class ReviewManager {
                     <div class="review-rating">${this.getStarString(review.rating)}</div>
                 </div>
                 <div class="review-content">${review.content}</div>
-                
                 ${review.media && review.media.length > 0 ? `
                     <div class="review-media">
-                        ${review.media.map(url => {
-                            const isVid = url.startsWith('data:video');
+                        ${review.media.map(m => {
+                            const url = (typeof m === 'string') ? m : (m?.url || '');
+                            const type = (typeof m === 'string') ? 'image' : (m?.type || 'image');
+                            const isVid = type === 'video' || /\.(mp4|webm|ogg)(\?|#|$)/i.test(url);
                             return isVid ? `<video src="${url}" controls></video>` : `<img src="${url}">`;
                         }).join('')}
                     </div>

@@ -21,7 +21,6 @@
     <link rel="stylesheet" href="css/modal.css">
     <link rel="stylesheet" href="css/theme.css">
     <link rel="stylesheet" href="css/reviews.css">
-    <link rel="stylesheet" href="css/lightbox.css">
 
     <style>
         /* Explore 페이지 전용 스타일 */
@@ -469,9 +468,10 @@
     <!-- 모달 컨테이너 -->
     <div id="modal-container"></div>
 
-    <!-- Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Firebase (v12 CDN - compat) -->
+    <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-storage-compat.js"></script>
 
     <script src="js/firebase-config.js?v=3"></script>
     <script src="js/data.js?v=3"></script>
@@ -481,7 +481,6 @@
     <script src="js/auth-guard.js"></script>
     <script src="js/logout.js"></script>
     <script src="js/map-toggle.js"></script>
-    <script src="js/lightbox.js?v=1"></script>
 
     <script>
         // 로그인 상태 확인 & 헤더 처리

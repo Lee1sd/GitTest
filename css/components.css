@@ -136,7 +136,7 @@
 
 .place-card__badge--normal {
     background: var(--color-normal);
-    color: var(--color-dark);
+    color: var(--color-white);
 }
 
 .place-card__badge--crowded {

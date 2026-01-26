@@ -114,7 +114,10 @@
 .place-modal__top-badges {
     margin-bottom: 20px;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    /* Ensure vertical center alignment */
+    padding-left: 0;
+    /* Remove any potential padding */
     /* Prevent stretching */
 }
 
@@ -138,18 +141,18 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Specific Badge Styles (Mirroring components.css) */
-/* Normal: Yellow Bg, Black Text */
+/* Specific Badge Styles (Centralized via variables.css) */
+/* Normal: Orange Bg, White Text */
 .place-modal__congestion.place-card__badge--normal {
-    background-color: var(--color-normal);
-    color: #000000;
+    background: var(--color-normal);
+    color: white;
     border: none;
 }
 
 /* Quiet: Green Bg, White Text */
 .place-modal__congestion.text-accent,
 .place-modal__congestion.place-card__badge--quiet {
-    background-color: var(--color-success);
+    background: var(--color-success);
     color: white;
     border: none;
 }
@@ -157,15 +160,17 @@
 /* Crowded: Red Bg, White Text */
 .place-modal__congestion.text-primary,
 .place-modal__congestion.place-card__badge--crowded {
-    background-color: var(--color-crowded);
+    background: var(--color-crowded);
     color: white;
     border: none;
     animation: pulse-red 2s infinite;
 }
 
 /* Category (Clean Text) */
+/* Category (Clean Text) */
 .place-modal__category {
     color: var(--color-accent);
+    /* Original Gold */
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1.5px;
@@ -181,12 +186,15 @@
 }
 
 /* Title */
+/* Title */
 .place-modal__title {
     font-family: var(--font-serif);
     font-size: 3.5rem;
     line-height: 1.1;
     margin: 0 0 16px 0;
-    color: white;
+    padding: 0;
+    /* Ensure no padding affects alignment */
+    color: var(--text-color);
     text-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
@@ -196,7 +204,9 @@
     gap: 15px;
     /* Spacing between Category | Address */
     align-items: center;
-    color: rgba(255, 255, 255, 0.8);
+    padding-left: 0;
+    /* Ensure alignment */
+    color: var(--color-accent);
     font-size: 1.05rem;
 }
 
@@ -222,7 +232,7 @@
     font-family: var(--font-serif);
     font-size: 1.3rem;
     margin-bottom: 20px;
-    color: var(--color-accent);
+    color: var(--accent-color);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding-bottom: 10px;
 }
@@ -231,6 +241,28 @@
     line-height: 1.7;
     color: rgba(255, 255, 255, 0.85);
     font-size: 1.05rem;
+}
+
+.place-modal__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.place-tag {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--color-text-light);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.place-tag:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
 }
 
 .place-modal__features {
@@ -352,15 +384,17 @@
 /* --- Area 3: Sidebar (Right) --- */
 .place-modal__footer {
     grid-area: sidebar;
-    background: #111;
+    background: linear-gradient(to bottom, #1a1a1a, #0d0d0d);
+    /* Subtle gradient depth */
     border-left: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 60px 25px 30px;
-    /* Top padding for close button space */
+    padding: 100px 25px 30px;
+    /* Top padding increased to clear "Plan Your Trip" title */
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     /* Items start from top */
-    align-items: center;
+    align-items: stretch;
+    /*Changed from center to stretch for left alignment */
     position: relative;
     box-shadow: -10px 0 20px rgba(0, 0, 0, 0.2);
     padding-bottom: 110px;
@@ -379,6 +413,24 @@
     z-index: 10;
 }
 
+.planner-sidebar__header {
+    width: 100%;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.planner-sidebar__header h4 {
+    color: var(--text-color);
+    font-size: 1.1rem;
+    margin: 0 0 5px 0;
+    font-weight: 600;
+}
+
+.planner-date {
+    color: var(--color-gray-light);
+    font-size: 0.9rem;
+}
+
 .place-modal__footer>button {
     /* Legacy selector support removed */
     display: none;
@@ -392,7 +444,7 @@
     font-family: var(--font-serif);
     font-size: 1.5rem;
     color: var(--color-accent);
-    opacity: 0.8;
+    opacity: 0.9;
 }
 
 
@@ -417,11 +469,22 @@
 .mini-timeline-item {
     position: relative;
     margin-bottom: 15px;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    transition: all 0.2s;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.08);
+    /* More visible glass background */
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.mini-timeline-item:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(212, 165, 116, 0.5);
+    /* Gold accent on hover */
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
 }
 
 .mini-timeline-item::before {
@@ -448,11 +511,12 @@
 }
 
 .mini-timeline-time {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: var(--color-accent);
-    font-weight: 600;
-    margin-bottom: 4px;
+    font-weight: 700;
+    margin-bottom: 6px;
     display: block;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .mini-timeline-content {
@@ -462,9 +526,11 @@
 }
 
 .mini-timeline-title {
-    font-size: 0.9rem;
-    color: white;
-    font-weight: 500;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    /* Bright Ivory/White */
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
 .btn-remove-mini {
@@ -495,21 +561,22 @@
     width: 100%;
     padding: 16px;
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 700;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 8px;
-    background: var(--color-accent);
-    color: black;
+    background: linear-gradient(135deg, #D4AF37 0%, #F5E6A3 50%, #D4AF37 100%);
+    color: #1A1A1A;
     border: none;
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
 }
 
 #modal-add-btn:hover {
-    background: var(--color-accent-light);
+    background: linear-gradient(135deg, #E4B584 0%, #FFF3C4 50%, #E4B584 100%);
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(212, 165, 116, 0.3);
 }
@@ -533,6 +600,21 @@
 
 .btn-remove-state .icon {
     transform: rotate(45deg);
+}
+
+/* Specific Sidebar Button Style */
+#btn-add-to-plan {
+    background: linear-gradient(135deg, #D4AF37 0%, #F5E6A3 50%, #D4AF37 100%);
+    color: #1A1A1A;
+    border: none;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+    font-weight: 700;
+}
+
+#btn-add-to-plan:hover {
+    background: linear-gradient(135deg, #E4B584 0%, #FFF3C4 50%, #E4B584 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(212, 165, 116, 0.3);
 }
 
 /* Mobile Responsive */

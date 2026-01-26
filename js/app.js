@@ -257,16 +257,19 @@ class TeumsaeApp {
         const activeMoods = [...document.querySelectorAll('.filter-btn[data-mood].active')]
             .map(tag => tag.dataset.mood);
 
+        const query = this.searchQuery.replace('#', '').trim(); // 검색어에서 # 제거 및 공백 제거
+
         this.filteredPlaces = this.places.filter(place => {
             // 1. 카테고리 일치 여부
             const categoryMatch = this.currentCategory === "전체" ||
                 place.category === this.currentCategory;
 
             // 2. 검색어 포함 여부 (이름, 설명, 태그)
-            const searchMatch = !this.searchQuery ||
-                place.name.toLowerCase().includes(this.searchQuery) ||
-                place.description.toLowerCase().includes(this.searchQuery) ||
-                place.tags.some(tag => tag.includes(this.searchQuery));
+            // 태그 검색 기능 강화: 검색어가 태그 중 하나라도 포함하거나 일치하면 매칭
+            const searchMatch = !query ||
+                place.name.toLowerCase().includes(query) ||
+                place.description.toLowerCase().includes(query) ||
+                place.tags.some(tag => tag.toLowerCase().includes(query));
 
             // 3. 분위기 태그 일치 여부 (선택된 태그를 모두 포함해야 통과 - AND 조건)
             const moodMatch = activeMoods.length === 0 ||
@@ -314,7 +317,7 @@ class TeumsaeApp {
         });
     }
 
-    // 분위기 필터 버튼 동적 생성
+    // 분위기 필터 버튼 동적 생성 (더보기 기능 추가)
     renderMoodFilters() {
         const filterContainer = document.getElementById('mood-filters');
         if (!filterContainer) return;
@@ -332,26 +335,59 @@ class TeumsaeApp {
             }
         });
 
-        // 2. 많이 사용된 상위 태그 추출 (예: 8개) 또는 전체
-        // 여기서는 등장 횟수가 1 이상인 모든 태그를 중복 없이 정렬하여 표시
+        // 2. 많이 사용된 순으로 정렬
         const sortedTags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
 
-        // 너무 많으면 상위 10개만 표시 (선택적)
-        const displayTags = sortedTags.slice(0, 10);
+        // 3. 버튼 렌더링 함수 (내부 함수로 정의하여 상태 유지)
+        const renderBtns = (showAll = false) => {
+            const initialCount = 10; // 처음에 보여줄 개수
+            const displayTags = showAll ? sortedTags : sortedTags.slice(0, initialCount);
 
-        // 3. 버튼 HTML 생성 (기존 활성화 상태 유지 노력은 복잡하므로 초기화)
-        filterContainer.innerHTML = displayTags.map(tag => {
-            return `<button class="filter-btn" data-mood="${tag}">${tag}</button>`;
-        }).join('');
+            // 태그 버튼 HTML 생성
+            let html = displayTags.map(tag => {
+                // 이미 활성화된 태그인지 확인 (재렌더링 시 상태 유지)
+                const isActive = document.querySelector(`.filter-btn[data-mood="${tag}"].active`);
+                return `<button class="filter-btn ${isActive ? 'active' : ''}" data-mood="${tag}">${tag}</button>`;
+            }).join('');
 
-        // 4. 이벤트 리스너 다시 연결
-        const newMoodBtns = filterContainer.querySelectorAll('.filter-btn');
-        newMoodBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                btn.classList.toggle('active');
-                this.filterPlaces();
+            // '더 보기' 또는 '접기' 버튼 추가
+            if (sortedTags.length > initialCount) {
+                if (showAll) {
+                    html += `<button class="filter-btn more-btn" id="filter-show-less" style="color: var(--accent-color); border-color: var(--accent-color);">− 접기</button>`;
+                } else {
+                    html += `<button class="filter-btn more-btn" id="filter-show-more" style="color: var(--accent-color); border-color: var(--accent-color);">+ 더 보기</button>`;
+                }
+            }
+
+            filterContainer.innerHTML = html;
+
+            // 이벤트 리스너 연결
+            filterContainer.querySelectorAll('.filter-btn[data-mood]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    btn.classList.toggle('active');
+                    this.filterPlaces();
+                });
             });
-        });
+
+            // 더 보기 버튼 이벤트
+            const moreBtn = document.getElementById('filter-show-more');
+            if (moreBtn) {
+                moreBtn.addEventListener('click', () => {
+                    renderBtns(true); // 전체 보기로 다시 렌더링
+                });
+            }
+
+            // 접기 버튼 이벤트
+            const lessBtn = document.getElementById('filter-show-less');
+            if (lessBtn) {
+                lessBtn.addEventListener('click', () => {
+                    renderBtns(false); // 요약 보기로 다시 렌더링
+                });
+            }
+        };
+
+        // 초기 렌더링
+        renderBtns(false);
     }
 
     // 장소 카드 렌더링
@@ -391,7 +427,10 @@ class TeumsaeApp {
           <h3 class="place-card__title">${place.name}</h3>
           <p class="place-card__desc">${place.shortDesc}</p>
           <div class="place-card__tags">
-            ${place.tags.slice(0, 3).map(tag => `<span class="tag">#${tag}</span>`).join('')}
+            ${place.tags.slice(0, 3).map(tag => {
+            const cleanTag = tag.replace(/^#+/, ''); // Remove existing hashes
+            return `<span class="tag">#${cleanTag}</span>`;
+        }).join('')}
           </div>
         </div>
       </article>

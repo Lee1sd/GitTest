@@ -24,6 +24,7 @@ class ModalPlanner {
     }
 
     init() {
+        // Add/Remove Main Button
         if (this.elements.btnAdd) {
             this.elements.btnAdd.addEventListener('click', () => {
                 if (this.currentPlace) {
@@ -34,6 +35,19 @@ class ModalPlanner {
                     }
                 } else {
                     console.warn('No current place set for ModalPlanner');
+                }
+            });
+        }
+
+        // Event Delegation for Remove Buttons in List
+        if (this.elements.list) {
+            this.elements.list.addEventListener('click', (e) => {
+                const btn = e.target.closest('.btn-remove-mini');
+                if (btn) {
+                    const placeId = btn.dataset.placeId;
+                    if (placeId) {
+                        this.removeFromPlan(placeId);
+                    }
                 }
             });
         }
@@ -149,7 +163,7 @@ class ModalPlanner {
                                 <span class="mini-timeline-time">${item.time}</span>
                                 <div class="mini-timeline-content">
                                     <span class="mini-timeline-title">${name}</span>
-                                    <button class="btn-remove-mini" onclick="app.modalPlanner.removeFromPlan('${item.placeId}')">×</button>
+                                    <button class="btn-remove-mini" data-place-id="${item.placeId}">×</button>
                                 </div>
                             </div>
                             `;

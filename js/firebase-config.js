@@ -10,10 +10,15 @@ const firebaseConfig = {
 
 // Initialize Firebase (HTML에서 로드한 firebase 객체 사용)
 // v9 모듈 방식 코드를 붙여넣으셨지만, 현재 CDN 방식에 맞게 제가 살짝 수정했습니다.
+
 if (typeof firebase !== 'undefined') {
   firebase.initializeApp(firebaseConfig);
-  var db = firebase.firestore();
-  console.log("Firebase initialized successfully");
+
+  // Auth & Firestore
+  window.auth = firebase.auth();
+  window.db = firebase.firestore();
+
+  console.log("Firebase initialized (Auth enabled)");
 } else {
-  console.error("Firebase SDK not loaded in HTML");
+  console.error("Firebase SDK not loaded");
 }

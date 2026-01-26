@@ -283,6 +283,7 @@ class ReviewManager {
                     <div class="review-rating">${this.getStarString(review.rating)}</div>
                 </div>
                 <div class="review-content">${review.content}</div>
+                
                 ${review.media && review.media.length > 0 ? `
                     <div class="review-media">
                         ${review.media.map(url => {

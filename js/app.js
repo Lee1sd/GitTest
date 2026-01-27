@@ -44,11 +44,15 @@ class TeumsaeApp {
             const html = await response.text();
             document.getElementById('modal-container').innerHTML = html;
 
-            // Re-bind ModalPlanner elements now that DOM exists
+            // Re-bind ModalPlanner and ReviewManager elements now that DOM exists
             if (this.modalPlanner) {
                 this.modalPlanner.rebind();
             } else if (window.modalPlanner) {
                 window.modalPlanner.rebind();
+            }
+            
+            if (window.reviewManager) {
+                window.reviewManager.rebind();
             }
         } catch (error) {
             console.error('Error loading modal component:', error);
@@ -698,6 +702,8 @@ class TeumsaeApp {
         galleryContainer.innerHTML = place.images.slice(0, 4).map(img =>
             `<img src="${img}" alt="${place.name} Gallery">`
         ).join('');
+
+        // 갤러리 이미지 클릭 이벤트는 lightbox.js에서 이벤트 위임으로 처리됨
 
         // 모달 표시
         this.modalBackdrop.classList.add('active');

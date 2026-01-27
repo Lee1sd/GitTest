@@ -245,15 +245,38 @@
     <div id="footer-placeholder"></div>
 
     <!-- Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Firebase (v12 CDN - compat) -->
+    <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-storage-compat.js"></script>
+
     <script src="js/firebase-config.js?v=4"></script>
     <script src="js/auth-guard.js"></script>
     <script src="js/planner.js"></script>
     <script src="js/logout.js"></script>
     <script src="js/components.js"></script>
     <script src="js/map-toggle.js"></script>
+    <script src="js/lightbox.js"></script>
+
+    <script>
+        // 로그인 상태 확인 & 헤더 처리
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.AuthGuard) {
+                // Page-level protection for planner.html
+                AuthGuard.checkPageAuth();
+                AuthGuard.updateHeaderUI();
+            }
+
+            // Scroll header effect - 동적 로드된 헤더에도 적용 가능하도록 이벤트 리스너 추가
+            window.addEventListener('scroll', () => {
+                const header = document.querySelector('.header');
+                if (header) {
+                    if (window.scrollY > 50) header.classList.add('scrolled');
+                    else header.classList.remove('scrolled');
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>

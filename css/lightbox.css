@@ -1,0 +1,65 @@
+/* Lightbox Overlay */
+.lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 10000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.lightbox-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+/* Lightbox Content (Image) */
+.lightbox-content {
+    max-width: 90%;
+    max-height: 90vh;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+    object-fit: contain;
+}
+
+.lightbox-overlay.active .lightbox-content {
+    transform: scale(1);
+}
+
+/* Close Button */
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 3rem;
+    cursor: pointer;
+    z-index: 10001;
+    transition: color 0.3s;
+    line-height: 1;
+    padding: 0;
+}
+
+.lightbox-close:hover {
+    color: var(--accent-color, #d4af37);
+    transform: scale(1.1);
+}
+
+/* Specific cursor for clickable images */
+.place-card__image img,
+.review-media img,
+.feature-image img, /* If any */
+#modal-gallery img {
+    cursor: pointer;
+}

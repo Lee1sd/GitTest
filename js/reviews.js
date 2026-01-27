@@ -49,14 +49,6 @@ class ReviewManager {
         if (this.elements.inputs.media) {
             this.elements.inputs.media.onchange = (e) => this.handleFileSelect(e);
         }
-        if (this.elements.list) {
-        this.elements.list.addEventListener('click', (e) => {
-        const img = e.target.closest('.review-media img');
-        const vid = e.target.closest('.review-media video');
-        if (img) this.openLightbox({ type: 'image', src: img.src });
-        if (vid) this.openLightbox({ type: 'video', src: vid.currentSrc || vid.src });
-      });
-    }
     }
 
     // Called when modal opens
@@ -253,11 +245,47 @@ class ReviewManager {
                 this.elements.btnSubmit.textContent = '등록 중...';
             }
 
+            // 0) 작성자 정보 결정
+            // 우선순위: Firebase Auth(있으면) > 프로젝트 AuthGuard(local/session) > 게스트
+            const author = (() => {
+                // (A) Firebase Auth 사용 중이라면
+                try {
+                    const fbUser = firebase?.auth?.().currentUser;
+                    if (fbUser) {
+                        const email = fbUser.email || '';
+                        const name = fbUser.displayName || email || '사용자';
+                        return {
+                            userId: fbUser.uid || email || 'user',
+                            userName: email || name
+                        };
+                    }
+                } catch (e) {
+                    // ignore
+                }
+
+                // (B) 이 프로젝트의 AuthGuard(localStorage/sessionStorage 기반)
+                try {
+                    const localUser = window.AuthGuard?.getUser?.();
+                    if (localUser && localUser.isLoggedIn) {
+                        const email = localUser.email || '';
+                        const name = localUser.name || (email ? email.split('@')[0] : '사용자');
+                        return {
+                            userId: email || name || 'user',
+                            userName: email || name || '사용자'
+                        };
+                    }
+                } catch (e) {
+                    // ignore
+                }
+
+                return { userId: 'guest', userName: '게스트' };
+            })();
+
             // 1) Firestore에 리뷰 문서 생성
             const baseReview = {
                 placeId: this.currentPlaceId,
-                userId: 'guest',
-                userName: '게스트',
+                userId: author.userId,
+                userName: author.userName,
                 title,
                 rating,
                 content: text,
@@ -371,92 +399,6 @@ class ReviewManager {
         const date = new Date(isoString);
         return `${date.getFullYear()}.${date.getMonth() + 1}.${date.getDate()}`;
     }
-
-
-
-    ensureLightbox() {
-    if (document.getElementById('review-lightbox')) return;
-
-    const wrap = document.createElement('div');
-    wrap.id = 'review-lightbox';
-    wrap.style.cssText = `
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.75);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 99999;
-      padding: 24px;
-    `;
-
-    wrap.innerHTML = `
-      <div id="review-lightbox-inner" style="
-        max-width: min(1000px, 95vw);
-        max-height: 90vh;
-        width: 100%;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        position: relative;
-      ">
-        <button id="review-lightbox-close" style="
-          position:absolute; top:-10px; right:-10px;
-          width:40px; height:40px; border:none; border-radius:20px;
-          background:#fff; cursor:pointer; font-size:22px; line-height:40px;
-        ">×</button>
-        <div id="review-lightbox-content" style="
-          width:100%;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-        "></div>
-      </div>
-    `;
-
-    document.body.appendChild(wrap);
-
-    // 닫기 동작들
-    const close = () => this.closeLightbox();
-    wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
-    wrap.querySelector('#review-lightbox-close').addEventListener('click', close);
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
-  }
-
-  openLightbox({ type, src }) {
-    this.ensureLightbox();
-
-    const wrap = document.getElementById('review-lightbox');
-    const content = document.getElementById('review-lightbox-content');
-
-    // 내용 교체
-    content.innerHTML = '';
-
-    if (type === 'video') {
-      const v = document.createElement('video');
-      v.src = src;
-      v.controls = true;
-      v.autoplay = true;
-      v.style.cssText = 'max-width:100%; max-height:90vh; border-radius:12px; background:#000;';
-      content.appendChild(v);
-    } else {
-      const img = document.createElement('img');
-      img.src = src;
-      img.style.cssText = 'max-width:100%; max-height:90vh; border-radius:12px; object-fit:contain;';
-      content.appendChild(img);
-    }
-
-    wrap.style.display = 'flex';
-    document.body.style.overflow = 'hidden'; // 뒤 스크롤 방지
-  }
-
-  closeLightbox() {
-    const wrap = document.getElementById('review-lightbox');
-    if (!wrap) return;
-    wrap.style.display = 'none';
-    const content = document.getElementById('review-lightbox-content');
-    if (content) content.innerHTML = '';
-    document.body.style.overflow = '';
-  }
 }
 
 // Global Loading Animation (Helper)

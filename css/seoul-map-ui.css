@@ -9,7 +9,7 @@
     left: 20px;
     width: 320px;
     height: calc(100% - 40px);
-    background: rgba(30, 30, 30, 0.85);
+    background: rgba(30, 30, 30, 0.86);
     /* 다크 글래스 */
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);

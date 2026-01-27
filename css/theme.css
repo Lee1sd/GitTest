@@ -157,9 +157,21 @@ a {
 
 .header__link {
     color: rgba(244, 244, 240, 0.8);
-    font-size: 18px;
-    transition: color 0.3s;
+    font-family: var(--font-sans);
+    font-size: var(--text-lg);
+    font-weight: 500;
+    /* Fixed weight to prevent width change */
+    letter-spacing: -0.01em;
+    /* Stabilize kerning */
+    text-rendering: optimizeLegibility;
+    transition: color 0.3s, text-shadow 0.3s;
+    display: inline-block;
+    position: relative;
+    text-align: center;
+    vertical-align: middle;
 }
+
+/* Remove old width-reservation trick as we're using text-shadow now */
 
 .header__link:hover {
     color: var(--text-color);
@@ -167,7 +179,10 @@ a {
 
 .header__link.active {
     color: var(--accent-color);
-    font-weight: 600;
+    font-weight: 500;
+    /* Keep weight same */
+    /* Fake bold using shadow - adds thickness without adding width */
+    text-shadow: 0.5px 0 0 currentColor, -0.5px 0 0 currentColor;
 }
 
 /* 지도 토글 버튼 */

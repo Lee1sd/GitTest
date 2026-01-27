@@ -710,6 +710,15 @@ class TeumsaeApp {
             `<img src="${img}" alt="${place.name} Gallery">`
         ).join('');
 
+        // 갤러리 이미지 클릭 이벤트 추가
+        galleryContainer.querySelectorAll('img').forEach(img => {
+            img.addEventListener('click', () => {
+                if (window.reviewManager) {
+                    window.reviewManager.openLightbox({ type: 'image', src: img.src });
+                }
+            });
+        });
+
         // 모달 표시
         this.modalBackdrop.classList.add('active');
         document.body.style.overflow = 'hidden'; // 배경 스크롤 방지

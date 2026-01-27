@@ -84,7 +84,17 @@ const AuthGuard = {
             const name = document.getElementById('user-name');
             const email = document.getElementById('user-email');
 
-            if (avatar && user.email) avatar.textContent = user.email.charAt(0).toUpperCase();
+            if (avatar) {
+                if (user.photoURL) {
+                    avatar.style.backgroundImage = `url('${user.photoURL}')`;
+                    avatar.textContent = '';
+                    avatar.style.backgroundColor = 'transparent';
+                } else if (user.email) {
+                    avatar.style.backgroundImage = 'none';
+                    avatar.style.backgroundColor = '#D4AF37';
+                    avatar.textContent = user.email.charAt(0).toUpperCase();
+                }
+            }
             if (name) name.textContent = user.name || (user.email ? user.email.split('@')[0] : 'User');
             if (email) email.textContent = user.email;
 

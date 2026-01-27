@@ -261,6 +261,9 @@ a {
     justify-content: center;
     font-weight: bold;
     font-size: 12px;
+    background-size: cover;
+    background-position: center;
+
 }
 
 /* 사용자 드롭다운 메뉴 */

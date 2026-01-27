@@ -11,6 +11,7 @@ class Lightbox {
 
         this.overlay = document.getElementById('lightbox-overlay');
         this.img = document.getElementById('lightbox-img');
+        this.video = document.getElementById('lightbox-video'); // New video element
         this.closeBtn = document.getElementById('lightbox-close');
 
         this.bindEvents();
@@ -24,9 +25,15 @@ class Lightbox {
         const img = document.createElement('img');
         img.id = 'lightbox-img';
         img.className = 'lightbox-content';
-        img.src = '';
+        img.style.display = 'none'; // Initially hidden
         img.alt = 'Enlarged view';
 
+        const video = document.createElement('video'); // Create video element
+        video.id = 'lightbox-video';
+        video.className = 'lightbox-content';
+        video.controls = true;
+        video.style.display = 'none'; // Initially hidden
+        
         const closeBtn = document.createElement('button');
         closeBtn.id = 'lightbox-close';
         closeBtn.className = 'lightbox-close';
@@ -35,31 +42,41 @@ class Lightbox {
 
         overlay.appendChild(closeBtn);
         overlay.appendChild(img);
+        overlay.appendChild(video);
         document.body.appendChild(overlay);
     }
 
     bindEvents() {
-        // Event delegation for opening images
+        // Event delegation for opening media
         document.addEventListener('click', (e) => {
             const target = e.target;
             
-            // Check if the clicked element is an image that should be enlargeable
-            // We targeting images in:
-            // 1. .review-media (Review images)
-            // 2. #modal-gallery (Place detail gallery)
-            // 3. Any other specific areas if needed
-            
+            // 1. Image Click
             if (target.tagName === 'IMG') {
                 const parent = target.parentElement;
                 
                 // Check if it's a gallery image or review image
+                // Also check if it's inside .place-modal__gallery (added this check)
                 if (parent.classList.contains('review-media') || 
                     parent.id === 'modal-gallery' || 
+                    parent.classList.contains('place-modal__gallery') ||
                     target.closest('.review-media') ||
                     target.closest('#modal-gallery')) {
                     
-                    this.open(target.src);
+                    this.open(target.src, 'image');
                 }
+            } 
+            // 2. Video Click (might be clicking the video element itself or a wrapper)
+            else if (target.tagName === 'VIDEO') {
+                 const parent = target.parentElement;
+                 if (parent.classList.contains('review-media') || 
+                     target.closest('.review-media')) {
+                     
+                     e.preventDefault(); // Prevent default play behavior if we want to open in lightbox
+                     // But usually users expect inline play or lightbox? 
+                     // Requirement: "동영상도 누르면 재생되도록" -> implies lightbox play if it's for enlargement
+                     this.open(target.src || target.currentSrc, 'video');
+                 }
             }
         });
 
@@ -79,16 +96,38 @@ class Lightbox {
         });
     }
 
-    open(src) {
-        this.img.src = src;
+    open(src, type = 'image') {
+        // Reset valid displays
+        this.img.style.display = 'none';
+        this.video.style.display = 'none';
+        this.video.pause(); // Ensure video stops
+        this.video.src = '';
+
+        if (type === 'video') {
+            this.video.src = src;
+            this.video.style.display = 'block';
+            // Optional: Auto play
+            try {
+                this.video.play(); 
+            } catch(e) {
+                console.log("Auto-play blocked or failed", e);
+            }
+        } else {
+            this.img.src = src;
+            this.img.style.display = 'block';
+        }
+
         this.overlay.classList.add('active');
         document.body.style.overflow = 'hidden'; // Prevent background scrolling
     }
 
     close() {
         this.overlay.classList.remove('active');
+        this.video.pause(); // Stop video
+        
         setTimeout(() => {
             this.img.src = '';
+            this.video.src = '';
         }, 300); // Wait for transition
         document.body.style.overflow = ''; // Restore scrolling
     }

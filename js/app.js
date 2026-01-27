@@ -710,14 +710,7 @@ class TeumsaeApp {
             `<img src="${img}" alt="${place.name} Gallery">`
         ).join('');
 
-        // 갤러리 이미지 클릭 이벤트 추가
-        galleryContainer.querySelectorAll('img').forEach(img => {
-            img.addEventListener('click', () => {
-                if (window.reviewManager) {
-                    window.reviewManager.openLightbox({ type: 'image', src: img.src });
-                }
-            });
-        });
+        // 갤러리 이미지 클릭 이벤트는 lightbox.js에서 이벤트 위임으로 처리됨
 
         // 모달 표시
         this.modalBackdrop.classList.add('active');

@@ -98,6 +98,11 @@ const AuthGuard = {
             if (name) name.textContent = user.name || (user.email ? user.email.split('@')[0] : 'User');
             if (email) email.textContent = user.email;
 
+            // greeting 업데이트
+            const greeting = document.querySelector('.user-greeting');
+            const userName = user.name || (user.email ? user.email.split('@')[0] : 'User');
+            if (greeting) greeting.textContent = `${userName}님 환영합니다!`;
+
         } else {
             // 비로그인 상태: 로그인 버튼 표시, 유저 메뉴 숨김
             loginBtn.style.display = 'inline-flex'; // flex 레이아웃 유지

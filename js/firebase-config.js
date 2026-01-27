@@ -18,6 +18,11 @@ if (typeof firebase !== 'undefined') {
   window.auth = firebase.auth();
   window.db = firebase.firestore();
 
+  // Storage (if available)
+  if (firebase.storage) {
+    window.storage = firebase.storage();
+  }
+
   console.log("Firebase initialized (Auth enabled)");
 } else {
   console.error("Firebase SDK not loaded");

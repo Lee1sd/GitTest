@@ -1,0 +1,416 @@
+/* 기존 내용 아래에 추가 */
+
+/* --- 네이버 지도 오버레이 UI --- */
+
+/* 검색 사이드 패널 */
+.map-search-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 320px;
+    height: calc(100% - 40px);
+    background: rgba(30, 30, 30, 0.85);
+    /* 다크 글래스 */
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* 검색 박스 */
+.map-search-box {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+}
+
+.map-search-box:focus-within {
+    border-color: var(--color-primary);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+#map-search-input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+}
+
+#map-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+#map-search-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+#map-search-btn:hover {
+    color: #fff;
+}
+
+/* 카테고리 태그 (가로 스크롤) */
+.map-category-tags {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    /* 스크롤바 숨기기 */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.map-category-tags::-webkit-scrollbar {
+    display: none;
+}
+
+.map-tag {
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.map-tag:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.map-tag.active {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+/* 장소 리스트 */
+.map-places-list {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* 스크롤바 스타일 */
+.map-places-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.map-places-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.map-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* 장소 아이템 (리스트 내부) */
+.map-place-item {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.map-place-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.map-place-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #eee;
+    margin-bottom: 4px;
+}
+
+.map-place-desc {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.map-place-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* 플로팅 버튼 (내 위치 등) */
+.map-floating-btns {
+    position: absolute;
+    bottom: 30px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.map-float-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #fff;
+    border: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.map-float-btn:hover {
+    transform: scale(1.1);
+    background: #f8f9fa;
+}
+
+.map-float-pill {
+    padding: 10px 20px;
+    background: var(--color-primary);
+    /* Gold */
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 13px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    pointer-events: none;
+}
+
+.map-float-pill.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+/* 네이버 지도 모드일 때 서울 지도 뒤로가기 버튼 위치 조정 */
+/* 오버라이드 필요할 수 있음 */
+
+/* === 혼잡도별 Accordion 스타일 === */
+
+/* 혼잡도 카테고리 아이템 */
+.congestion-category {
+    margin-bottom: 8px;
+}
+
+/* 혼잡도 헤더 (클릭 가능) */
+.congestion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.congestion-header:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.08) 100%);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.congestion-header.active {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.08) 100%);
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
+/* 혼잡도 헤더 좌측 영역 */
+.congestion-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 혼잡도 아이콘 */
+/* 혼잡도 아이콘 */
+.congestion-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.congestion-icon svg {
+    filter: drop-shadow(0 0 5px currentColor);
+    opacity: 0.9;
+}
+
+.congestion-icon.quiet {
+    background: radial-gradient(circle at 30% 30%, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.05));
+    color: #69F0AE;
+    /* 밝은 민트 그린 */
+    border-color: rgba(76, 175, 80, 0.3);
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.2), inset 0 0 10px rgba(76, 175, 80, 0.1);
+}
+
+.congestion-icon.normal {
+    background: radial-gradient(circle at 30% 30%, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.05));
+    color: #FFD54F;
+    /* 밝은 앰버 */
+    border-color: rgba(255, 193, 7, 0.3);
+    box-shadow: 0 0 15px rgba(255, 193, 7, 0.2), inset 0 0 10px rgba(255, 193, 7, 0.1);
+}
+
+.congestion-icon.crowded {
+    background: radial-gradient(circle at 30% 30%, rgba(244, 67, 54, 0.2), rgba(244, 67, 54, 0.05));
+    color: #FF8A80;
+    /* 밝은 코랄 레드 */
+    border-color: rgba(244, 67, 54, 0.3);
+    box-shadow: 0 0 15px rgba(244, 67, 54, 0.2), inset 0 0 10px rgba(244, 67, 54, 0.1);
+}
+
+/* 혼잡도 정보 */
+.congestion-info {
+    flex: 1;
+}
+
+.congestion-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 2px;
+}
+
+.congestion-count {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* 펼침 아이콘 */
+.congestion-chevron {
+    width: 20px;
+    height: 20px;
+    color: rgba(255, 255, 255, 0.6);
+    transition: transform 0.3s ease;
+}
+
+.congestion-header.active .congestion-chevron {
+    transform: rotate(180deg);
+}
+
+/* 장소 목록 컨테이너 (접히는 영역) */
+.congestion-places {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0 4px;
+}
+
+.congestion-places.expanded {
+    max-height: 2000px;
+    /* 충분히 큰 값 */
+    margin-top: 8px;
+}
+
+/* 장소 아이템 (accordion 내부) */
+.congestion-places .map-place-item {
+    background: rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    animation: slideIn 0.3s ease forwards;
+    opacity: 0;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.congestion-places .map-place-item:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.congestion-places .map-place-item:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.congestion-places .map-place-item:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+.congestion-places .map-place-item:nth-child(4) {
+    animation-delay: 0.2s;
+}
+
+.congestion-places .map-place-item:nth-child(5) {
+    animation-delay: 0.25s;
+}
+
+.congestion-places .map-place-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(212, 175, 55, 0.3);
+    transform: translateX(4px);
+}
+
+.congestion-places .map-place-item:hover .map-place-name {
+    color: #D4AF37;
+}

@@ -51,3 +51,7 @@ function toggleMap() {
         }
     }
 }
+
+// 전역 객체에 할당 (HTML onclick 속성에서 접근 가능하도록)
+window.toggleMap = toggleMap;
+

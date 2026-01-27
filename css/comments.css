@@ -30,6 +30,22 @@
     color: var(--color-accent);
 }
 
+.comment-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background: rgba(212, 175, 55, 0.2);
+    color: var(--accent-color);
+    border-radius: 9px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    margin-left: 4px;
+}
+
 /* Comment Form */
 .comment-form {
     display: flex;

@@ -1983,3 +1983,7 @@
     border-radius: 12px;
     flex-shrink: 0;
 }
+
+.todo-delete-btn{
+    color:white;
+}

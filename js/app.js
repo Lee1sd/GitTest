@@ -26,15 +26,8 @@ class TeumsaeApp {
         try {
             await this.fetchPlacesFromFirestore();
         } catch (error) {
-            console.error("Firestore loading failed, falling back to local data:", error);
-            // 실패 시 기존 data.js의 placesData 사용 (Fallback)
-            if (typeof placesData !== 'undefined') {
-                this.places = placesData;
-                this.filteredPlaces = [...this.places];
-                this.renderCategoryFilters();
-                this.renderMoodFilters();
-                this.renderPlaces();
-            }
+            console.error("Firestore loading failed:", error);
+            this.showToast("데이터를 불러오는 데 실패했습니다. 잠시 후 다시 시도해주세요.");
         }
 
         this.initScrollEffects();

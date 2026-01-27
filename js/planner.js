@@ -17,24 +17,34 @@ class PlannerPage {
         this.cacheDOMElements();
         this.setDefaultDate();
 
+        // 초기 수동 렌더링 (데이터 로딩 전이라도 빈 화면이나 로컬 ID 기반 틀 표시)
+        this.renderSavedPlaces();
+        this.renderTimeline();
+
         // Load Data asynchronously
         await this.fetchAllPlaces();
 
+        // 데이터 로딩 완료 후 실제 내용으로 다시 렌더링
         this.renderSavedPlaces();
         this.renderTimeline();
+
         this.bindEvents();
         this.initRevealAnimations();
     }
 
-    // Fetch places from Firestore (or fallback)
+    // Fetch places from Firestore
     async fetchAllPlaces() {
-        // Try Firestore first
         if (typeof db !== 'undefined') {
             try {
                 const snapshot = await db.collection('places').get();
                 if (!snapshot.empty) {
                     this.places = snapshot.docs.map(doc => {
-                        return { id: doc.id, ...doc.data() };
+                        const data = doc.data();
+                        return {
+                            ...data,
+                            // Firestore 내부의 id 필드(숫자)를 실제 ID로 사용 (다른 페이지와 통일)
+                            id: parseInt(data.id) || data.id
+                        };
                     });
                     console.log('Planner loaded places from Firestore:', this.places.length);
                     return;
@@ -44,9 +54,8 @@ class PlannerPage {
             }
         }
 
-        // Fallback to data.js
-        console.warn('Planner using fallback data.js');
-        this.places = typeof placesData !== 'undefined' ? placesData : [];
+        console.error('Planner failing: Database not available or empty');
+        this.places = [];
     }
 
     // DOM 요소 캐싱 (Updated ID selectors if needed, currently reusing existing)
@@ -134,19 +143,34 @@ class PlannerPage {
     renderSavedPlaces() {
         if (!this.savedList) return;
 
-        if (this.savedPlaces.length === 0) {
+        // 1. 매칭된 데이터 준비
+        const savedPlacesData = this.savedPlaces
+            .map(id => this.places.find(p => String(p.id) === String(id)))
+            .filter(Boolean);
+
+        // 2. 상태 결정 로직
+        const isLoading = this.places.length === 0 && this.savedPlaces.length > 0;
+        const hasNoValidData = savedPlacesData.length === 0;
+
+        // 3. UI 가시성 조절
+        if (isLoading) {
+            // 데이터 로딩 중
+            this.savedList.style.display = 'block';
+            this.savedList.innerHTML = '<div style="padding: 2rem; color: var(--color-gray); text-align: center;">장소 정보를 불러오는 중...</div>';
+            if (this.emptySaved) this.emptySaved.style.display = 'none';
+            return;
+        }
+
+        if (hasNoValidData) {
+            // 저장된 장소가 아예 없거나, ID는 있지만 매칭되는 데이터가 없는 경우 (Stale ID 등)
             this.savedList.style.display = 'none';
             if (this.emptySaved) this.emptySaved.style.display = 'block';
             return;
         }
 
+        // 4. 리스트 렌더링
         this.savedList.style.display = 'flex';
         if (this.emptySaved) this.emptySaved.style.display = 'none';
-
-        // Match string IDs
-        const savedPlacesData = this.savedPlaces
-            .map(id => this.places.find(p => String(p.id) === String(id)))
-            .filter(Boolean);
 
         this.savedList.innerHTML = savedPlacesData.map(place => `
           <div class="planner__saved-item" data-id="${place.id}" draggable="true">

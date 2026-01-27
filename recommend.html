@@ -27,7 +27,7 @@
         /* Recommend Page Specifics */
         .recommend-page {
             min-height: 100vh;
-            padding-top: 90px;
+            padding-top: var(--header-height);
             padding-bottom: 80px;
             /* More padding for fixed header */
             background: var(--bg-color);
@@ -501,85 +501,8 @@
 </head>
 
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header__inner">
-                <a href="main.html" class="header__logo"><span class="logo-teum">틈</span><span
-                        class="logo-gap"></span><span class="logo-sae">새</span></a>
-                <nav class="header__nav">
-                    <a href="main.html#places" class="header__link hover-underline">장소 탐색</a>
-                    <a href="recommend.html" class="header__link hover-underline"
-                        style="color: var(--accent-color);">여행지 추천</a>
-                    <a href="planner.html" class="header__link hover-underline">여행 계획</a>
-                </nav>
-                <div class="header__controls">
-                    <button class="header__map-btn" onclick="toggleMap()" aria-label="지도 보기/닫기">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-                            <line x1="8" y1="2" x2="8" y2="18"></line>
-                            <line x1="16" y1="6" x2="16" y2="22"></line>
-                        </svg>
-                        <span>지도</span>
-                        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
-                    <div class="user-menu" id="user-menu">
-                        <button class="user-btn">
-                            <span class="user-avatar" id="user-avatar">G</span>
-                            <span id="user-name">게스트</span>
-                        </button>
-                        <div class="user-dropdown">
-                            <div class="user-dropdown-header">
-                                <div class="user-greeting">환영합니다!</div>
-                                <div class="user-email" id="user-email">guest@teumsae.kr</div>
-                            </div>
-                            <a href="planner.html" class="user-dropdown-item">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                                    <line x1="16" y1="2" x2="16" y2="6" />
-                                    <line x1="8" y1="2" x2="8" y2="6" />
-                                    <line x1="3" y1="10" x2="21" y2="10" />
-                                </svg>
-                                내 여행 계획
-                            </a>
-                            <a href="#" class="user-dropdown-item">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path
-                                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                                </svg>
-                                저장한 장소
-                            </a>
-                            <a href="recommend.html" class="user-dropdown-item">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polygon
-                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                                </svg>
-                                여행지 추천 받기
-                            </a>
-                            <div class="user-dropdown-divider"></div>
-                            <a href="#" class="user-dropdown-item">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="3" />
-                                    <path
-                                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                                </svg>
-                                설정
-                            </a>
-                            <a href="#" class="user-dropdown-item logout" onclick="logout()">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                                    <polyline points="16 17 21 12 16 7" />
-                                    <line x1="21" y1="12" x2="9" y2="12" />
-                                </svg>
-                                로그아웃
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-    </header>
+    <!-- Header (Dynamic) -->
+    <div id="header-placeholder"></div>
 
     <!-- Recommend Page -->
     <main class="recommend-page">
@@ -741,6 +664,9 @@
         </div>
     </main>
 
+    <!-- 푸터 (Dynamic) -->
+    <div id="footer-placeholder"></div>
+  
     <!-- Firebase (v12 CDN - compat) -->
     <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore-compat.js"></script>
@@ -778,8 +704,23 @@
                 name.textContent = user.name || user.email.split('@')[0];
             }
         }
+    }
 
+    // Survey Navigation
+    nextBtn.addEventListener('click', () => {
+        if (currentQuestion < totalQuestions) {
+            goToQuestion(currentQuestion + 1);
+        } else {
+            // Show results
+            generateSurveyResults();
+        }
+    });
 
+    prevBtn.addEventListener('click', () => {
+        if (currentQuestion > 1) {
+            goToQuestion(currentQuestion - 1);
+        }
+    });
 
         // ⚠️ API Key Configuration
         const API_KEY = "AIzaSyBzVdLWxJjek_x7-dOXmKu23-Gn1VzEAl8"; // Imported from aiApiTest2.html
@@ -976,32 +917,51 @@ ${JSON.stringify(placesDataForAI)}
             });
         });
 
-        // Survey Option Selection
-        document.querySelectorAll('.survey-option').forEach(option => {
-            option.addEventListener('click', () => {
-                const question = option.closest('.survey-question');
-                question.querySelectorAll('.survey-option').forEach(o => o.classList.remove('selected'));
-                option.classList.add('selected');
-                surveyAnswers[currentQuestion] = option.dataset.value;
-                nextBtn.disabled = false;
-            });
+        progressDots.forEach((dot, i) => {
+            dot.classList.remove('active');
+            if (i < num - 1) dot.classList.add('completed');
+            else dot.classList.remove('completed');
+            if (i === num - 1) dot.classList.add('active');
         });
 
-        // Survey Navigation
-        nextBtn.addEventListener('click', () => {
-            if (currentQuestion < totalQuestions) {
-                goToQuestion(currentQuestion + 1);
-            } else {
-                // Show results
-                generateSurveyResults();
+        currentQuestion = num;
+
+        prevBtn.style.visibility = num > 1 ? 'visible' : 'hidden';
+        nextBtn.textContent = num === totalQuestions ? '결과 보기 →' : '다음 →';
+        nextBtn.disabled = !surveyAnswers[num];
+    }
+
+    // Generate Survey Results
+    async function generateSurveyResults() {
+        if (placesData.length === 0) await fetchPlaces();
+
+        const answers = Object.values(surveyAnswers);
+        let recommendedPlaces = [];
+
+        // Simple matching algorithm
+        placesData.forEach(place => {
+            let score = 0;
+
+            // Match based on answers
+            if (answers.includes('힐링') && (place.tags.includes('힐링') || place.category === '자연')) score += 2;
+            if (answers.includes('감성') && (place.tags.includes('감성') || place.category === '감성')) score += 2;
+            if (answers.includes('조용한') && place.congestion === 'quiet') score += 3;
+            if (answers.includes('자연') && place.category === '자연') score += 2;
+            if (answers.includes('역사') && place.category === '역사') score += 2;
+            if (answers.includes('밤') && (place.category === '야경' || place.tags.includes('야경'))) score += 3;
+            if (answers.includes('사진') && place.tags.includes('사진')) score += 2;
+            if (answers.includes('산책') && (place.category === '산책' || place.tags.includes('산책'))) score += 2;
+            if (answers.includes('혼자') && place.congestion === 'quiet') score += 1;
+            if (answers.includes('연인') && (place.tags.includes('감성') || place.category === '야경')) score += 1;
+
+            if (score > 0) {
+                recommendedPlaces.push({ ...place, score });
             }
         });
 
-        prevBtn.addEventListener('click', () => {
-            if (currentQuestion > 1) {
-                goToQuestion(currentQuestion - 1);
-            }
-        });
+        // Sort by score and take top 4
+        recommendedPlaces.sort((a, b) => b.score - a.score);
+        recommendedPlaces = recommendedPlaces.slice(0, 4);
 
         function goToQuestion(num) {
             surveyQuestions.forEach(q => q.classList.remove('active'));
@@ -1106,6 +1066,7 @@ ${JSON.stringify(placesDataForAI)}
                 showToast("데이터를 불러오는 중 오류가 발생했습니다.");
             }
         }
+    });
 
 
         // Chat functionality
@@ -1258,12 +1219,15 @@ ${JSON.stringify(placesDataForAI)}
             return texts[level] || '보통';
         }
 
-        function showResults(places, subtitle) {
-            const resultsSection = document.getElementById('results-section');
-            const resultsGrid = document.getElementById('results-grid');
-            const resultsSubtitle = document.getElementById('results-subtitle');
+        showResults(recommendedPlaces, '당신의 요청을 분석했어요');
+    }
 
-            resultsSubtitle.textContent = subtitle;
+    function showResults(places, subtitle) {
+        const resultsSection = document.getElementById('results-section');
+        const resultsGrid = document.getElementById('results-grid');
+        const resultsSubtitle = document.getElementById('results-subtitle');
+
+        resultsSubtitle.textContent = subtitle;
 
             if (places.length === 0) {
                 resultsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">추천할 만한 장소를 찾지 못했습니다. 조건을 변경해 보세요.</p>';
@@ -1339,6 +1303,7 @@ ${JSON.stringify(placesDataForAI)}
                 showToast('이미 추가된 장소입니다.');
             }
         }
+    }
 
         function addAllToPlan() {
             if (!window.recommendedPlaces) return;

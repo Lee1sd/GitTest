@@ -1,24 +1,68 @@
 // 틈새 - 여행 일정 관리 로직
 // PlannerPage: 나만의 여행 일정을 생성하고 관리하는 기능을 담당하는 클래스
+
+// Firebase (CDN + compat)
+const auth = window.auth;
+const db = window.db;
+const firebase = window.firebase;
+
 class PlannerPage {
-    constructor() {
-        this.savedPlaces = this.loadSavedPlaces(); // 저장된 장소 목록 로드
-        this.timeline = this.loadTimeline(); // 타임라인(일정) 로드
-        this.places = placesData; // 전체 장소 데이터 참조
-        this.currentDay = 1; // 날짜 기억
-        this.init();
-    }
+     constructor(user) {
+  this.user = user;
+
+  if (!user) {
+    this.savedPlaces = [];
+    this.timeline = [];
+  } else {
+    this.savedPlaces = this.loadSavedPlaces();//저장된 장소 목록 코드
+    this.timeline = this.loadTimeline();//타임라인(일정)로드
+  }
+
+  this.places = placesData; //장소 데이터 참조
+  this.currentDay = 1; //날짜 기억
+
+  this.currentPlanMeta = {
+    id: null,
+    name: '',
+    createdAt: null
+  };
+
+  this.savedPlans = [];
+  this.init();
+}
 
     // 초기화 메서드
-    init() {
-        this.cacheDOMElements(); // DOM 요소 캐싱
-        this.restorePlan();// 여행일정 복구
-        this.setDefaultDate(); // 여행 날짜 기본값 설정 (오늘)
-        this.renderSavedPlaces(); // 저장된 장소 목록 렌더링
-        this.renderTimeline(); // 타임라인 렌더링
-        this.bindEvents(); // 이벤트 바인딩
-        this.initRevealAnimations(); // 애니메이션 초기화
-    }
+  async init() {
+  this.cacheDOMElements();
+
+  if (!this.dateInput || !this.endDateInput) return;
+
+
+ // 게스트면 여기서 완전히 끝
+  if (!this.user) {
+    this.timeline = [];
+    this.savedPlaces = [];
+    this.savedPlans = [];
+
+    // 중요: 날짜도 비워버리기
+    this.dateInput.value = '';
+    this.endDateInput.value = '';
+
+    this.renderSavedPlaces();
+    this.renderTimeline();
+    this.disableGuestUI();
+    return;
+  }
+
+
+  await this.restorePlan();//여행일정 복구
+  this.renderSavedPlaces(); //저장된 장소 목록 렌더링
+  this.renderTimeline(); //타임라인 렌더링
+  this.bindEvents(); // 이벤트 바인딩
+  this.initRevealAnimations(); //애니메이션 초기화
+  await this.fetchMyPlans(); // 여행일정 firebase에서 가져와서 슬라이드에 저장
+}
+
 
     // DOM 요소 캐싱
     cacheDOMElements() {
@@ -58,7 +102,27 @@ class PlannerPage {
         this.initDragAndDrop();
 
         // 일정 저장 버튼 이벤트
-        this.savePlanBtn.addEventListener('click', () => this.savePlan());
+        this.savePlanBtn.addEventListener('click', () => {
+      document
+        .getElementById('plan-name-modal')
+        .classList.add('is-open');
+    });
+
+        // 모달 저장
+    document
+      .getElementById('confirm-plan-name')
+      .addEventListener('click', () => {
+        this.handleConfirmPlanName();
+      });
+
+        // 모달 취소
+    document
+      .getElementById('cancel-plan-name')
+      .addEventListener('click', () => {
+        document
+          .getElementById('plan-name-modal')
+          .classList.remove('is-open');
+      });
 
         // 일정 공유 버튼 이벤트
         this.sharePlanBtn.addEventListener('click', () => this.sharePlan());
@@ -66,6 +130,30 @@ class PlannerPage {
         // 일정 초기화 버튼 이벤트
         this.clearPlanBtn.addEventListener('click', () => this.clearPlan());
     }
+
+      handleConfirmPlanName() {
+    const input = document.getElementById('plan-name-input');
+    const name = input.value.trim();
+
+    if (!this.dateInput.value || !this.endDateInput.value) {
+      alert('여행 날짜를 먼저 선택해주세요');
+      return;
+    }
+
+    if (!name) {
+      alert('일정 이름을 입력해주세요');
+      return;
+    }
+
+    this.currentPlanMeta.name = name;
+    this.savePlan();
+
+    document
+      .getElementById('plan-name-modal')
+      .classList.remove('is-open');
+
+    input.value = '';
+  }
 
     // 드래그 앤 드롭 기능 초기화
     initDragAndDrop() {
@@ -108,81 +196,82 @@ class PlannerPage {
         });
     }
 
-    restorePlan() {
-  try {
-    const plan = JSON.parse(localStorage.getItem('teumsae_plan'));
+ async restorePlan() {
+     if (!this.dateInput || !this.endDateInput) return;
 
-    // 🔹 저장된 게 없으면 기본 날짜만 세팅
-    if (!plan) {
+     // 로그아웃 상태면 일정 복원 안 함
+  if (!this.user) {
+    this.setDefaultDate();
+    renderDays();
+    this.timeline = [];
+    this.renderTimeline();
+    return;
+  }
+
+  const userId = this.user.uid;
+
+    const snap = await db
+      .collection('users')
+      .doc(userId)
+      .collection('plans')
+      .orderBy('createdAt', 'desc')
+      .limit(1)
+      .get();
+
+    if (snap.empty) {
       this.setDefaultDate();
-      this.endDateInput.value = '';
-      this.timeline = [];
-      this.currentDay = 1;
       return;
     }
 
-    //  날짜 복원
-    this.dateInput.value = plan.date || '';
-    this.endDateInput.value = plan.endDate || '';
+    const docSnap = snap.docs[0];
+    const plan = docSnap.data();
 
-    // 일정 데이터만 복원 (DOM은 건들지 않음)
+    this.currentPlanMeta = {
+      id: docSnap.id,
+      name: plan.name,
+      createdAt: plan.createdAt
+    };
+
+    this.dateInput.value = plan.date;
+    this.endDateInput.value = plan.endDate;
     this.timeline = plan.timeline || [];
-    this.currentDay = 1;
 
-   // 투두 복원 (UI 생성 로직과 100% 동일해야 함)
-if (plan.todos && Array.isArray(plan.todos)) {
-  const todoList = document.querySelector('.todo-list');
-  if (todoList) {
+    renderDays();
+    this.renderTimeline();
+    this.restoreTodos(plan.todos);
+  }
+     resetCurrentPlanMeta() {
+    this.currentPlanMeta = {
+      id: null,
+      name: '',
+      createdAt: null
+    };
+  }
+
+restoreTodos(todos = []) {
+    const todoList = document.querySelector('.todo-list');
+    if (!todoList) return;
+
     todoList.innerHTML = '';
 
-    plan.todos.forEach(todo => {
+    todos.forEach(todo => {
       const div = document.createElement('div');
       div.className = 'todo-item';
 
       div.innerHTML = `
-        <input type="checkbox" ${todo.checked ? 'checked' : ''}>
-        <input type="text" value="${todo.text}" placeholder="할 일을 입력하세요">
-        <button class="todo-delete">×</button>
-      `;
+      <input type="checkbox" ${todo.checked ? 'checked' : ''}>
+      <input type="text" value="${todo.text}" placeholder="할 일을 입력하세요">
+      <button class="todo-delete">×</button>
+    `;
 
-      //삭제 버튼 이벤트 다시 연결
       div.querySelector('.todo-delete').addEventListener('click', () => {
         div.remove();
-        planner.savePlan(); // 즉시 저장 반영
+        this.savePlan();
       });
 
       todoList.appendChild(div);
     });
   }
-}
-
-
-  } catch (e) {
-    console.error('restorePlan 실패:', e);
-    this.setDefaultDate();
-    this.endDateInput.value = '';
-    this.timeline = [];
-    this.currentDay = 1;
-  }
-}
-
-createTodoItem(todo = { text: '', checked: false }) {
-  const div = document.createElement('div');
-  div.className = 'todo-item';
-
-  div.innerHTML = `
-    <input type="checkbox" ${todo.checked ? 'checked' : ''}>
-    <input type="text" value="${todo.text}" placeholder="할 일을 입력하세요">
-    <button class="todo-delete">×</button>
-  `;
-
-  div.querySelector('.todo-delete').addEventListener('click', () => {
-    div.remove();
-    planner.savePlan();
-  });
-
-  return div;
-}
 
     // 저장된 장소 목록 렌더링 (사이드바)
     renderSavedPlaces() {
@@ -224,7 +313,7 @@ createTodoItem(todo = { text: '', checked: false }) {
     renderTimeline() {
         const days = this.timelineItems.querySelectorAll('.planner__day');
         // 타임라인이 비어있을 경우
-        if (if (days.length === 0 && this.timeline.length === 0)) {
+        if ((days.length === 0 && this.timeline.length === 0)) {
             this.timelineItems.innerHTML = '';
             this.timelineEmpty.style.display = 'block';
             this.timelineActions.style.display = 'none';
@@ -314,6 +403,14 @@ this.timeline.forEach((item, index) => {
             this.showToast('이미 일정에 추가된 장소입니다.');
             return;
         }
+        // 현재 Day의 DOM 찾기
+    const dayEl = this.timelineItems.querySelector(
+      `.planner__day[data-day="${this.currentDay}"]`
+    );
+
+    // 그 Day의 실제 날짜
+    const date = dayEl.dataset.date;
+
 
         // 다음 일정 시간 자동 계산 (마지막 일정 + 2시간)
         const lastTime = this.timeline.length > 0
@@ -364,22 +461,51 @@ this.timeline.forEach((item, index) => {
     }
 
     // 일정 저장 (로컬 스토리지)
-    savePlan() {
-        const todos = [...document.querySelectorAll('.todo-item')]
-    .map(item => {
-      const checkbox = item.querySelector('input[type="checkbox"]');
-      const textInput = item.querySelector('input[type="text"]');
+    async savePlan() {
+        const user = auth.currentUser;
 
-      return {
-        text: textInput ? textInput.value : '',
-        checked: checkbox ? checkbox.checked : false
-      };
-    });
+     if (!user) {
+    this.showToast('로그인 후에만 일정 저장이 가능해요');
+    return;
+    }
+
+     const userId = user.uid;
+
+     const todos = [...document.querySelectorAll('.todo-item')].map(item => ({
+      text: item.querySelector('input[type="text"]')?.value || '',
+      checked: item.querySelector('input[type="checkbox"]')?.checked || false
+    }));
         const planData = {
+            userId,
+            name: this.currentPlanMeta.name || '이름 없는 일정',
             date: this.dateInput.value,
+            endDate: this.endDateInput.value,
             timeline: this.timeline,todos,
-            createdAt: new Date().toISOString()
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
         };
+
+        // 새 일정 (문서 ID 자동 생성)
+    if (!this.currentPlanMeta.id) {
+      const docRef = await db
+        .collection('users')
+        .doc(userId)
+        .collection('plans')
+        .add(planData);
+
+      this.currentPlanMeta.id = docRef.id;
+
+    }
+
+        //  기존 일정 수정
+    else {
+      await db
+        .collection('users')
+        .doc(userId)
+        .collection('plans')
+        .doc(this.currentPlanMeta.id)
+        .set(planData, { merge: true });
+    }
 
         localStorage.setItem('teumsae_plan', JSON.stringify(planData));
         this.showToast('일정이 저장되었습니다!');
@@ -392,13 +518,36 @@ this.timeline.forEach((item, index) => {
             return;
         }
 
-        const date = this.dateInput.value;
-        const places = this.timeline.map(item => {
-            const place = this.places.find(p => p.id === item.placeId);
-            return place ? `${item.time} - ${place.name}` : '';
-        }).filter(Boolean).join('\n');
+        // 날짜별로 묶기
+    const grouped = {};
 
-        const shareText = `🌿 틈새 여행 일정\n📅 ${date}\n\n${places}\n\n틈새에서 만든 나만의 서울 여행 코스입니다.`;
+    this.timeline.forEach(item => {
+      if (!grouped[item.date]) {
+        grouped[item.date] = [];
+      }
+      grouped[item.date].push(item);
+    });
+
+        // 날짜 오름차순 정렬
+    const sortedDates = Object.keys(grouped).sort();
+
+    // 날짜별 출력
+    sortedDates.forEach(date => {
+      shareText += `📅 ${date}\n`;
+
+      grouped[date]
+        .sort((a, b) => a.time.localeCompare(b.time))
+        .forEach(item => {
+          const place = this.places.find(p => p.id === item.placeId);
+          if (!place) return;
+
+          shareText += `${item.time} - ${place.name}\n`;
+        });
+
+      shareText += '\n';
+    });
+
+    shareText += '틈새에서 만든 나만의 서울 여행 코스입니다.';
 
         // Web Share API 지원 확인
         if (navigator.share) {
@@ -422,14 +571,89 @@ this.timeline.forEach((item, index) => {
         });
     }
 
+    //저장된 여러 여행 일정을 슬라이드 패널에 렌더링하는 역할
+  renderMyPlans() {
+    const list = document.querySelector('.myplans-list');
+
+    if (!list) return;
+
+    list.innerHTML = '';
+
+    if (this.savedPlans.length === 0) {
+      // 선택 사항: 빈 상태 UX
+      list.innerHTML = `
+      <p class="empty-myplans">저장된 일정이 없습니다</p>
+    `;
+      return;
+    }
+
+    this.savedPlans.forEach(plan => {
+      const item = document.createElement('div');
+      item.className = 'myplans-item';
+      item.dataset.id = plan.id;
+
+      item.innerHTML = `
+      <div class="myplans-thumb"></div>
+      <div class="myplans-info">
+        <strong>${plan.name}</strong>
+        <p>${plan.date} ~ ${plan.endDate}</p>
+      </div>
+
+      <button class="myplans-delete-btn" title="삭제">✕</button>
+    `;
+      list.appendChild(item);
+    });
+  }
+
+    async deletePlanById(planId) {
+    const user = auth.currentUser;
+    const userId = user ? user.uid : 'guest';
+
+    await db
+      .collection('users')
+      .doc(userId)
+      .collection('plans')
+      .doc(planId)
+      .delete();
+
+
+    if (this.currentPlanMeta.id === planId) {
+      this.clearPlan({ silent: true });
+      this.currentPlanMeta = { id: null, name: '' };
+    }
+
+    await this.fetchMyPlans();
+    this.showToast('일정이 삭제되었습니다');
+  }
+
+    async fetchMyPlans() {
+    const user = auth.currentUser;
+    const userId = user ? user.uid : 'guest';
+
+
+    const snap = await db
+      .collection('users')
+      .doc(userId)
+      .collection('plans')
+      .orderBy('createdAt', 'desc')
+      .get();
+
+    this.savedPlans = snap.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }));
+
+    this.renderMyPlans();
+  }
+
     // 일정 초기화
   clearPlan() {
   if (confirm('정말 일정을 초기화하시겠습니까?')) {
     this.timeline = [];
+    this.currentDay = 1;
 
     // Day DOM 삭제
-    const days = this.timelineItems.querySelectorAll('.planner__day');
-    days.forEach(day => day.remove());
+    this.timelineItems.innerHTML = '';
 
     // 날짜 초기화
     this.endDateInput.value = '';
@@ -439,6 +663,9 @@ this.timeline.forEach((item, index) => {
     const todoList = document.querySelector('.todo-list');
     if (todoList) {
       todoList.innerHTML = '';
+    }
+      if (!silent) {
+      this.endDateInput.value = '';
     }
 
     // localStorage 삭제
@@ -477,11 +704,60 @@ this.timeline.forEach((item, index) => {
         const planData = {
             ...existing, // 기존 date, endDate, todos 유지
             date: this.dateInput.value,
+            endDate: this.endDateInput.value,
             timeline: this.timeline,
             updatedAt: new Date().toISOString()
         };
         localStorage.setItem('teumsae_plan', JSON.stringify(planData));
     }
+
+    async loadPlanById(planId) {
+    const user = auth.currentUser;
+    const userId = user ? user.uid : 'guest';
+
+    const snap = await db
+      .collection('users')
+      .doc(userId)
+      .collection('plans')
+      .doc(planId)
+      .get();
+
+    if (!snap.exists) return;
+
+    const plan = snap.data();
+
+    // change 이벤트 잠금
+    this.isLoadingPlan = true;
+
+    // 1️메타
+    this.currentPlanMeta = {
+      id: snap.id,
+      name: plan.name,
+      createdAt: plan.createdAt
+    };
+
+    // 날짜 세팅 (change 이벤트는 막혀 있음)
+    this.dateInput.value = plan.date;
+    this.endDateInput.value = plan.endDate;
+
+
+    //  Day DOM 생성
+    renderDays();
+
+    //  timeline 교체
+    this.timeline = plan.timeline || [];
+
+    //  렌더
+    this.renderTimeline();
+    this.restoreTodos(plan.todos);
+
+    // change 이벤트 다시 허용
+    this.isLoadingPlan = false;
+
+    document.getElementById('myplans-panel').classList.remove('is-open');
+    this.showToast(`"${plan.name}" 일정을 불러왔어요`);
+  }
+
 
     // 토스트 알림 표시
     showToast(message) {
@@ -546,29 +822,107 @@ this.timeline.forEach((item, index) => {
 // 초기화
 let planner;
 document.addEventListener('DOMContentLoaded', () => {
+    auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      localStorage.removeItem('teumsae_plan');
+      localStorage.removeItem('teumsae_saved');
+    }
+        
   planner = new PlannerPage();
+  window.planner = planner;
+
+    const startInput = document.getElementById('travel-date');
+    const endInput = document.getElementById('end-date');
+        
+   if (!startInput) {
+    console.error('start date input not found');
+    return;
+  }   
+
+        //  날짜 변경 이벤트
+  startInput.addEventListener('change', () => {
+    if (planner.isLoadingPlan) return;
+    renderDays();
+    planner.renderTimeline();
+  });
 
   // 날짜가 이미 복원돼 있으면 여기서 Day 생성 + 일정 렌더
   if (planner.dateInput.value && planner.endDateInput.value) {
     renderDays();              // Day DOM 생성
     planner.renderTimeline(); // Day 안에 일정 뿌리기
   }
+        
+if (endInput) {
+    endInput.addEventListener('change', () => {
+      if (planner.isLoadingPlan) return;
+      planner.timeline = [];
+      renderDays();
+      planner.renderTimeline();
+    });
+  }
+
+        //  내 일정 리스트 클릭
+  const myPlansList = document.querySelector('.myplans-list');
+  if (myPlansList) {
+    myPlansList.addEventListener('click', (e) => {
+      // 삭제
+      if (e.target.classList.contains('myplans-delete-btn')) {
+        e.stopPropagation();
+        const item = e.target.closest('.myplans-item');
+        if (!item) return;
+
+        if (confirm('이 일정을 삭제할까요?')) {
+          planner.deletePlanById(item.dataset.id);
+        }
+        return;
+      }
+
+      // 불러오기
+      const item = e.target.closest('.myplans-item');
+      if (!item) return;
+
+      planner.loadPlanById(item.dataset.id);
+    });
+  }
+
+       // 새 일정 만들기
+  const newBtn = document.querySelector('.myplans-new-btn');
+  if (newBtn) {
+    newBtn.addEventListener('click', () => {
+      planner.clearPlan({ silent: true });
+      planner.resetCurrentPlanMeta();
+
+      planner.timelineItems.innerHTML = '';
+      planner.timelineEmpty.style.display = 'block';
+      planner.timelineActions.style.display = 'none';
+
+      planner.dateInput.value = '';
+      if (planner.endDateInput) planner.endDateInput.value = '';
+
+      document.getElementById('myplans-panel').classList.remove('is-open');
+      planner.showToast('새 일정 작성을 시작했어요!');
+    });
+  } 
+
+// 이미 날짜가 있으면 복원
+  if (planner.user && planner.dateInput.value) {
+  renderDays();
+  planner.renderTimeline();
+}
+ });
 });
-
-// 여행 일정 DAY
-const startInput = document.getElementById('travel-date');
-const endInput = document.getElementById('end-date');
-const dayList = document.getElementById('day-list');
-
-startInput.addEventListener('change', renderDays);
-endInput.addEventListener('change', renderDays);
+        
 
 function renderDays() {
- 
-  const start = new Date(startInput.value);
-  const end = new Date(endInput.value);
+  const startInput = document.getElementById('travel-date');
+  const endInput = document.getElementById('end-date');
 
-  if (!startInput.value || !endInput.value) return;
+  if (!startInput.value) return;
+
+   const start = new Date(startInput.value);
+  const end = endInput.value
+    ? new Date(endInput.value)
+    : new Date(startInput.value); 
   
  start.setHours(0,0,0,0);
   end.setHours(0,0,0,0);
@@ -588,11 +942,14 @@ if (start > end) return;
     dayItem.dataset.day = day;
 
     dayItem.innerHTML = `
-      <h2>Day ${day}</h2>
+     <h2 class="planner-day-title">
+        <span class="day-number">Day ${day}</span>
+        <span class="day-date">${yyyy}.${mm}.${dd}</span>
+      </h2>
       <button class="add-place-btn">장소를 드래그 하세요</button>
       <div class="planner__day-places"></div>
-      
     `;
+
 
     dayItem.addEventListener('dragover', (e) => {
   e.preventDefault();
@@ -601,7 +958,7 @@ if (start > end) return;
 
 dayItem.addEventListener('dragleave', () => {
   dayItem.classList.remove('drag-over');
-});
+});      
 
 dayItem.addEventListener('drop', (e) => {
   e.preventDefault();
@@ -618,25 +975,18 @@ dayItem.addEventListener('drop', (e) => {
   planner.addToTimeline(id);
 });
 
-
- dayItem.addEventListener('click', (e) => {
-  e.stopPropagation();
-   const wrapper = e.currentTarget;
-  planner.currentDay = Number(dayItem.dataset.day);
-});
-    timelineItems.appendChild(dayItem);
+timelineItems.appendChild(dayItem);
 
     current.setDate(current.getDate() + 1);
     day++;
   }
 
-  
 
   //  DAY 생겼으니 empty 숨김
   planner.timelineEmpty.style.display = 'none';
   planner.timelineActions.style.display = 'flex';
 
-  planner.currentDay = 1;
 }
+
 
 

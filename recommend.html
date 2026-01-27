@@ -24,7 +24,7 @@
         /* Recommend Page Specifics */
         .recommend-page {
             min-height: 100vh;
-            padding-top: 90px;
+            padding-top: var(--header-height);
             padding-bottom: 80px;
             /* More padding for fixed header */
             background: var(--bg-color);
@@ -408,92 +408,8 @@
 </head>
 
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header__inner">
-                <a href="index.html" class="header__logo">
-                    <img src="images/logo.png" alt="틈새 Teumsae" class="logo-img">
-                </a>
-                <nav class="header__nav">
-                    <a href="explore.html" class="header__link hover-underline">장소 탐색</a>
-                    <a href="recommend.html" class="header__link hover-underline" style="color: var(--accent-color);"
-                        onclick="AuthGuard.handleProtectedLink(event, 'recommend.html')">AI 추천</a>
-                    <a href="planner.html" class="header__link hover-underline"
-                        onclick="AuthGuard.handleProtectedLink(event, 'planner.html')">여행 계획</a>
-                </nav>
-                <div class="header__controls">
-                    <button class="header__map-btn" onclick="toggleMap()" aria-label="지도 보기/닫기">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-                            <line x1="8" y1="2" x2="8" y2="18"></line>
-                            <line x1="16" y1="6" x2="16" y2="22"></line>
-                        </svg>
-                        <span>지도</span>
-                        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
-
-                    <!-- Login Button (Visible when logged out) -->
-                    <a href="login.html" id="login-btn" class="btn btn-primary btn-sm" style="display: none;">로그인</a>
-
-                    <!-- User Menu (Visible when logged in) -->
-                    <div class="user-menu" id="user-menu" style="display: none;">
-                        <button class="user-btn">
-                            <span class="user-avatar" id="user-avatar">U</span>
-                            <span id="user-name">User</span>
-                        </button>
-                        <div class="user-dropdown">
-                            <div class="user-dropdown-header">
-                                <div class="user-greeting">환영합니다!</div>
-                                <div class="user-email" id="user-email">guest@teumsae.kr</div>
-                            </div>
-                            <a href="planner.html" class="user-dropdown-item">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                                    <line x1="16" y1="2" x2="16" y2="6" />
-                                    <line x1="8" y1="2" x2="8" y2="6" />
-                                    <line x1="3" y1="10" x2="21" y2="10" />
-                                </svg>
-                                내 여행 계획
-                            </a>
-                            <a href="#" class="user-dropdown-item">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path
-                                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                                </svg>
-                                저장한 장소
-                            </a>
-                            <a href="recommend.html" class="user-dropdown-item">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polygon
-                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                                </svg>
-                                AI 추천받기
-                            </a>
-                            <div class="user-dropdown-divider"></div>
-                            <a href="mypage.html" class="user-dropdown-item">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="3" />
-                                    <path
-                                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                                </svg>
-                                내 프로필
-                            </a>
-                            <a href="#" class="user-dropdown-item logout" onclick="logout()">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                                    <polyline points="16 17 21 12 16 7" />
-                                    <line x1="21" y1="12" x2="9" y2="12" />
-                                </svg>
-                                로그아웃
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-    </header>
+    <!-- Header (Dynamic) -->
+    <div id="header-placeholder"></div>
 
     <!-- Recommend Page -->
     <main class="recommend-page">
@@ -651,278 +567,290 @@
         </div>
     </main>
 
-    <!-- 푸터 -->
-    <footer class="footer">
-        <div class="footer__content">
-            <a href="index.html" class="footer__logo">
-                <img src="images/logo.png" alt="틈새 Teumsae" class="logo-img">
-            </a>
-            <p class="footer__desc">Seoul's Hidden Sanctuary</p>
-            <div class="footer__links">
-                <a href="#">소개</a>
-                <a href="#">이용약관</a>
-                <a href="#">개인정보처리방침</a>
-                <a href="#">문의하기</a>
-            </div>
-            <div class="footer__copy">
-                &copy; 2026 Teumsae. All rights reserved.
-            </div>
-        </div>
-    </footer>
+    <!-- 푸터 (Dynamic) -->
+    <div id="footer-placeholder"></div>
 
     <!-- Scripts -->
-    <script src="js/data.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="js/firebase-config.js?v=4"></script>
     <script src="js/auth-guard.js"></script>
-    <script>
-        // Check login state and update UI
-        document.addEventListener('DOMContentLoaded', () => {
-            if (window.AuthGuard) {
-                // Page-level protection for recommend.html
-                AuthGuard.checkPageAuth();
-                AuthGuard.updateHeaderUI();
-            }
-        });
-
-
-
-        // Survey State
-        let currentQuestion = 1;
-        const totalQuestions = 5;
-        const surveyAnswers = {};
-
-        // DOM Elements
-        const tabs = document.querySelectorAll('.recommend-tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-        const surveyQuestions = document.querySelectorAll('.survey-question');
-        const progressDots = document.querySelectorAll('.survey-progress__dot');
-        const prevBtn = document.getElementById('survey-prev');
-        const nextBtn = document.getElementById('survey-next');
-        const chatMessages = document.getElementById('chat-messages');
-        const chatInput = document.getElementById('chat-input');
-        const chatSendBtn = document.getElementById('chat-send');
-
-        // Initialize User Info
-        // document.addEventListener('DOMContentLoaded', () => {
-        //     const user = checkAuth(); // Replaced by AuthGuard
-        //     if (user) {
-        //         updateUserInfo(user);
-        //     }
-        // });
-
-        // Tab Switching
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-
-                tabContents.forEach(content => content.classList.remove('active'));
-                document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
-            });
-        });
-
-        // Survey Option Selection
-        document.querySelectorAll('.survey-option').forEach(option => {
-            option.addEventListener('click', () => {
-                const question = option.closest('.survey-question');
-                question.querySelectorAll('.survey-option').forEach(o => o.classList.remove('selected'));
-                option.classList.add('selected');
-                surveyAnswers[currentQuestion] = option.dataset.value;
-                nextBtn.disabled = false;
-            });
-        });
-
-        // Survey Navigation
-        nextBtn.addEventListener('click', () => {
-            if (currentQuestion < totalQuestions) {
-                goToQuestion(currentQuestion + 1);
-            } else {
-                // Show results
-                generateSurveyResults();
-            }
-        });
-
-        prevBtn.addEventListener('click', () => {
-            if (currentQuestion > 1) {
-                goToQuestion(currentQuestion - 1);
-            }
-        });
-
-        function goToQuestion(num) {
-            surveyQuestions.forEach(q => q.classList.remove('active'));
-            document.querySelector(`[data-question="${num}"]`).classList.add('active');
-
-            progressDots.forEach((dot, i) => {
-                dot.classList.remove('active');
-                if (i < num - 1) dot.classList.add('completed');
-                else dot.classList.remove('completed');
-                if (i === num - 1) dot.classList.add('active');
-            });
-
-            currentQuestion = num;
-
-            prevBtn.style.visibility = num > 1 ? 'visible' : 'hidden';
-            nextBtn.textContent = num === totalQuestions ? '결과 보기 →' : '다음 →';
-            nextBtn.disabled = !surveyAnswers[num];
+    <script src="js/components.js"></script>
+    <script src="js/logout.js"></script>
+    <script src="js/map-toggle.js"></script>
+</body>
+<script>
+    // Check login state and update UI
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.AuthGuard) {
+            // Page-level protection for recommend.html
+            AuthGuard.checkPageAuth();
+            AuthGuard.updateHeaderUI();
         }
+    });
 
-        // Generate Survey Results
-        function generateSurveyResults() {
-            const answers = Object.values(surveyAnswers);
-            let recommendedPlaces = [];
 
-            // Simple matching algorithm
-            placesData.forEach(place => {
-                let score = 0;
 
-                // Match based on answers
-                if (answers.includes('힐링') && (place.tags.includes('힐링') || place.category === '자연')) score += 2;
-                if (answers.includes('감성') && (place.tags.includes('감성') || place.category === '감성')) score += 2;
-                if (answers.includes('조용한') && place.congestion === 'quiet') score += 3;
-                if (answers.includes('자연') && place.category === '자연') score += 2;
-                if (answers.includes('역사') && place.category === '역사') score += 2;
-                if (answers.includes('밤') && (place.category === '야경' || place.tags.includes('야경'))) score += 3;
-                if (answers.includes('사진') && place.tags.includes('사진')) score += 2;
-                if (answers.includes('산책') && (place.category === '산책' || place.tags.includes('산책'))) score += 2;
-                if (answers.includes('혼자') && place.congestion === 'quiet') score += 1;
-                if (answers.includes('연인') && (place.tags.includes('감성') || place.category === '야경')) score += 1;
+    // Survey State
+    let currentQuestion = 1;
+    const totalQuestions = 5;
+    const surveyAnswers = {};
 
-                if (score > 0) {
-                    recommendedPlaces.push({ ...place, score });
-                }
-            });
+    // DOM Elements
+    const tabs = document.querySelectorAll('.recommend-tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const surveyQuestions = document.querySelectorAll('.survey-question');
+    const progressDots = document.querySelectorAll('.survey-progress__dot');
+    const prevBtn = document.getElementById('survey-prev');
+    const nextBtn = document.getElementById('survey-next');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const chatSendBtn = document.getElementById('chat-send');
 
-            // Sort by score and take top 4
-            recommendedPlaces.sort((a, b) => b.score - a.score);
-            recommendedPlaces = recommendedPlaces.slice(0, 4);
+    // Initialize User Info
+    // document.addEventListener('DOMContentLoaded', () => {
+    //     const user = checkAuth(); // Replaced by AuthGuard
+    //     if (user) {
+    //         updateUserInfo(user);
+    //     }
+    // });
 
-            showResults(recommendedPlaces, '설문 응답을 분석했어요');
+    // Tab Switching
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            tabContents.forEach(content => content.classList.remove('active'));
+            document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+        });
+    });
+
+    // Survey Option Selection
+    document.querySelectorAll('.survey-option').forEach(option => {
+        option.addEventListener('click', () => {
+            const question = option.closest('.survey-question');
+            question.querySelectorAll('.survey-option').forEach(o => o.classList.remove('selected'));
+            option.classList.add('selected');
+            surveyAnswers[currentQuestion] = option.dataset.value;
+            nextBtn.disabled = false;
+        });
+    });
+
+    // Data handling
+    let placesData = [];
+    async function fetchPlaces() {
+        if (typeof db !== 'undefined') {
+            try {
+                const snapshot = await db.collection('places').get();
+                placesData = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return { ...data, id: parseInt(data.id) || data.id };
+                });
+                console.log('Recommend page loaded places from Firestore:', placesData.length);
+            } catch (error) {
+                console.error('Error fetching places:', error);
+            }
         }
+    }
 
-        // Chat functionality
-        chatSendBtn.addEventListener('click', sendMessage);
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
+    // Survey Navigation
+    nextBtn.addEventListener('click', () => {
+        if (currentQuestion < totalQuestions) {
+            goToQuestion(currentQuestion + 1);
+        } else {
+            // Show results
+            generateSurveyResults();
+        }
+    });
+
+    prevBtn.addEventListener('click', () => {
+        if (currentQuestion > 1) {
+            goToQuestion(currentQuestion - 1);
+        }
+    });
+
+    function goToQuestion(num) {
+        surveyQuestions.forEach(q => q.classList.remove('active'));
+        document.querySelector(`[data-question="${num}"]`).classList.add('active');
+
+        progressDots.forEach((dot, i) => {
+            dot.classList.remove('active');
+            if (i < num - 1) dot.classList.add('completed');
+            else dot.classList.remove('completed');
+            if (i === num - 1) dot.classList.add('active');
+        });
+
+        currentQuestion = num;
+
+        prevBtn.style.visibility = num > 1 ? 'visible' : 'hidden';
+        nextBtn.textContent = num === totalQuestions ? '결과 보기 →' : '다음 →';
+        nextBtn.disabled = !surveyAnswers[num];
+    }
+
+    // Generate Survey Results
+    async function generateSurveyResults() {
+        if (placesData.length === 0) await fetchPlaces();
+
+        const answers = Object.values(surveyAnswers);
+        let recommendedPlaces = [];
+
+        // Simple matching algorithm
+        placesData.forEach(place => {
+            let score = 0;
+
+            // Match based on answers
+            if (answers.includes('힐링') && (place.tags.includes('힐링') || place.category === '자연')) score += 2;
+            if (answers.includes('감성') && (place.tags.includes('감성') || place.category === '감성')) score += 2;
+            if (answers.includes('조용한') && place.congestion === 'quiet') score += 3;
+            if (answers.includes('자연') && place.category === '자연') score += 2;
+            if (answers.includes('역사') && place.category === '역사') score += 2;
+            if (answers.includes('밤') && (place.category === '야경' || place.tags.includes('야경'))) score += 3;
+            if (answers.includes('사진') && place.tags.includes('사진')) score += 2;
+            if (answers.includes('산책') && (place.category === '산책' || place.tags.includes('산책'))) score += 2;
+            if (answers.includes('혼자') && place.congestion === 'quiet') score += 1;
+            if (answers.includes('연인') && (place.tags.includes('감성') || place.category === '야경')) score += 1;
+
+            if (score > 0) {
+                recommendedPlaces.push({ ...place, score });
             }
         });
 
-        function sendMessage() {
-            const message = chatInput.value.trim();
-            if (!message) return;
+        // Sort by score and take top 4
+        recommendedPlaces.sort((a, b) => b.score - a.score);
+        recommendedPlaces = recommendedPlaces.slice(0, 4);
 
-            // Add user message
-            addChatMessage(message, 'user');
-            chatInput.value = '';
+        showResults(recommendedPlaces, '설문 응답을 분석했어요');
+    }
 
-            // Show typing indicator
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'chat-message chat-message--ai';
-            typingDiv.innerHTML = `
+    // Chat functionality
+    chatSendBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    function sendMessage() {
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        // Add user message
+        addChatMessage(message, 'user');
+        chatInput.value = '';
+
+        // Show typing indicator
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'chat-message chat-message--ai';
+        typingDiv.innerHTML = `
         <div class="chat-message__sender">틈새 AI</div>
         <div class="typing-indicator">
           <span></span><span></span><span></span>
         </div>
       `;
-            chatMessages.appendChild(typingDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+        chatMessages.appendChild(typingDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
 
-            // Simulate AI response
-            setTimeout(() => {
-                typingDiv.remove();
-                processUserMessage(message);
-            }, 1500);
-        }
+        // Simulate AI response
+        setTimeout(() => {
+            typingDiv.remove();
+            processUserMessage(message);
+        }, 1500);
+    }
 
-        function addChatMessage(text, type) {
-            const div = document.createElement('div');
-            div.className = `chat-message chat-message--${type}`;
-            div.innerHTML = `
+    function addChatMessage(text, type) {
+        const div = document.createElement('div');
+        div.className = `chat-message chat-message--${type}`;
+        div.innerHTML = `
         <div class="chat-message__sender">${type === 'ai' ? '틈새 AI' : '나'}</div>
         <div class="chat-message__text">${text}</div>
       `;
-            chatMessages.appendChild(div);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 
-        function processUserMessage(message) {
-            const lowerMessage = message.toLowerCase();
-            let recommendedPlaces = [];
+    async function processUserMessage(message) {
+        if (placesData.length === 0) await fetchPlaces();
 
-            // Keyword matching
-            placesData.forEach(place => {
-                let score = 0;
+        const lowerMessage = message.toLowerCase();
+        let recommendedPlaces = [];
 
-                // Check for keywords
-                if (lowerMessage.includes('조용') || lowerMessage.includes('한적')) {
-                    if (place.congestion === 'quiet') score += 3;
-                }
-                if (lowerMessage.includes('산책')) {
-                    if (place.category === '산책' || place.tags.includes('산책')) score += 2;
-                }
-                if (lowerMessage.includes('야경') || lowerMessage.includes('밤')) {
-                    if (place.category === '야경' || place.tags.includes('야경')) score += 3;
-                }
-                if (lowerMessage.includes('자연') || lowerMessage.includes('공원')) {
-                    if (place.category === '자연') score += 2;
-                }
-                if (lowerMessage.includes('감성') || lowerMessage.includes('예쁜')) {
-                    if (place.category === '감성' || place.tags.includes('감성')) score += 2;
-                }
-                if (lowerMessage.includes('사진') || lowerMessage.includes('인생샷')) {
-                    if (place.tags.includes('사진')) score += 2;
-                }
-                if (lowerMessage.includes('혼자')) {
-                    if (place.congestion === 'quiet') score += 2;
-                }
-                if (lowerMessage.includes('연인') || lowerMessage.includes('데이트')) {
-                    if (place.category === '야경' || place.category === '감성') score += 2;
-                }
-                if (lowerMessage.includes('역사') || lowerMessage.includes('고궁')) {
-                    if (place.category === '역사') score += 3;
-                }
-                if (lowerMessage.includes('힐링') || lowerMessage.includes('휴식')) {
-                    if (place.tags.includes('힐링') || place.category === '자연') score += 2;
-                }
-                if (lowerMessage.includes('카페')) {
-                    if (place.category === '카페') score += 3;
-                }
-                if (lowerMessage.includes('문화') || lowerMessage.includes('예술')) {
-                    if (place.category === '문화') score += 3;
-                }
+        // Keyword matching
+        placesData.forEach(place => {
+            let score = 0;
 
-                if (score > 0) {
-                    recommendedPlaces.push({ ...place, score });
-                }
-            });
-
-            if (recommendedPlaces.length === 0) {
-                // If no matches, recommend random quiet places
-                recommendedPlaces = placesData.filter(p => p.congestion === 'quiet').slice(0, 3);
-                addChatMessage(
-                    `"${message}"에 대한 정확한 결과는 찾기 어렵지만, 한적하고 좋은 장소들을 추천해드릴게요! 🌿`,
-                    'ai'
-                );
-            } else {
-                recommendedPlaces.sort((a, b) => b.score - a.score);
-                recommendedPlaces = recommendedPlaces.slice(0, 4);
-                addChatMessage(
-                    `"${message}"에 딱 맞는 장소들을 찾았어요! 아래에서 확인해보세요 ✨`,
-                    'ai'
-                );
+            // Check for keywords
+            if (lowerMessage.includes('조용') || lowerMessage.includes('한적')) {
+                if (place.congestion === 'quiet') score += 3;
+            }
+            if (lowerMessage.includes('산책')) {
+                if (place.category === '산책' || place.tags.includes('산책')) score += 2;
+            }
+            if (lowerMessage.includes('야경') || lowerMessage.includes('밤')) {
+                if (place.category === '야경' || place.tags.includes('야경')) score += 3;
+            }
+            if (lowerMessage.includes('자연') || lowerMessage.includes('공원')) {
+                if (place.category === '자연') score += 2;
+            }
+            if (lowerMessage.includes('감성') || lowerMessage.includes('예쁜')) {
+                if (place.category === '감성' || place.tags.includes('감성')) score += 2;
+            }
+            if (lowerMessage.includes('사진') || lowerMessage.includes('인생샷')) {
+                if (place.tags.includes('사진')) score += 2;
+            }
+            if (lowerMessage.includes('혼자')) {
+                if (place.congestion === 'quiet') score += 2;
+            }
+            if (lowerMessage.includes('연인') || lowerMessage.includes('데이트')) {
+                if (place.category === '야경' || place.category === '감성') score += 2;
+            }
+            if (lowerMessage.includes('역사') || lowerMessage.includes('고궁')) {
+                if (place.category === '역사') score += 3;
+            }
+            if (lowerMessage.includes('힐링') || lowerMessage.includes('휴식')) {
+                if (place.tags.includes('힐링') || place.category === '자연') score += 2;
+            }
+            if (lowerMessage.includes('카페')) {
+                if (place.category === '카페') score += 3;
+            }
+            if (lowerMessage.includes('문화') || lowerMessage.includes('예술')) {
+                if (place.category === '문화') score += 3;
             }
 
-            showResults(recommendedPlaces, '당신의 요청을 분석했어요');
+            if (score > 0) {
+                recommendedPlaces.push({ ...place, score });
+            }
+        });
+
+        if (recommendedPlaces.length === 0) {
+            // If no matches, recommend random quiet places
+            recommendedPlaces = placesData.filter(p => p.congestion === 'quiet').slice(0, 3);
+            addChatMessage(
+                `"${message}"에 대한 정확한 결과는 찾기 어렵지만, 한적하고 좋은 장소들을 추천해드릴게요! 🌿`,
+                'ai'
+            );
+        } else {
+            recommendedPlaces.sort((a, b) => b.score - a.score);
+            recommendedPlaces = recommendedPlaces.slice(0, 4);
+            addChatMessage(
+                `"${message}"에 딱 맞는 장소들을 찾았어요! 아래에서 확인해보세요 ✨`,
+                'ai'
+            );
         }
 
-        function showResults(places, subtitle) {
-            const resultsSection = document.getElementById('results-section');
-            const resultsGrid = document.getElementById('results-grid');
-            const resultsSubtitle = document.getElementById('results-subtitle');
+        showResults(recommendedPlaces, '당신의 요청을 분석했어요');
+    }
 
-            resultsSubtitle.textContent = subtitle;
+    function showResults(places, subtitle) {
+        const resultsSection = document.getElementById('results-section');
+        const resultsGrid = document.getElementById('results-grid');
+        const resultsSubtitle = document.getElementById('results-subtitle');
 
-            resultsGrid.innerHTML = places.map(place => `
+        resultsSubtitle.textContent = subtitle;
+
+        resultsGrid.innerHTML = places.map(place => `
         <div class="recommended-card">
           <div class="recommended-card__image">
             <img src="${place.images[0]}" alt="${place.name}">
@@ -940,49 +868,49 @@
         </div>
       `).join('');
 
-            resultsSection.style.display = 'block';
-            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        resultsSection.style.display = 'block';
+        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-            // Store recommended places
-            window.recommendedPlaces = places;
-        }
+        // Store recommended places
+        window.recommendedPlaces = places;
+    }
 
-        function addToPlan(placeId) {
-            let saved = JSON.parse(localStorage.getItem('teumsae_saved') || '[]');
-            if (!saved.includes(placeId)) {
-                saved.push(placeId);
-                localStorage.setItem('teumsae_saved', JSON.stringify(saved));
-                showToast('일정에 추가했습니다!');
-            } else {
-                showToast('이미 추가된 장소입니다.');
-            }
-        }
-
-        function addAllToPlan() {
-            if (!window.recommendedPlaces) return;
-
-            let saved = JSON.parse(localStorage.getItem('teumsae_saved') || '[]');
-            let added = 0;
-
-            window.recommendedPlaces.forEach(place => {
-                if (!saved.includes(place.id)) {
-                    saved.push(place.id);
-                    added++;
-                }
-            });
-
+    function addToPlan(placeId) {
+        let saved = JSON.parse(localStorage.getItem('teumsae_saved') || '[]');
+        if (!saved.includes(placeId)) {
+            saved.push(placeId);
             localStorage.setItem('teumsae_saved', JSON.stringify(saved));
-            showToast(`${added}개 장소를 일정에 추가했습니다!`);
+            showToast('일정에 추가했습니다!');
+        } else {
+            showToast('이미 추가된 장소입니다.');
         }
+    }
 
-        function showToast(message) {
-            const existing = document.querySelector('.toast');
-            if (existing) existing.remove();
+    function addAllToPlan() {
+        if (!window.recommendedPlaces) return;
 
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.innerHTML = message;
-            toast.style.cssText = `
+        let saved = JSON.parse(localStorage.getItem('teumsae_saved') || '[]');
+        let added = 0;
+
+        window.recommendedPlaces.forEach(place => {
+            if (!saved.includes(place.id)) {
+                saved.push(place.id);
+                added++;
+            }
+        });
+
+        localStorage.setItem('teumsae_saved', JSON.stringify(saved));
+        showToast(`${added}개 장소를 일정에 추가했습니다!`);
+    }
+
+    function showToast(message) {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = message;
+        toast.style.cssText = `
         position: fixed;
         bottom: 2rem;
         left: 50%;
@@ -996,30 +924,30 @@
         transition: transform 0.3s ease;
       `;
 
-            document.body.appendChild(toast);
+        document.body.appendChild(toast);
 
-            setTimeout(() => {
-                toast.style.transform = 'translateX(-50%) translateY(0)';
-            }, 10);
+        setTimeout(() => {
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+        }, 10);
 
-            setTimeout(() => {
-                toast.style.transform = 'translateX(-50%) translateY(100px)';
-                setTimeout(() => toast.remove(), 300);
-            }, 2500);
-        }
+        setTimeout(() => {
+            toast.style.transform = 'translateX(-50%) translateY(100px)';
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
+    }
 
-        // Reveal animations
-        document.querySelectorAll('.reveal').forEach(el => {
-            setTimeout(() => el.classList.add('revealed'), 100);
-        });
-    </script>
-    <script src="js/logout.js"></script>
-    <script src="js/map-toggle.js"></script>
+    // Reveal animations
+    document.querySelectorAll('.reveal').forEach(el => {
+        setTimeout(() => el.classList.add('revealed'), 100);
+    });
+</script>
+<script src="js/logout.js"></script>
+<script src="js/map-toggle.js"></script>
 
-    <!-- 지도 오버레이 -->
-    <div id="map-overlay" class="map-overlay">
-        <iframe src="" frameborder="0" loading="lazy"></iframe>
-    </div>
+<!-- 지도 오버레이 -->
+<div id="map-overlay" class="map-overlay">
+    <iframe src="" frameborder="0" loading="lazy"></iframe>
+</div>
 </body>
 
 </html>

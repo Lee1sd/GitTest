@@ -45,7 +45,7 @@ class ComponentLoader {
                     <nav class="header__nav">
                         <a href="explore.html" class="header__link hover-underline ${pageRelativePath === 'explore.html' ? 'active' : ''}" data-text="장소 탐색">장소 탐색</a>
                         <a href="recommend.html" class="header__link hover-underline ${pageRelativePath === 'recommend.html' ? 'active' : ''}"
-                            onclick="AuthGuard.handleProtectedLink(event, 'recommend.html')" data-text="AI 추천">AI 추천</a>
+                            onclick="AuthGuard.handleProtectedLink(event, 'recommend.html')" data-text="여행지 추천">여행지 추천</a>
                         <a href="planner.html" class="header__link hover-underline ${pageRelativePath === 'planner.html' ? 'active' : ''}"
                             onclick="AuthGuard.handleProtectedLink(event, 'planner.html')" data-text="여행 계획">여행 계획</a>
                     </nav>
@@ -143,7 +143,7 @@ class ComponentLoader {
                     <p class="footer__desc">서울의 숨은 여유를 디자인하다</p>
                     <div class="footer__links">
                         <a href="explore.html">장소 탐색</a>
-                        <a href="recommend.html">AI 추천</a>
+                        <a href="recommend.html">여행지 추천</a>
                         <a href="planner.html">여행 계획</a>
                     </div>
                     <p class="footer__copy">&copy; 2024 Teumsae. All rights reserved.</p>

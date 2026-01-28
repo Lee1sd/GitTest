@@ -73,12 +73,36 @@ class TeumsaeApp {
         this.modalAddBtn = document.getElementById('modal-add-btn');
     }
 
-    // Check URL parameters for direct place access
+    // Check URL parameters for direct place access or notification-triggered review access
     checkUrlParams() {
         const params = new URLSearchParams(window.location.search);
         const id = parseInt(params.get('id'));
-        if (id) {
-            // Wait slightly for data to be ready
+        const placeId = parseInt(params.get('placeId'));
+        const reviewId = params.get('reviewId');
+        
+        if (placeId && reviewId) {
+            // Notification click: open modal and scroll to specific review
+            setTimeout(() => {
+                this.openPlaceModal(placeId);
+                // Wait for modal to open and reviews to load, then scroll to review
+                setTimeout(() => {
+                    const reviewElement = document.getElementById(`review-${reviewId}`);
+                    if (reviewElement) {
+                        reviewElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // Highlight the review briefly
+                        reviewElement.style.backgroundColor = 'rgba(212, 175, 55, 0.1)';
+                        reviewElement.style.border = '2px solid rgba(212, 175, 55, 0.5)';
+                        setTimeout(() => {
+                            reviewElement.style.backgroundColor = '';
+                            reviewElement.style.border = '';
+                        }, 3000);
+                    }
+                }, 1500);
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }, 500);
+        } else if (id) {
+            // Direct place access: open modal normally
             setTimeout(() => {
                 this.openPlaceModal(id);
                 // Clean URL

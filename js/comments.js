@@ -160,12 +160,52 @@ class CommentManager {
         if (!currentUser) return alert('로그인이 필요합니다.');
 
         try {
+            // Add comment to Firestore
             await window.db.collection('reviews').doc(reviewId).collection('comments').add({
                 text,
                 userId: currentUser.userId,
                 userName: currentUser.userName,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
+
+            // Create notification for review author
+            try {
+                // Fetch review to get author info
+                console.log('[DEBUG] Fetching review document:', reviewId);
+                const reviewDoc = await window.db.collection('reviews').doc(reviewId).get();
+                if (reviewDoc.exists) {
+                    const reviewData = reviewDoc.data();
+                    const reviewAuthorId = reviewData.userId;
+                    
+                    console.log('[DEBUG] Review data:', reviewData);
+                    console.log('[DEBUG] Review author ID:', reviewAuthorId);
+                    console.log('[DEBUG] Current user ID:', currentUser.userId);
+                    
+                    // Only create notification if commenter is not theauthor
+                    if (reviewAuthorId && reviewAuthorId !== currentUser.userId) {
+                        // Truncate comment text for preview
+                        const commentPreview = text.length > 50 ? text.substring(0, 50) + '...' : text;
+                        
+                        // Create notification document
+                        await window.db.collection('notifications').add({
+                            recipientId: reviewAuthorId,
+                            reviewId: reviewId,
+                            placeId: reviewData.placeId || '',
+                            commenterName: currentUser.userName,
+                            commentText: commentPreview,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            read: false
+                        });
+                        
+                        console.log('[DEBUG] ✅ Notification created successfully!');
+                    } else {
+                        console.log('[DEBUG] ⚠️ Notification NOT created - self-comment detected');
+                    }
+                }
+            } catch (notifError) {
+                console.error('Error creating notification:', notifError);
+                // Don't show error to user - notification creation is not critical
+            }
 
             // Reload comments
             await this.loadComments(reviewId);

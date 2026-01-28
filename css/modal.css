@@ -206,19 +206,26 @@
 /* Category (Clean Text) */
 .place-modal__category {
     color: var(--color-accent);
-    /* Original Gold */
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    font-size: 0.95rem;
-    padding: 0;
-    background: transparent;
-    margin: 0;
+    letter-spacing: 1px;
+    font-size: 0.85rem;
+    padding: 4px 12px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
 }
 
-.place-modal__category::after {
-    display: none;
-    /* Remove unwanted vertical line */
+.place-modal__address {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 400;
+    font-size: 0.85rem;
+    padding: 4px 12px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
 }
 
 /* Title */
@@ -246,15 +253,12 @@
 /* Meta Row (Bottom) */
 .place-modal__meta {
     display: flex;
-    gap: 15px;
-    /* Spacing between Category | Address */
+    gap: 8px;
+    /* 박스 사이 간격 좁힘 */
     align-items: center;
     padding-left: 0;
-    /* Ensure alignment */
-    color: var(--color-accent);
-    font-size: 1.05rem;
-    margin-bottom: 5px;
-    /* 제목과의 간격 */
+    margin-bottom: 12px;
+    /* 제목과의 간격 약간 더 확보 */
 }
 
 .meta-divider {

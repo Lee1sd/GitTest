@@ -71,8 +71,8 @@
 </head>
 
 <body>
-    <!-- Header -->
-    <header class="header">
+    <!-- Header (기본 숨김 처리: embed 모드에서 깜빡임 방지) -->
+    <header class="header" style="display: none;">
         <div class="container">
             <div class="header__inner">
                 <a href="main.html" class="header__logo"><span class="logo-teum">틈</span><span
@@ -289,8 +289,16 @@
         document.addEventListener('DOMContentLoaded', function () {
             // embed 모드 감지 (URL 파라미터 확인)
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('embed') === 'true') {
+            const isEmbed = urlParams.get('embed') === 'true';
+
+            if (isEmbed) {
                 document.body.classList.add('embed-mode');
+            } else {
+                // embed 모드가 아니면 헤더 표시
+                const header = document.querySelector('.header');
+                if (header) {
+                    header.style.display = '';
+                }
             }
 
             const user = checkAuth();

@@ -58,6 +58,18 @@ const SeoulMap = (function () {
     // Core Load & Render Logic
     async function loadAndRender() {
         try {
+            // [추가] 장소 데이터 먼저 로드 (혼잡도 색상 적용을 위해)
+            if (allPlaces.length === 0) {
+                if (typeof fetchPlacesFromFirestore === 'function') {
+                    try {
+                        allPlaces = await fetchPlacesFromFirestore();
+                        console.log(`Firebase에서 ${allPlaces.length}개의 장소 데이터를 로드했습니다.`);
+                    } catch (err) {
+                        console.warn('장소 데이터 로드 실패:', err);
+                    }
+                }
+            }
+
             // 구 단위 데이터가 없으면 먼저 로드 (레이블용)
             if (!cachedData['gu']) {
                 try {
@@ -76,6 +88,7 @@ const SeoulMap = (function () {
             // Check Cache
             if (cachedData[currentMode]) {
                 renderGeoJSONToSVG(cachedData[currentMode]);
+                removeLoadingText(); // 캐시 사용 시에도 로딩 텍스트 제거
                 return;
             }
 
@@ -104,8 +117,7 @@ const SeoulMap = (function () {
             console.log(`Seoul Map (${currentMode}) Rendered Successfully`);
 
             // 로딩 텍스트 제거
-            const loadingText = document.getElementById('loading-text');
-            if (loadingText) loadingText.remove();
+            removeLoadingText();
 
         } catch (error) {
             console.error('Failed to load map data:', error);
@@ -114,6 +126,20 @@ const SeoulMap = (function () {
                 loadingText.textContent = "지도를 불러오는데 실패했습니다.";
                 loadingText.style.fill = "#ff6b6b";
             }
+        }
+    }
+
+    // [추가] 로딩 텍스트를 페이드아웃하며 제거하는 함수
+    function removeLoadingText() {
+        const loadingText = document.getElementById('loading-text');
+        if (loadingText) {
+            loadingText.style.transition = 'opacity 0.5s ease-out';
+            loadingText.style.opacity = '0';
+            setTimeout(() => {
+                if (loadingText.parentNode) {
+                    loadingText.remove();
+                }
+            }, 500);
         }
     }
 
@@ -313,25 +339,47 @@ const SeoulMap = (function () {
             path.setAttribute("data-name", name);
 
             // [수정됨] 혼잡도별 5단계 프리미엄 색상 팔레트 (Muted/Chic Tones)
-            // 채도를 대폭 낮추고 회색기를 더하여 '칙칙하면서도 고급스러운' 분위기 연출
-            const congestionPalette = [
-                "rgba(75, 107, 85, 0.6)",   // Quiet: Muted Moss Green (차분한 이끼색)
-                "rgba(141, 123, 85, 0.55)", // Normal: Desaturated Ochre (탁한 황토색)
-                "rgba(148, 97, 85, 0.6)",   // Crowded: Dusty Rust (녹슨 주황색)
-                "rgba(115, 65, 65, 0.55)",  // Very Crowded: Muted Burgundy (탁한 버건디)
-                "rgba(70, 75, 80, 0.6)"     // Unknown: Dark Slate (짙은 슬레이트 회색)
-            ];
+            const congestionPalette = {
+                'quiet': "rgba(75, 107, 85, 0.6)",        // Quiet: Muted Moss Green
+                'normal': "rgba(141, 123, 85, 0.55)",     // Normal: Desaturated Ochre
+                'crowded': "rgba(148, 97, 85, 0.6)",      // Crowded: Dusty Rust
+                'very_crowded': "rgba(115, 65, 65, 0.55)", // Very Crowded: Muted Burgundy
+                'unknown': "rgba(70, 75, 80, 0.6)"        // Unknown: Dark Slate
+            };
 
-            // 랜덤으로 혼잡도 색상 선택 (시뮬레이션)
-            // 실제 데이터 연동 시에는 feature 속성이나 별도 데이터를 참조해야 함
-            const randomColor = congestionPalette[Math.floor(Math.random() * congestionPalette.length)];
+            let districtColor;
+
+            // [추가] 구 단위 모드일 때만 실제 혼잡도 데이터 적용
+            if (currentMode === 'gu') {
+                // 해당 구에 속하는 장소 찾기 (구 이름 매칭)
+                // 예: "강남구" -> "강남"으로 매칭하거나, 정확한 이름 매칭
+                const districtPlaces = allPlaces.filter(place => {
+                    if (!place.address) return false;
+                    // 주소에 구 이름이 포함되어 있는지 확인
+                    return place.address.includes(name);
+                });
+
+                if (districtPlaces.length > 0) {
+                    // 첫 번째 장소의 혼잡도 사용
+                    const congestionLevel = districtPlaces[0].congestion || 'unknown';
+                    districtColor = congestionPalette[congestionLevel] || congestionPalette['unknown'];
+                } else {
+                    // 마커가 없는 구는 가장 혼잡도 낮은 색 (quiet)
+                    districtColor = congestionPalette['quiet'];
+                }
+            } else {
+                // 동 단위 모드일 때는 랜덤 색상 유지
+                const paletteArray = Object.values(congestionPalette);
+                districtColor = paletteArray[Math.floor(Math.random() * paletteArray.length)];
+            }
+
             const strokeColor = "rgba(255, 255, 255, 0.7)"; // 은은한 경계선
             const hoverColor = "rgba(212, 175, 55, 0.55)"; // 호버 시 금색 (Gold Accent)
 
             // 스타일 조정
             path.style.stroke = strokeColor;
             path.style.strokeWidth = "0.5px"; // 얇고 세련된 라인
-            path.style.fill = randomColor;
+            path.style.fill = districtColor;
             path.style.transition = "all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)"; // 부드러운 전환
 
             // 호버 효과: 해당 구역이 금색으로 빛나며 강조됨
@@ -344,7 +392,7 @@ const SeoulMap = (function () {
             };
 
             path.onmouseleave = function () {
-                this.style.fill = randomColor; // 원래의 랜덤 혼잡도 색상으로 복귀
+                this.style.fill = districtColor; // 원래의 혼잡도 색상으로 복귀
                 this.style.stroke = strokeColor;
                 this.style.strokeWidth = "0.5px";
                 this.style.filter = "";
@@ -407,28 +455,13 @@ const SeoulMap = (function () {
         // [수정됨] Firebase에서 가져온 실제 장소 데이터로 마커 추가
         const addPlaceMarkers = async () => {
             try {
-                // 이미 데이터가 있으면 재사용 (불필요한 Fetch 방지)
-                if (allPlaces.length === 0) {
-                    if (typeof fetchPlacesFromFirestore === 'function') {
-                        allPlaces = await fetchPlacesFromFirestore();
-                        console.log(`Firebase에서 ${allPlaces.length}개의 장소 데이터를 로드했습니다.`);
-                    } else {
-                        console.warn('fetchPlacesFromFirestore 함수가 없습니다.');
-                        return;
-                    }
-                }
-
+                // 데이터가 없으면 아무것도 하지 않음 (이미 loadAndRender에서 로드됨)
                 if (allPlaces.length === 0) {
                     console.warn('표시할 장소 데이터가 없습니다.');
                     return;
                 }
 
                 const places = allPlaces; // 로컬 변수 맵핑
-
-                if (places.length === 0) {
-                    console.warn('표시할 장소 데이터가 없습니다.');
-                    return;
-                }
 
                 // 좌표가 있는 장소만 필터링
                 const validPlaces = places.filter(place => place.lat && place.lng);

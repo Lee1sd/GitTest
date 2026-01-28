@@ -72,7 +72,8 @@ class ReviewManager {
                 .limit(50)
                 .get();
 
-            this.reviews = snap.docs.map(d => {
+            // Load reviews with comment counts
+            const reviewsWithComments = await Promise.all(snap.docs.map(async d => {
                 const data = d.data() || {};
                 // createdAt: Firestore Timestamp -> ISO
                 let createdAt = data.createdAt;
@@ -94,13 +95,29 @@ class ReviewManager {
                     media = [];
                 }
 
+                // Get comment count
+                let commentCount = 0;
+                try {
+                    const commentsSnap = await window.db
+                        .collection('reviews')
+                        .doc(d.id)
+                        .collection('comments')
+                        .get();
+                    commentCount = commentsSnap.size;
+                } catch (e) {
+                    console.error('Error loading comment count:', e);
+                }
+
                 return {
                     id: d.id,
                     ...data,
                     createdAt,
-                    media
+                    media,
+                    commentCount
                 };
-            });
+            }));
+
+            this.reviews = reviewsWithComments;
 
             this.updateStats();
             this.renderReviews();
@@ -439,6 +456,16 @@ class ReviewManager {
                     </div>
                     <div class="review-header-right" style="display: flex; align-items: center; gap: 8px;">
                         <div class="review-rating">${this.getStarString(review.rating)}</div>
+                        
+                        <!-- Comment Toggle -->
+                        <button class="btn-toggle-comments" onclick="commentManager.toggleComments('${review.id}')">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="margin-top: 2px;">
+                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                            </svg>
+                            <span>댓글</span>
+                            ${review.commentCount > 0 ? `<span class="comment-count-badge">${review.commentCount}</span>` : ''}
+                        </button>
+
                         ${isOwner ? `
                         <div class="review-actions">
                             <button class="btn-text-edit" onclick="reviewManager.editReview('${review.id}')">수정</button>
@@ -458,6 +485,13 @@ class ReviewManager {
                         }).join('')}
                     </div>
                 ` : ''}
+                
+                <!-- Comment Section Container -->
+                <div id="comments-${review.id}" class="review-comments-section">
+                    <div class="comment-loading" style="text-align: center; color: #888; font-size: 0.8rem; padding: 10px;">
+                        댓글을 불러오는 중...
+                    </div>
+                </div>
             </div>
         `}).join('');
     }
@@ -506,6 +540,8 @@ class ReviewManager {
         // 스크롤 이동
         this.elements.form.scrollIntoView({ behavior: 'smooth' });
     }
+
+
 }
 
 // Global Loading Animation (Helper)

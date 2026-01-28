@@ -680,7 +680,7 @@
     <script src="js/auth-guard.js"></script>
     <script>
         // ⚠️ API Key Configuration
-        const API_KEY = "AIzaSyAvxv68MXCYiZbbSFc-WERwF7NGJ00x0Ss";
+        const API_KEY = "AIzaSyCnJosh522XUe4bORgm8H0a9IHa8N6xxEo";
 
         // State Management
         let currentQuestion = 1;
@@ -787,14 +787,14 @@
                 });
 
                 // Simple matching logic based on survey answers
-                let recommended = places;
+                let recommendedPlaces = places;
                 const answers = surveyAnswers;
 
                 // Q1: 혼합도
                 if (answers[1]) {
                     const mapping = { '한산': 'quiet', '여유': 'quiet', '보통': 'normal', '약간 붐빔': 'crowded', '붐빔': 'crowded' };
                     const target = mapping[answers[1]];
-                    recommended = recommended.filter(p => (p.congestion?.level || p.congestion) === target);
+                    recommendedPlaces = recommendedPlaces.filter(p => (p.congestion?.level || p.congestion) === target);
                 }
 
                 // Q2: 관심사
@@ -812,10 +812,10 @@
                     );
                 }
 
-                if (recommended.length === 0) {
+                if (recommendedPlaces.length === 0) {
                     showResults([], '조건에 맞는 장소를 찾지 못했어요. 조건을 조금만 넓혀볼까요?');
                 } else {
-                    showResults(recommended.slice(0, 6), '당신을 위한 최적의 장소들을 찾았습니다!');
+                    showResults(recommendedPlaces.slice(0, 12), '당신을 위한 최적의 장소들을 찾았습니다!');
                 }
             } catch (error) {
                 console.error("Survey Error:", error);
@@ -866,6 +866,7 @@
 - **Conciseness**: 정보는 풍부하되, 가독성을 위해 불필요한 미사여구는 줄이고 핵심 위주로 답해줘.
 - **Clean Output**: 답변에서 별표(*)나 해시태그(#)와 같은 마크다운 서식을 절대 사용하지 마. 가독성을 위해 줄바꿈과 이모지만 사용해줘.
 - **Data Schema**: n=name, c=category, d=description, t=tags, nr=nearby_restaurants, f=fee, h=hours, cg=congestion, rt=recommend_time.
+- 답변을 제시할 때 6개만 제시해줘
 
 ## Output Format (답변 예시 구조)
 1. 간단한 인사
@@ -948,7 +949,7 @@ ${JSON.stringify(placesDataForAI)}
                     }
                 });
                 if (matched.length > 0) {
-                    showResults(matched, 'AI가 추천한 장소들이에요');
+                    showResults(matched.slice(0,6), 'AI가 추천한 장소들이에요');
                 }
             } catch (e) {
                 console.error("Recommendation Error", e);

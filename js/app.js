@@ -5,7 +5,12 @@ class TeumsaeApp {
         this.places = []; // 초기값 빈 배열
         this.filteredPlaces = [];
         this.savedPlaces = this.loadSavedPlaces();
+
+        // Filter States
         this.currentCategory = "전체";
+        this.currentDistrict = "전체";
+        this.currentCongestion = "all";
+        this.currentSort = "recommended"; // Default Sort
         this.searchQuery = "";
 
         this.init();
@@ -50,8 +55,6 @@ class TeumsaeApp {
             const placeHtmlRaw = await placeRes.text();
             const compHtmlRaw = await compRes.text();
 
-            // Extract the core content div from the backdrop wrapper
-            // We assume the inner div has class "place-modal" and "comparison-modal" respectively
             const parser = new DOMParser();
             const placeDoc = parser.parseFromString(placeHtmlRaw, 'text/html');
             const compDoc = parser.parseFromString(compHtmlRaw, 'text/html');
@@ -59,7 +62,6 @@ class TeumsaeApp {
             const placeContent = placeDoc.querySelector('.place-modal').outerHTML;
             const compContent = compDoc.querySelector('.comparison-modal').outerHTML;
 
-            // Construct the Dual Layout
             const dualLayout = `
                 <div class="dual-backdrop" id="dual-backdrop">
                     <div class="dual-layout">
@@ -129,9 +131,16 @@ class TeumsaeApp {
             this.places.push(place);
         });
 
+        // Debugging Data
+        if (this.places.length > 0) {
+            console.log("First place data sample:", this.places[0]);
+            console.log("Checking district field on sample:", this.places[0].district);
+            console.log("Checking address field on sample:", this.places[0].address);
+        }
+
         this.filteredPlaces = [...this.places];
         this.renderCategoryFilters();
-        this.renderMoodFilters();
+        this.renderDistrictFilters();
         this.renderPlaces();
         console.log(`Loaded ${this.places.length} places from Firestore.`);
         this.checkUrlParams();
@@ -142,15 +151,21 @@ class TeumsaeApp {
         // 메인 섹션 요소
         this.main = document.querySelector('.main');
         this.searchInput = document.querySelector('.search-box__input'); // 검색 입력창
-        this.categoryBtns = document.querySelectorAll('.filter-btn[data-category]'); // 카테고리 버튼들
-        this.moodTags = document.querySelectorAll('.filter-btn[data-mood]'); // 분위기 태그 버튼들
         this.placesGrid = document.querySelector('.places-grid'); // 장소 목록 그리드 컨테이너
+
+        // Filter Elements (Updated Selectors for New Design)
+        this.categoryContainer = document.getElementById('category-filters');
+
+        // District Dropdown
+        this.districtSelect = document.getElementById('district-select');
+        this.districtTrigger = document.getElementById('district-trigger');
+        this.districtOptions = document.getElementById('district-options');
+
+        this.congestionBtns = document.querySelectorAll('#congestion-filters .segment-btn');
+        this.sortBtns = document.querySelectorAll('#sort-filters .sort-btn');
 
         // 헤더
         this.header = document.querySelector('.header');
-
-        // 모달 (팝업)
-        // Other elements cached in cacheModalElements()
     }
 
     // 이벤트 리스너 설정
@@ -172,10 +187,46 @@ class TeumsaeApp {
             });
         }
 
-        // 카테고리 필터 클릭 이벤트 -> renderCategoryFilters()에서 처리됨
+        // --- New Filter Events ---
 
+        // 1. Region Dropdown Toggle
+        if (this.districtTrigger) {
+            this.districtTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.districtSelect.classList.toggle('active');
+            });
+        }
 
-        // 분위기 태그 클릭 이벤트 -> renderMoodFilters()에서 처리됨
+        // Close dropdown when clicking outside
+        window.addEventListener('click', (e) => {
+            if (this.districtSelect && !this.districtSelect.contains(e.target)) {
+                this.districtSelect.classList.remove('active');
+            }
+        });
+
+        // 2. Congestion Filter (Segment Control)
+        if (this.congestionBtns) {
+            this.congestionBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this.congestionBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    this.currentCongestion = btn.dataset.congestion;
+                    this.filterPlaces();
+                });
+            });
+        }
+
+        // 3. Sort Filter (Text Buttons)
+        if (this.sortBtns) {
+            this.sortBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this.sortBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    this.currentSort = btn.dataset.sort;
+                    this.filterPlaces();
+                });
+            });
+        }
 
         // 스크롤 이벤트 (헤더 스타일 변경 및 요소 등장 효과)
         window.addEventListener('scroll', () => this.handleScroll());
@@ -196,8 +247,6 @@ class TeumsaeApp {
                 }
             });
         }
-
-        // Bookmark Toggle logic is handled in openPlaceModal
     }
 
     // 메인 섹션으로 스크롤
@@ -280,144 +329,202 @@ class TeumsaeApp {
         });
     }
 
-    // 장소 필터링 로직 (카테고리, 검색어, 태그 조합)
+    // 장소 필터링 로직
     filterPlaces() {
-        // 활성화된 분위기 태그 목록 수집
-        const activeMoods = [...document.querySelectorAll('.filter-btn[data-mood].active')]
-            .map(tag => tag.dataset.mood);
-
-        const query = this.searchQuery.replace('#', '').trim(); // 검색어에서 # 제거 및 공백 제거
+        const query = this.searchQuery.replace('#', '').trim(); // 검색어
 
         this.filteredPlaces = this.places.filter(place => {
             // 1. 카테고리 일치 여부
             const categoryMatch = this.currentCategory === "전체" ||
                 place.category === this.currentCategory;
 
-            // 2. 검색어 포함 여부 (이름, 설명, 태그)
-            // 태그 검색 기능 강화: 검색어가 태그 중 하나라도 포함하거나 일치하면 매칭
+            // 2. 지역 일치 여부
+            const placeDistrict = this.extractDistrict(place);
+            const districtMatch = this.currentDistrict === "전체" ||
+                placeDistrict === this.currentDistrict;
+
+            // 3. 혼잡도 일치 여부
+            const placeLevel = place.congestion ? (place.congestion.level || place.congestion) : 'normal';
+            // Simple mapping if needed, assuming direct value match for now
+            const congestionMatch = this.currentCongestion === "all" ||
+                placeLevel === this.currentCongestion;
+
+            // 4. 검색어 포함 여부
             const searchMatch = !query ||
                 place.name.toLowerCase().includes(query) ||
                 place.description.toLowerCase().includes(query) ||
                 place.tags.some(tag => tag.toLowerCase().includes(query));
 
-            // 3. 분위기 태그 일치 여부 (선택된 태그를 모두 포함해야 통과 - AND 조건)
-            const moodMatch = activeMoods.length === 0 ||
-                activeMoods.every(mood =>
-                    place.tags.some(tag => tag.includes(mood)) ||
-                    place.description.includes(mood)
-                );
-
-            return categoryMatch && searchMatch && moodMatch;
+            return categoryMatch && districtMatch && congestionMatch && searchMatch;
         });
+
+        // 5. 정렬 Logic
+        this.sortPlaces();
 
         this.renderPlaces(); // 필터링 결과 렌더링
     }
 
+    // 정렬 함수
+    sortPlaces() {
+        if (this.currentSort === 'recommended') {
+            // Custom Recommendation Score
+            // Priority: High Rating > Quiet > Normal > Crowded
+            this.filteredPlaces.sort((a, b) => {
+                const getScore = (p) => {
+                    let score = 0;
+                    const rating = p.stats ? p.stats.rating : (p.rating || 0);
+                    score += rating * 20; // 5.0 -> 100
 
-    // 카테고리 필터 버튼 동적 생성
+                    const lvl = p.congestion ? (p.congestion.level || p.congestion) : 'normal';
+                    if (lvl === 'quiet') score += 15;
+                    else if (lvl === 'normal') score += 5;
+                    // crowded = 0
+
+                    return score;
+                };
+                return getScore(b) - getScore(a);
+            });
+        } else if (this.currentSort === 'rating') {
+            this.filteredPlaces.sort((a, b) => {
+                const ratingA = a.stats ? a.stats.rating : (a.rating || 0);
+                const ratingB = b.stats ? b.stats.rating : (b.rating || 0);
+                return ratingB - ratingA; // Descending
+            });
+        } else if (this.currentSort === 'reviews') {
+            this.filteredPlaces.sort((a, b) => {
+                const reviewsA = a.stats ? a.stats.reviewCount : 0;
+                const reviewsB = b.stats ? b.stats.reviewCount : 0;
+                return reviewsB - reviewsA; // Descending
+            });
+        }
+    }
+
+    // 주소에서 구 추출 Helper
+    extractDistrict(place) {
+        // 1. Try to find the district or address from the flat object first
+        if (place.district) return place.district;
+        let addressVal = place.address;
+
+        // 2. If not found, use the deep search logic from openPlaceModal
+        if (!addressVal && !place.district) {
+            // Check nested by ID
+            const idKey = place.id;
+            const nested = place[idKey] || place[String(idKey)];
+            if (nested) {
+                if (nested.district) return nested.district;
+                if (nested.address) addressVal = nested.address;
+            }
+
+            // Check nested by Name
+            if (!addressVal && place[place.name]) {
+                if (place[place.name].district) return place[place.name].district;
+                if (place[place.name].address) addressVal = place[place.name].address;
+            }
+
+            // Fallback: Scan all properties
+            if (!addressVal) {
+                for (const key in place) {
+                    if (place[key] && typeof place[key] === 'object') {
+                        if (place[key].district) return place[key].district;
+                        if (place[key].address) {
+                            addressVal = place[key].address;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!addressVal) {
+            // console.warn(`Could not find address for place id: ${place.id}`);
+            return "기타";
+        }
+
+        // '서울 종로구 ...', '경기도 ...', '강남구 ...'
+        const match = addressVal.match(/([가-힣]+구)/);
+
+        if (match) {
+            return match[1];
+        }
+
+        // console.warn(`Could not extract district from address: ${addressVal}`);
+        return "기타";
+    }
+
+    // 카테고리 필터 버튼 동적 생성 (New Chips Style)
     renderCategoryFilters() {
         const filterContainer = document.getElementById('category-filters');
         if (!filterContainer) return;
 
-        // 1. 현재 데이터에서 사용된 카테고리 추출 (중복 제거)
+        // 1. 카테고리 추출
         const uniqueCategories = new Set(['전체']);
         this.places.forEach(place => {
             if (place.category) uniqueCategories.add(place.category);
         });
 
-        // 2. 버튼 HTML 생성
+        // 2. HTML 생성 (Using .category-chip)
         filterContainer.innerHTML = Array.from(uniqueCategories).map(category => {
             const isActive = category === this.currentCategory;
-            return `<button class="filter-btn ${isActive ? 'active' : ''}" data-category="${category}">${category}</button>`;
+            return `<button class="category-chip ${isActive ? 'active' : ''}" data-category="${category}">${category}</button>`;
         }).join('');
 
-        // 3. 이벤트 리스너 다시 연결
-        const newCategoryBtns = filterContainer.querySelectorAll('.filter-btn');
-        newCategoryBtns.forEach(btn => {
+        // 3. 이번트 리스너
+        const chips = filterContainer.querySelectorAll('.category-chip');
+        chips.forEach(btn => {
             btn.addEventListener('click', () => {
-                // UI 업데이트
-                newCategoryBtns.forEach(b => b.classList.remove('active'));
+                chips.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
 
-                // 상태 업데이트 및 필터링
                 this.currentCategory = btn.dataset.category;
                 this.filterPlaces();
             });
         });
     }
 
-    // 분위기 필터 버튼 동적 생성 (더보기 기능 추가)
-    renderMoodFilters() {
-        const filterContainer = document.getElementById('mood-filters');
-        if (!filterContainer) return;
+    // 지역(구) 필터 (Custom Select Options)
+    renderDistrictFilters() {
+        const optionsContainer = document.getElementById('district-options');
+        if (!optionsContainer) return;
 
-        // 1. 현재 데이터에서 사용된 태그 추출 확인
-        const tagCounts = {};
+        // 1. 데이터 추출
+        const districts = new Set(['전체']); // Use '전체' as value, trigger displays '전체 지역'
         this.places.forEach(place => {
-            if (place.tags && Array.isArray(place.tags)) {
-                place.tags.forEach(tag => {
-                    const cleanTag = tag.replace('#', '').trim();
-                    if (cleanTag) {
-                        tagCounts[cleanTag] = (tagCounts[cleanTag] || 0) + 1;
-                    }
-                });
-            }
+            const gu = this.extractDistrict(place);
+            if (gu && gu !== "기타") districts.add(gu);
         });
 
-        // 2. 많이 사용된 순으로 정렬
-        const sortedTags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
+        const sortedDistricts = Array.from(districts).filter(d => d !== "전체").sort();
+        const displayList = ["전체", ...sortedDistricts];
 
-        // 3. 버튼 렌더링 함수 (내부 함수로 정의하여 상태 유지)
-        const renderBtns = (showAll = false) => {
-            const initialCount = 10; // 처음에 보여줄 개수
-            const displayTags = showAll ? sortedTags : sortedTags.slice(0, initialCount);
+        // 2. HTML 생성
+        optionsContainer.innerHTML = displayList.map(district => {
+            const label = district === "전체" ? "전체 지역" : district;
+            return `<div class="select-option" data-value="${district}">${label}</div>`;
+        }).join('');
 
-            // 태그 버튼 HTML 생성
-            let html = displayTags.map(tag => {
-                // 이미 활성화된 태그인지 확인 (재렌더링 시 상태 유지)
-                const isActive = document.querySelector(`.filter-btn[data-mood="${tag}"].active`);
-                return `<button class="filter-btn ${isActive ? 'active' : ''}" data-mood="${tag}">${tag}</button>`;
-            }).join('');
+        // 3. 이벤트 리스너
+        optionsContainer.querySelectorAll('.select-option').forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                e.stopPropagation(); // prevent closing immediately if needed, but here we want to close
+                const value = opt.dataset.value;
+                const label = opt.textContent;
 
-            // '더 보기' 또는 '접기' 버튼 추가
-            if (sortedTags.length > initialCount) {
-                if (showAll) {
-                    html += `<button class="filter-btn more-btn" id="filter-show-less" style="color: var(--accent-color); border-color: var(--accent-color);">− 접기</button>`;
-                } else {
-                    html += `<button class="filter-btn more-btn" id="filter-show-more" style="color: var(--accent-color); border-color: var(--accent-color);">+ 더 보기</button>`;
-                }
-            }
+                // Update Trigger Text
+                if (this.districtTrigger) this.districtTrigger.textContent = label;
 
-            filterContainer.innerHTML = html;
+                // Update State
+                this.currentDistrict = value;
 
-            // 이벤트 리스너 연결
-            filterContainer.querySelectorAll('.filter-btn[data-mood]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    btn.classList.toggle('active');
-                    this.filterPlaces();
-                });
+                // Close Dropdown
+                this.districtSelect.classList.remove('active');
+
+                // Filter
+                this.filterPlaces();
             });
-
-            // 더 보기 버튼 이벤트
-            const moreBtn = document.getElementById('filter-show-more');
-            if (moreBtn) {
-                moreBtn.addEventListener('click', () => {
-                    renderBtns(true); // 전체 보기로 다시 렌더링
-                });
-            }
-
-            // 접기 버튼 이벤트
-            const lessBtn = document.getElementById('filter-show-less');
-            if (lessBtn) {
-                lessBtn.addEventListener('click', () => {
-                    renderBtns(false); // 요약 보기로 다시 렌더링
-                });
-            }
-        };
-
-        // 초기 렌더링
-        renderBtns(false);
+        });
     }
+
+    // renderMoodFilters Removed
 
     // 장소 카드 렌더링
     renderPlaces() {
@@ -428,7 +535,7 @@ class TeumsaeApp {
             this.placesGrid.innerHTML = `
         <div class="places-empty" style="grid-column: 1 / -1; text-align: center; padding: 4rem;">
           <p style="font-size: 1.25rem; color: var(--color-gray);">검색 결과가 없습니다.</p>
-          <p style="color: var(--color-gray-light); margin-top: 0.5rem;">다른 키워드로 검색해보세요.</p>
+          <p style="color: var(--color-gray-light); margin-top: 0.5rem;">다른 키워드나 필터를 선택해보세요.</p>
         </div>
       `;
             return;

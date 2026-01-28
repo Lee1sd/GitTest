@@ -35,28 +35,28 @@
         .search-box {
             display: flex;
             align-items: center;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            /* Lighter background */
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 50px;
-            padding: 12px 25px;
-            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            /* Less rounded */
+            padding: 12px 20px;
+            margin-bottom: 24px;
             transition: all 0.3s ease;
             position: relative;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
         .search-box:focus-within {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: var(--text-color);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-color);
             transform: translateY(-2px);
         }
 
         .search-box__icon {
-            color: rgba(255, 255, 255, 0.7);
-            margin-right: 15px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-right: 12px;
         }
 
         .search-box__input {
@@ -64,58 +64,249 @@
             border: none;
             outline: none;
             width: 100%;
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: var(--text-color);
-            font-family: var(--font-serif);
+            font-family: var(--font-sans);
         }
 
         .search-box__input::placeholder {
             color: rgba(255, 255, 255, 0.3);
         }
 
-        .main__filters {
-            margin-bottom: 30px;
+        /* --- New Filter Toolbar Design --- */
+        .filter-toolbar {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            /* Reduced from 20px */
+            margin-bottom: 24px;
+            /* Reduced from 30px */
+            background: rgba(30, 30, 30, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            /* Slightly less rounded */
+            padding: 14px 18px;
+            /* Reduced from 20px */
         }
 
-        .filter-section {
-            margin-bottom: 15px;
-        }
-
-        .filter-section__label {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.4);
-            margin-bottom: 8px;
-            letter-spacing: 2px;
-            font-weight: 600;
-        }
-
-        .filter-buttons {
+        /* Row 1: Categories (Chips) */
+        .filter-row.categories {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
+            /* Reduced from 10px */
+            padding-bottom: 10px;
+            /* Reduced from 16px */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .filter-btn {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: rgba(255, 255, 255, 0.6);
-            padding: 6px 16px;
-            border-radius: 4px;
-            font-size: 14px;
+        .category-chip {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            padding: 6px 14px;
+            /* Reduced padding */
+            border-radius: 20px;
+            font-size: 0.85rem;
+            /* Slightly smaller */
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
-        .filter-btn:hover {
-            border-color: rgba(255, 255, 255, 0.4);
+        .category-chip:hover {
+            background: rgba(255, 255, 255, 0.1);
             color: var(--text-color);
         }
 
-        .filter-btn.active {
+        .category-chip.active {
+            background: var(--accent-color);
+            color: #111;
+            /* Dark text for contrast */
             border-color: var(--accent-color);
-            color: var(--accent-color);
-            background: rgba(212, 175, 55, 0.1);
+            font-weight: 600;
         }
+
+        /* Row 2: Controls (Dropdown, Segment, Sort) */
+        .filter-row.controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+            /* Reduced from 24px */
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            /* Reduced from 8px */
+        }
+
+        /* Custom Dropdown (Region) */
+        .custom-select {
+            position: relative;
+            min-width: 130px;
+            /* Reduced min-width */
+        }
+
+        .select-btn {
+            width: 100%;
+            background: #252525;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-color);
+            padding: 8px 12px;
+            /* Reduced padding */
+            border-radius: 6px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .select-btn:after {
+            content: '';
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid rgba(255, 255, 255, 0.5);
+            margin-left: 8px;
+        }
+
+        .select-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: #252525;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            margin-top: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .custom-select.active .select-options {
+            display: block;
+        }
+
+        .select-option {
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .select-option:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--accent-color);
+        }
+
+        /* Segment Control (Congestion) */
+        .segment-control {
+            display: flex;
+            background: #252525;
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            gap: 4px;
+        }
+
+        .segment-btn {
+            padding: 6px 16px;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        /* Color Coding for Congestion */
+        .segment-btn[data-congestion="quiet"]:hover,
+        .segment-btn[data-congestion="quiet"].active {
+            color: #4DB6AC;
+            /* Teal lighten-2 */
+            background: rgba(38, 166, 154, 0.15);
+        }
+
+        .segment-btn[data-congestion="quiet"].active {
+            font-weight: 700;
+            background: rgba(38, 166, 154, 0.25);
+        }
+
+        .segment-btn[data-congestion="normal"]:hover,
+        .segment-btn[data-congestion="normal"].active {
+            color: #FFCA28;
+            /* Amber lighten-1 */
+            background: rgba(255, 179, 0, 0.15);
+        }
+
+        .segment-btn[data-congestion="normal"].active {
+            font-weight: 700;
+            background: rgba(255, 179, 0, 0.25);
+        }
+
+        .segment-btn[data-congestion="crowded"]:hover,
+        .segment-btn[data-congestion="crowded"].active {
+            color: #EF5350;
+            /* Red lighten-1 */
+            background: rgba(229, 57, 53, 0.15);
+        }
+
+        .segment-btn[data-congestion="crowded"].active {
+            font-weight: 700;
+            background: rgba(229, 57, 53, 0.25);
+        }
+
+        /* 'All' state default */
+        .segment-btn[data-congestion="all"].active {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        /* Sort Control */
+        .sort-control {
+            display: flex;
+            gap: 12px;
+        }
+
+        .sort-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.9rem;
+            cursor: pointer;
+            position: relative;
+            padding-bottom: 2px;
+        }
+
+        .sort-btn.active {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .sort-btn.active:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent-color);
+        }
+
+        .spacer {
+            flex: 1;
+        }
+
 
         /* 분할 뷰 / 지도 토글 로직 */
         .split-view-container {
@@ -323,22 +514,47 @@
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
-                        <input type="text" class="search-box__input" placeholder="장소, 분위기, 지역을 검색해보세요 (예: 경복궁, 야경)">
+                        <input type="text" class="search-box__input" placeholder="장소, 분위기, 지역을 검색해보세요">
                     </div>
 
-                    <!-- 필터 --->
-                    <div class="main__filters">
-                        <div class="filter-section">
-                            <h3 class="filter-section__label">카테고리</h3>
-                            <div class="filter-buttons" id="category-filters">
-                                <!-- Populated by JS -->
-                            </div>
+                    <!-- New Filter Toolbar -->
+                    <div class="filter-toolbar">
+                        <!-- Row 1: Categories -->
+                        <div class="filter-row categories" id="category-filters">
+                            <!-- JS Populated -->
                         </div>
 
-                        <div class="filter-section">
-                            <h3 class="filter-section__label">테마</h3>
-                            <div class="filter-buttons" id="mood-filters">
-                                <!-- Populated by JS -->
+                        <!-- Row 2: Controls -->
+                        <div class="filter-row controls">
+                            <!-- Region Dropdown -->
+                            <div class="control-group">
+                                <div class="custom-select" id="district-select">
+                                    <div class="select-btn" id="district-trigger">전체 지역</div>
+                                    <div class="select-options" id="district-options">
+                                        <!-- JS Populated -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Congestion -->
+                            <div class="control-group">
+                                <div class="segment-control" id="congestion-filters">
+                                    <button class="segment-btn active" data-congestion="all">전체</button>
+                                    <button class="segment-btn" data-congestion="quiet">여유</button>
+                                    <button class="segment-btn" data-congestion="normal">보통</button>
+                                    <button class="segment-btn" data-congestion="crowded">혼잡</button>
+                                </div>
+                            </div>
+
+                            <div class="spacer"></div>
+
+                            <!-- Sort -->
+                            <div class="control-group">
+                                <div class="sort-control" id="sort-filters">
+                                    <button class="sort-btn active" data-sort="recommended">추천순</button>
+                                    <button class="sort-btn" data-sort="rating">별점순</button>
+                                    <button class="sort-btn" data-sort="reviews">리뷰순</button>
+                                </div>
                             </div>
                         </div>
                     </div>

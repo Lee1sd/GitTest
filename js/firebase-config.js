@@ -131,3 +131,9 @@ function getCongestionText(level) {
 window.fetchPlacesFromFirestore = fetchPlacesFromFirestore;
 window.getCongestionColor = getCongestionColor;
 window.getCongestionText = getCongestionText;
+
+
+// 전역 노출 (planner.js에서 사용)
+window.firebase = firebase;
+window.auth = firebase.auth();
+window.db = firebase.firestore();

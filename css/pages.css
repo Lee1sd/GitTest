@@ -424,7 +424,7 @@
 /* ===== PLANNER PAGE ===== */
 .planner {
     min-height: 100vh;
-    padding-top: var(--header-height);
+    padding-top: 80px;
     background: var(--color-light);
 }
 
@@ -446,8 +446,9 @@
 }
 
 .planner__content {
+    
     display: grid;
-    grid-template-columns: 350px 1fr;
+    grid-template-columns: 350px 1fr 240px; 
     gap: var(--space-8);
     padding-bottom: var(--space-12);
 }
@@ -531,10 +532,20 @@
     margin-bottom: var(--space-8);
 }
 
+.planner__timeline-time input {
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    color: var(--accent-color);
+    font-size: 0.875rem;
+}
+
 .planner__date-picker {
+    position: relative;
     display: flex;
     align-items: center;
     gap: var(--space-4);
+    left: 80px;
 }
 
 .planner__date-input {
@@ -606,16 +617,20 @@
     object-fit: cover;
 }
 
-.planner__timeline-info h4 {
-    font-size: var(--text-base);
-    font-weight: var(--font-bold);
-    margin-bottom: var(--space-1);
-}
+/* Fixed Visibility for Timeline Items */
+    .planner__timeline-info h4 {
+        color: var(--text-color);
+        margin-bottom: 4px;
+        font-size: 1.1rem;
+        margin-top: 0;
+    }
 
-.planner__timeline-info p {
-    font-size: var(--text-sm);
-    color: var(--color-gray);
-}
+    .planner__timeline-info p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+        line-height: 1.4;
+        margin: 0;
+    }
 
 .planner__empty {
     text-align: center;
@@ -1507,4 +1522,340 @@
     box-shadow:
         inset 0 2px 15px rgba(0, 0, 0, 0.5),
         inset 0 1px 0 rgba(255, 200, 150, 0.05);
+}
+
+/**/
+.planner__day h2 {
+  margin-bottom: 12px;
+}
+
+.planner-day-title {
+  display: flex;
+  flex-direction: row; /* 🔥 위 → 아래 */
+  gap: 6px;
+}
+
+.day-date {
+    position: relative;
+  font-size: 0.85rem;
+  color: #aaa;
+  top: 10px;
+}
+
+/*일정보가 hover*/
+#open-myplans {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  transition: 
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+#open-myplans svg {
+  width: 20px;
+  height: 20px;
+  stroke: rgba(255, 255, 255, 0.85);
+  transition: stroke 0.2s ease, transform 0.2s ease;
+}
+
+#open-myplans:hover {
+  background: rgba(255, 215, 128, 0.12); /* 은은한 골드 */
+  border-color: rgba(255, 215, 128, 0.5);
+
+  box-shadow: 
+    0 6px 18px rgba(255, 215, 128, 0.25);
+
+  transform: translateY(-2px);
+}
+
+#open-myplans:hover svg {
+  stroke: var(--accent-color); /* 골드 포인트 */
+  transform: scale(1.08);
+}
+
+/*일정 슬라이드*/
+/* 내 일정 슬라이드 패널 */
+.myplans-panel {
+  position: fixed;
+  top: 90px; /* header 높이 맞춰 */
+  right: -360px; /* 처음엔 화면 밖 */
+  width: 340px;
+  height: calc(100vh - 110px);
+  background: #2f2f2f;
+  border-left: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px 0 0 16px;
+  box-shadow: -10px 0 30px rgba(0,0,0,0.35);
+  padding: 20px;
+  z-index: 2000;
+
+  transition: right 0.35s ease;
+}
+
+/* 열렸을 때 */
+.myplans-panel.is-open {
+  right: 0;
+}
+
+/* 헤더 */
+.myplans-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.myplans-header h3 {
+  font-size: 1.2rem;
+  color: var(--text-color);
+}
+
+#close-myplans {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.7);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+/* 새 일정 버튼 */
+.myplans-new-btn {
+  width: 100%;
+  padding: 10px 12px;
+  margin: 10px 0 16px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+/* 일정 리스트 */
+.myplans-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.myplans-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.myplans-item:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: var(--accent-color);
+}
+
+.myplans-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #555, #777);
+}
+
+.myplans-info strong {
+  color: var(--text-color);
+  font-size: 0.95rem;
+}
+
+.myplans-info p {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.6);
+  margin: 4px 0 0;
+}
+
+/*이름 설정 모달*/
+/* 일정 이름 모달 전체 오버레이 */
+
+/* 열릴 때 */
+.plan-name-modal.is-open {
+  display: flex;
+}
+
+.plan-name-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* 모달 박스 */
+.plan-name-box {
+  background: #2f2f2f;
+  padding: 24px;
+  border-radius: 16px;
+  width: 320px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  text-align: center;
+}
+
+/* 제목 */
+.plan-name-box span {
+  color: #fff;
+  font-size: 25px;
+  margin-bottom: 12px;
+
+}
+
+/* 입력창 */
+.plan-name-box input {
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  color: black;
+  margin-bottom: 16px;
+}
+
+/* 버튼 영역 */
+.plan-name-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.plan-name-actions .btn {
+  padding: 8px 14px;     /* 🔻 기존보다 줄임 */
+  font-size: 0.85rem;   /* 🔻 살짝 작게 */
+  border-radius: 20px;  /* 너무 둔하지 않게 */
+  min-width: 72px;      /* 버튼 균형 */
+}
+
+.myplans-delete-btn{
+   margin-left: auto;
+}
+
+/*슬라이드*/
+.empty-myplans{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+}
+
+/*todo*/
+.planner_Todo{
+    background-color: #333;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    height: fit-content;
+    position: sticky;
+    top: 100px;
+    color: black;   
+}
+
+.planner_Todo h5{
+    color: white;
+}
+
+.todo-add{
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+}
+
+.todo-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 25px;
+  border: none;
+  background-color: white;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.todo-add-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.todo-add-btn:hover {
+  background: var(--color-secondary);
+}
+
+.todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.todo-item input[type="text"] {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.4);
+  outline: none;
+  color: #fff;
+  padding: 4px 0;
+   width: 150px;
+}
+
+.todo-item input[type="text"]:focus {
+  border-bottom-color: #fff;
+}
+
+.todo-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.p-container{
+    max-width: 1500px;
+    margin: 0 auto;     /* ← 화면 가운데로 */
+  padding: 0 2rem;    /* ← 양옆 숨 쉴 여백 */
+
+}
+
+.planner__day h2{
+    color: white;
+
+}
+
+.add-place-btn {
+    font-size: 0.875rem;
+    color: var(--color-gray);
+    margin-bottom: 1rem;
+}
+/*일정 이미지*/
+.planner__timeline-place img{
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.todo-delete-btn{
+    color: white;
 }

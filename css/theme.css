@@ -380,10 +380,10 @@ a {
 /* 지도 오버레이 */
 .map-overlay {
     position: fixed;
-    top: 80px;
+    top: 0;
     left: 0;
     width: 100%;
-    height: calc(100vh - 80px);
+    height: 100vh;
     z-index: 990;
     /* 헤더(1000) 바로 아래 */
     background-color: rgba(0, 0, 0, 0.2);

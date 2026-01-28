@@ -11,6 +11,8 @@ class ReviewManager {
 
     // Call this after modal HTML is injected into DOM
     rebind() {
+        console.log('[ReviewManager] rebind() called');
+
         // Cache DOM elements
         this.elements = {
             section: document.getElementById('modal-reviews-section'),
@@ -32,6 +34,20 @@ class ReviewManager {
                 count: document.getElementById('review-count')
             }
         };
+
+        // Debug: Check if elements are found
+        console.log('[ReviewManager] Elements bound:', {
+            section: !!this.elements.section,
+            btnWrite: !!this.elements.btnWrite,
+            form: !!this.elements.form,
+            list: !!this.elements.list,
+            'inputs.text': !!this.elements.inputs?.text,
+            'stats.avg': !!this.elements.stats?.avg
+        });
+
+        if (!this.elements.list) {
+            console.error('[ReviewManager] review-list element not found! Modal HTML may not be loaded yet.');
+        }
 
         this.bindEvents();
     }
@@ -59,6 +75,13 @@ class ReviewManager {
     async loadForPlace(placeId) {
         console.log(`[ReviewManager] Loading for placeId: ${placeId} (Type: ${typeof placeId})`);
         this.currentPlaceId = placeId;
+
+        // Ensure elements are bound before accessing them
+        if (!this.elements || !this.elements.list) {
+            console.log('[ReviewManager] Elements not bound, calling rebind()...');
+            this.rebind();
+        }
+
         this.resetForm();
         this.toggleForm(false);
 
@@ -104,7 +127,9 @@ class ReviewManager {
 
         } catch (error) {
             console.error("Error loading reviews:", error);
-            this.elements.list.innerHTML = '<div class="review-empty">리뷰를 불러오는 중 오류가 발생했습니다.</div>';
+            if (this.elements && this.elements.list) {
+                this.elements.list.innerHTML = '<div class="review-empty">리뷰를 불러오는 중 오류가 발생했습니다.</div>';
+            }
         }
     }
 
@@ -169,12 +194,20 @@ class ReviewManager {
         this.mediaFiles = [];
         this.editingReviewId = null; // 수정 ID 초기화
 
+        // Null 체크 추가
+        if (!this.elements || !this.elements.inputs) {
+            console.warn('[ReviewManager] resetForm: elements not initialized');
+            return;
+        }
+
         if (this.elements.inputs.title) this.elements.inputs.title.value = '';
-        this.elements.inputs.text.value = '';
-        this.elements.inputs.media.value = ''; // Reset file input
-        this.elements.preview.innerHTML = '';
+        if (this.elements.inputs.text) this.elements.inputs.text.value = '';
+        if (this.elements.inputs.media) this.elements.inputs.media.value = ''; // Reset file input
+        if (this.elements.preview) this.elements.preview.innerHTML = '';
         // Reset stars
-        this.elements.inputs.stars.forEach(radio => radio.checked = false);
+        if (this.elements.inputs.stars) {
+            this.elements.inputs.stars.forEach(radio => radio.checked = false);
+        }
 
         // 버튼 텍스트 원복
         if (this.elements.btnSubmit) this.elements.btnSubmit.textContent = '등록하기';
@@ -428,19 +461,25 @@ class ReviewManager {
     }
 
     updateStats() {
+        // Null 체크 추가
+        if (!this.elements || !this.elements.stats) {
+            console.warn('[ReviewManager] updateStats: elements.stats not initialized');
+            return;
+        }
+
         if (this.reviews.length === 0) {
-            this.elements.stats.avg.textContent = "0.0";
-            this.elements.stats.stars.textContent = "☆☆☆☆☆";
-            this.elements.stats.count.textContent = "(0)";
+            if (this.elements.stats.avg) this.elements.stats.avg.textContent = "0.0";
+            if (this.elements.stats.stars) this.elements.stats.stars.textContent = "☆☆☆☆☆";
+            if (this.elements.stats.count) this.elements.stats.count.textContent = "(0)";
             return;
         }
 
         const sum = this.reviews.reduce((acc, r) => acc + (r.rating || 0), 0);
         const avg = (sum / this.reviews.length).toFixed(1);
 
-        this.elements.stats.avg.textContent = avg;
-        this.elements.stats.stars.textContent = this.getStarString(avg);
-        this.elements.stats.count.textContent = `(${this.reviews.length})`;
+        if (this.elements.stats.avg) this.elements.stats.avg.textContent = avg;
+        if (this.elements.stats.stars) this.elements.stats.stars.textContent = this.getStarString(avg);
+        if (this.elements.stats.count) this.elements.stats.count.textContent = `(${this.reviews.length})`;
     }
 
     getStarString(rating) {
@@ -449,7 +488,7 @@ class ReviewManager {
     }
 
     renderReviews() {
-        if (!this.elements.list) return;
+        if (!this.elements || !this.elements.list) return;
 
         if (this.reviews.length === 0) {
             this.elements.list.innerHTML = `

@@ -62,6 +62,11 @@ class TeumsaeApp {
             const placeContent = placeDoc.querySelector('.place-modal').outerHTML;
             const compContent = compDoc.querySelector('.comparison-modal').outerHTML;
 
+            // Debug: Check if review elements are in the extracted HTML
+            console.log('[loadModalComponent] placeContent includes review-list:', placeContent.includes('review-list'));
+            console.log('[loadModalComponent] placeContent includes btn-write-review:', placeContent.includes('btn-write-review'));
+            console.log('[loadModalComponent] placeContent length:', placeContent.length);
+
             const dualLayout = `
                 <div class="dual-backdrop" id="dual-backdrop">
                     <div class="dual-layout">
@@ -76,6 +81,10 @@ class TeumsaeApp {
             `;
 
             document.getElementById('modal-container').innerHTML = dualLayout;
+
+            // Debug: Check if elements exist in DOM after injection
+            console.log('[loadModalComponent] After injection - review-list exists:', !!document.getElementById('review-list'));
+            console.log('[loadModalComponent] After injection - btn-write-review exists:', !!document.getElementById('btn-write-review'));
 
             // Re-bind sub-components
             if (this.modalPlanner) this.modalPlanner.rebind();
@@ -131,11 +140,15 @@ class TeumsaeApp {
             this.places.push(place);
         });
 
+        // 리뷰 통계 로드 및 장소 데이터에 추가
+        await this.loadReviewStats();
+
         // Debugging Data
         if (this.places.length > 0) {
             console.log("First place data sample:", this.places[0]);
             console.log("Checking district field on sample:", this.places[0].district);
             console.log("Checking address field on sample:", this.places[0].address);
+            console.log("Review stats sample:", this.places[0].reviewStats);
         }
 
         this.filteredPlaces = [...this.places];
@@ -144,6 +157,62 @@ class TeumsaeApp {
         this.renderPlaces();
         console.log(`Loaded ${this.places.length} places from Firestore.`);
         this.checkUrlParams();
+    }
+
+    // Firestore에서 리뷰 통계 로드
+    async loadReviewStats() {
+        try {
+            // 모든 리뷰를 한 번에 가져와서 장소별로 집계
+            const reviewsSnapshot = await db.collection('reviews').get();
+
+            // 장소별 리뷰 통계 계산
+            const statsMap = new Map(); // placeId -> { totalRating, count }
+
+            reviewsSnapshot.forEach(doc => {
+                const review = doc.data();
+                const placeId = review.placeId;
+                const rating = review.rating || 0;
+
+                if (!statsMap.has(placeId)) {
+                    statsMap.set(placeId, { totalRating: 0, count: 0 });
+                }
+
+                const stat = statsMap.get(placeId);
+                stat.totalRating += rating;
+                stat.count += 1;
+            });
+
+            // 각 장소에 리뷰 통계 추가
+            this.places.forEach(place => {
+                // placeId가 숫자 또는 문자열일 수 있으므로 둘 다 확인
+                const numericId = Number(place.id);
+                const stringId = String(place.id);
+
+                let stat = statsMap.get(numericId) || statsMap.get(stringId);
+
+                if (stat && stat.count > 0) {
+                    const avgRating = (stat.totalRating / stat.count).toFixed(1);
+                    place.reviewStats = {
+                        rating: parseFloat(avgRating),
+                        reviewCount: stat.count
+                    };
+                    // 기존 stats 객체가 있으면 병합, 없으면 생성
+                    if (!place.stats) place.stats = {};
+                    place.stats.rating = parseFloat(avgRating);
+                    place.stats.reviewCount = stat.count;
+                } else {
+                    place.reviewStats = { rating: 0, reviewCount: 0 };
+                    if (!place.stats) place.stats = {};
+                    place.stats.rating = place.stats.rating || 0;
+                    place.stats.reviewCount = 0;
+                }
+            });
+
+            console.log(`[loadReviewStats] Processed ${reviewsSnapshot.size} reviews for ${statsMap.size} places`);
+
+        } catch (error) {
+            console.error('[loadReviewStats] Error loading review stats:', error);
+        }
     }
 
     // 자주 사용하는 DOM 요소를 변수에 저장하여 성능 최적화
@@ -973,6 +1042,8 @@ class TeumsaeApp {
                 const currentRating = place.stats ? place.stats.rating : (place.rating || 0);
                 if (recRating > currentRating) chips.push('<span class="comp-chip better">평점 높음</span>');
 
+                const recReviewCount = rec.stats ? rec.stats.reviewCount : (rec.reviewCount || 0);
+
                 return `
                 <div class="comp-item" onclick="window.app.openPlaceModal(${rec.id})">
                     <img src="${rec.images[0]}" class="comp-item__thumb" alt="${rec.name}">
@@ -983,6 +1054,8 @@ class TeumsaeApp {
                         </div>
                         <div class="comp-item__meta">
                             <span>★ ${recRating}</span>
+                            <span class="divider">|</span>
+                            <span>리뷰 ${recReviewCount}개</span>
                             <span class="divider">|</span>
                             <span>${this.getCongestionText(recLevel)}</span>
                         </div>

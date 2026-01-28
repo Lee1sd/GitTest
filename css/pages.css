@@ -1856,15 +1856,29 @@
     flex-shrink: 0;
 }
 
-.todo-delete {
+.planner-todo-delete{
+   color: #fff; 
+}
+.todo-item .todo-delete {
   background: none;
   border: none;
-  color: var(--color-white); /* 또는 white */
+  color: #fff;
   font-size: 1.2rem;
   cursor: pointer;
   padding: 0;
 }
 
+
 .todo-delete:hover {
-  color: var(--color-white);
+  color: #fff;
+}
+
+.btn-waste {
+  margin-left: auto;   /* 오른쪽 끝으로 보내는 핵심 */
+  flex-shrink: 0;      /* 아이콘 찌그러짐 방지 */
+  opacity: 0.7;
+}
+
+.btn-waste:hover {
+  opacity: 1;
 }

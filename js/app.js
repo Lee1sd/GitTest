@@ -47,6 +47,14 @@ class TeumsaeApp {
         this.initIntroAnimation();
         this.checkHash();
         this.checkUrlParams(); // Check for ?id=...
+
+        // ✅ 다른 탭/페이지(예: 여행계획)에서 즐겨찾기 변경 시 UI 즉시 동기화
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'teumsae_saved') {
+                this.savedPlaces = this.loadSavedPlaces();
+                this.updateBookmarkButtons();
+            }
+        });
     }
 
     // Load modal HTML from component files (Dual Modal System)
@@ -740,36 +748,50 @@ class TeumsaeApp {
 
         this.savePlaces(); // 로컬 스토리지 업데이트
 
-        // UI 즉시 업데이트 - 모든 관련 버튼 동기화 (모달 & 리스트)
-        const allRelevantBtns = [];
-        if (event.currentTarget) allRelevantBtns.push(event.currentTarget);
+        // UI 즉시 업데이트
+        this.updateBookmarkButtons(numericId);
 
-        const targetId = Number(id);
-        document.querySelectorAll('.place-card__save').forEach(btn => {
-            const card = btn.closest('.place-card');
-            if (card && Number(card.dataset.id) === targetId) {
-                if (!allRelevantBtns.includes(btn)) allRelevantBtns.push(btn);
-            }
-        });
+        // 토스트 알림 표시
+        this.showToast(isNowSaving ? '저장 목록에 추가했습니다.' : '저장 목록에서 제거했습니다.');
+    }
 
+    /**
+     * 화면상의 모든 북마크 버튼 상태를 현재 savedPlaces 데이터에 맞춰 동기화
+     * @param {number} targetId 특정 ID만 업데이트하고 싶을 때 사용 (선택 사항)
+     */
+    updateBookmarkButtons(targetId = null) {
+        const buttons = document.querySelectorAll('.place-card__save');
         const modalBtn = document.getElementById('btn-bookmark');
-        if (modalBtn && Number(modalBtn.dataset.id) === targetId) {
-            if (!allRelevantBtns.includes(modalBtn)) allRelevantBtns.push(modalBtn);
-        }
 
-        allRelevantBtns.forEach(btn => {
+        const updateBtn = (btn, id) => {
+            const isSaved = this.isSaved(id);
             const svg = btn.querySelector('svg');
-            if (isNowSaving) {
+
+            if (isSaved) {
                 btn.classList.add('saved');
                 if (svg) svg.setAttribute('fill', 'currentColor');
             } else {
                 btn.classList.remove('saved');
                 if (svg) svg.setAttribute('fill', 'none');
             }
+        };
+
+        // 리스트 카드 버튼들 업데이트
+        buttons.forEach(btn => {
+            const card = btn.closest('.place-card');
+            const id = card ? Number(card.dataset.id) : Number(btn.dataset.id);
+            if (id && (!targetId || id === targetId)) {
+                updateBtn(btn, id);
+            }
         });
 
-        // 토스트 알림 표시
-        this.showToast(isNowSaving ? '저장 목록에 추가했습니다.' : '저장 목록에서 제거했습니다.');
+        // 상세 모달 버튼 업데이트
+        if (modalBtn) {
+            const id = Number(modalBtn.dataset.id);
+            if (id && (!targetId || id === targetId)) {
+                updateBtn(modalBtn, id);
+            }
+        }
     }
 
     // 저장 여부 확인
@@ -908,24 +930,7 @@ class TeumsaeApp {
             congestionSpan.classList.add('place-card__badge--normal'); // Default
         }
 
-        // 북마크 버튼 상태 동기화
-        const bookmarkBtn = document.getElementById('btn-bookmark');
-        if (bookmarkBtn) {
-            bookmarkBtn.dataset.id = place.id; // ID 저장
-            const isSaved = this.isSaved(place.id);
-            const svg = bookmarkBtn.querySelector('svg');
 
-            if (isSaved) {
-                bookmarkBtn.classList.add('saved');
-                svg.setAttribute('fill', 'currentColor');
-            } else {
-                bookmarkBtn.classList.remove('saved');
-                svg.setAttribute('fill', 'none');
-            }
-
-            // 클릭 이벤트 연결
-            bookmarkBtn.onclick = (e) => this.toggleSave(place.id, e);
-        }
 
         document.getElementById('modal-description').textContent = place.description;
 
@@ -1043,6 +1048,25 @@ class TeumsaeApp {
         // 플래너 사이드바 업데이트
         if (this.modalPlanner) {
             this.modalPlanner.updateForPlace(place);
+        }
+
+        // 즐겨찾기(save) 버튼 연동 - 최하단에서 클래스만 제어 (안정성 최우선)
+        const bookmarkBtn = document.getElementById('btn-bookmark');
+        if (bookmarkBtn) {
+            bookmarkBtn.dataset.id = place.id;
+            const isSaved = this.isSaved(place.id);
+
+            // SVG 조작 없이 클래스만 교체 (CSS에서 배경 이미지 제어)
+            if (isSaved) {
+                bookmarkBtn.classList.add('saved');
+            } else {
+                bookmarkBtn.classList.remove('saved');
+            }
+
+            bookmarkBtn.onclick = (e) => {
+                this.toggleSave(place.id, e);
+                // toggleSave가 전역적으로 .saved 클래스를 업데이트하므로 별도 처리 최소화
+            };
         }
     }
 

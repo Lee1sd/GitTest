@@ -111,36 +111,36 @@
     justify-content: flex-end;
 }
 
-/* Header Badges (Top) */
-/* Header Badges (Top) */
+/* Header Badges Group (Top Left) */
 .place-modal__top-badges {
-    position: absolute;
-    top: 30px;
-    left: 30px;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    position: absolute !important;
+    top: 25px !important;
+    left: 25px !important;
+    z-index: 100 !important;
+    display: flex !important;
+    align-items: center !important;
+    /* 수직 중앙 정렬 */
+    gap: 12px !important;
+    /* 요소 간격 */
+    pointer-events: auto !important;
 }
 
-/* Congestion Badge (Exact Pill Style) */
+/* Congestion Badge Base Style */
 .place-modal__congestion {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 6px 16px;
-    /* Slightly larger pill */
-    border-radius: 50px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    white-space: nowrap;
-    /* Prevent text wrap */
-    /* Base style */
+    height: 36px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 16px !important;
+    border-radius: 50px !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    backdrop-filter: blur(4px) !important;
     background: rgba(255, 255, 255, 0.2);
-    color: white;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* !important 제거하여 상태별 색상이 적용되도록 함 */
+    margin: 0 !important;
+    color: white !important;
 }
 
 .place-modal__address-top {
@@ -151,55 +151,74 @@
     align-items: center;
     gap: 6px;
     background: rgba(0, 0, 0, 0.6);
-    /* Black box with 60% opacity */
     padding: 6px 14px;
     border-radius: 50px;
-    /* Pill shape to match congestion badge */
     backdrop-filter: blur(4px);
-    /* Glassmorphism effect */
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .place-modal__address-top .address-icon {
     flex-shrink: 0;
     color: var(--accent-color);
-    /* Yellow/Gold marker */
 }
 
-/* Override for bookmark button in modal context */
+/* Bookmark Button in Modal (Explore Page Style Reset) */
 #btn-bookmark.place-card__save {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    right: auto;
-    width: 44px;
-    height: 44px;
-    z-index: 100;
+    position: relative !important;
+    /* absolute 위치 무시 */
+    top: 0 !important;
+    left: 0 !important;
+    display: flex !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'%3E%3C/path%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: 18px !important;
+    border: none !important;
+    border-radius: 50% !important;
+    width: 36px !important;
+    height: 36px !important;
+    cursor: pointer !important;
+    backdrop-filter: blur(4px) !important;
+    transition: all 0.2s !important;
+    margin: 0 !important;
 }
+
+#btn-bookmark.place-card__save:hover {
+    background-color: rgba(212, 175, 55, 0.8) !important;
+    transform: scale(1.1) !important;
+}
+
+#btn-bookmark.place-card__save.saved {
+    background-color: rgba(0, 0, 0, 0.7) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23D4AF37' stroke='%23D4AF37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'%3E%3C/path%3E%3C/svg%3E") !important;
+}
+
+
 
 /* Specific Badge Styles (Centralized via variables.css) */
 /* Normal: Orange Bg, White Text */
 .place-modal__congestion.place-card__badge--normal {
-    background: var(--color-normal);
-    color: white;
-    border: none;
+    background: var(--color-normal) !important;
+    color: white !important;
+    border: none !important;
 }
 
 /* Quiet: Green Bg, White Text */
 .place-modal__congestion.text-accent,
 .place-modal__congestion.place-card__badge--quiet {
-    background: var(--color-success);
-    color: white;
-    border: none;
+    background: var(--color-success) !important;
+    color: white !important;
+    border: none !important;
 }
 
 /* Crowded: Red Bg, White Text */
 .place-modal__congestion.text-primary,
 .place-modal__congestion.place-card__badge--crowded {
-    background: var(--color-crowded);
-    color: white;
-    border: none;
-    animation: pulse-red 2s infinite;
+    background: var(--color-crowded) !important;
+    color: white !important;
+    border: none !important;
+    animation: pulse-red 2s infinite !important;
 }
 
 /* Category (Clean Text) */

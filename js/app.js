@@ -36,46 +36,74 @@ class TeumsaeApp {
         this.checkUrlParams(); // Check for ?id=...
     }
 
-    // Load modal HTML from component file
+    // Load modal HTML from component files (Dual Modal System)
     async loadModalComponent() {
         try {
-            const response = await fetch('components/place-modal.html');
-            if (!response.ok) throw new Error('Failed to load modal component');
-            const html = await response.text();
-            document.getElementById('modal-container').innerHTML = html;
+            // Fetch both components in parallel
+            const [placeRes, compRes] = await Promise.all([
+                fetch('components/place-modal.html'),
+                fetch('components/comparison-page.html')
+            ]);
 
-            // Re-bind ModalPlanner and ReviewManager elements now that DOM exists
-            if (this.modalPlanner) {
-                this.modalPlanner.rebind();
-            } else if (window.modalPlanner) {
-                window.modalPlanner.rebind();
-            }
+            if (!placeRes.ok || !compRes.ok) throw new Error('Failed to load modal components');
 
-            if (window.reviewManager) {
-                window.reviewManager.rebind();
-            }
+            const placeHtmlRaw = await placeRes.text();
+            const compHtmlRaw = await compRes.text();
+
+            // Extract the core content div from the backdrop wrapper
+            // We assume the inner div has class "place-modal" and "comparison-modal" respectively
+            const parser = new DOMParser();
+            const placeDoc = parser.parseFromString(placeHtmlRaw, 'text/html');
+            const compDoc = parser.parseFromString(compHtmlRaw, 'text/html');
+
+            const placeContent = placeDoc.querySelector('.place-modal').outerHTML;
+            const compContent = compDoc.querySelector('.comparison-modal').outerHTML;
+
+            // Construct the Dual Layout
+            const dualLayout = `
+                <div class="dual-backdrop" id="dual-backdrop">
+                    <div class="dual-layout">
+                        <section class="dual-left">
+                            ${placeContent}
+                        </section>
+                        <section class="dual-right">
+                            ${compContent}
+                        </section>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('modal-container').innerHTML = dualLayout;
+
+            // Re-bind sub-components
+            if (this.modalPlanner) this.modalPlanner.rebind();
+            else if (window.modalPlanner) window.modalPlanner.rebind();
+
+            if (window.reviewManager) window.reviewManager.rebind();
+
         } catch (error) {
-            console.error('Error loading modal component:', error);
+            console.error('Error loading modal components:', error);
         }
     }
 
     // Cache modal-specific DOM elements
     cacheModalElements() {
-        this.modalBackdrop = document.getElementById('place-modal-backdrop');
-        this.modalCloseBtn = document.getElementById('place-modal-close');
-        this.modalAddBtn = document.getElementById('modal-add-btn');
-        this.modalBookmarkBtn = document.getElementById('btn-bookmark');
+        this.modalBackdrop = document.getElementById('dual-backdrop');
+        this.placeCloseBtn = document.getElementById('place-modal-close');
+        this.compCloseBtn = document.getElementById('comparison-modal-close');
+        this.compBottomCloseBtn = document.getElementById('comparison-close-bottom');
+
+        // Comparison Elements (Recommendations only)
+        this.compRecommendList = document.getElementById('comp-recommend-list');
     }
 
-    // Check URL parameters for direct place access
+    // Check URL parameters
     checkUrlParams() {
         const params = new URLSearchParams(window.location.search);
         const id = parseInt(params.get('id'));
         if (id) {
-            // Wait slightly for data to be ready
             setTimeout(() => {
                 this.openPlaceModal(id);
-                // Clean URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             }, 500);
         }
@@ -94,10 +122,9 @@ class TeumsaeApp {
         this.places = [];
         snapshot.forEach(doc => {
             const data = doc.data();
-            // id 필드가 숫자인 경우 처리
             const place = {
                 ...data,
-                id: parseInt(data.id) || data.id // ID 호환성 유지
+                id: parseInt(data.id) || data.id
             };
             this.places.push(place);
         });
@@ -107,8 +134,6 @@ class TeumsaeApp {
         this.renderMoodFilters();
         this.renderPlaces();
         console.log(`Loaded ${this.places.length} places from Firestore.`);
-
-        // Re-check URL params after data load (in case data took longer)
         this.checkUrlParams();
     }
 
@@ -156,14 +181,18 @@ class TeumsaeApp {
         window.addEventListener('scroll', () => this.handleScroll());
 
         // 모달 닫기 이벤트
-        if (this.modalCloseBtn) {
-            this.modalCloseBtn.addEventListener('click', () => this.closePlaceModal());
-        }
+        const closeModals = () => this.closePlaceModal();
+
+        if (this.modalCloseBtn) this.modalCloseBtn.addEventListener('click', closeModals); // Place close
+        if (this.placeCloseBtn) this.placeCloseBtn.addEventListener('click', closeModals); // Alias for place close
+        if (this.compCloseBtn) this.compCloseBtn.addEventListener('click', closeModals);   // Comp close
+        if (this.compBottomCloseBtn) this.compBottomCloseBtn.addEventListener('click', closeModals); // Bottom close
+
         if (this.modalBackdrop) {
             this.modalBackdrop.addEventListener('click', (e) => {
-                // 배경 클릭 시 닫기
-                if (e.target === this.modalBackdrop) {
-                    this.closePlaceModal();
+                // 배경 클릭 시 닫기 (배경 자체 or backdrop wrapper)
+                if (e.target === this.modalBackdrop || e.target.id === 'dual-backdrop') {
+                    closeModals();
                 }
             });
         }
@@ -770,14 +799,18 @@ class TeumsaeApp {
 
         // 갤러리 이미지 클릭 이벤트는 lightbox.js에서 이벤트 위임으로 처리됨
 
-        // 모달 표시
-        this.modalBackdrop.classList.add('active');
-        document.body.style.overflow = 'hidden'; // 배경 스크롤 방지
-        document.documentElement.style.overflow = 'hidden';
+        // 비교 페이지 업데이트 Logic
+        this.updateComparison(place);
 
-        // 모달 내부 스크롤 시 배경 스크롤 전파 방지
-        this.modalBackdrop.addEventListener('wheel', this.preventScroll, { passive: false });
-        this.modalBackdrop.addEventListener('touchmove', this.preventScroll, { passive: false });
+        // 모달 표시
+        if (this.modalBackdrop) {
+            this.modalBackdrop.classList.add('active');
+            document.body.style.overflow = 'hidden'; // 배경 스크롤 방지
+            document.documentElement.style.overflow = 'hidden';
+            // 모달 내부 스크롤 시 배경 스크롤 전파 방지
+            this.modalBackdrop.addEventListener('wheel', this.preventScroll, { passive: false });
+            this.modalBackdrop.addEventListener('touchmove', this.preventScroll, { passive: false });
+        }
 
         // 리뷰 데이터 로드
         if (this.reviewManager) {
@@ -790,11 +823,75 @@ class TeumsaeApp {
         }
     }
 
+    // 비교 데이터 업데이트
+    updateComparison(place) {
+        if (!this.compRecommendList) return;
+
+        // Find Recommendations
+        // Filter: Same category, not same ID
+        const candidates = this.places.filter(p => p.category === place.category && p.id !== place.id);
+
+        // Sort by "Better" criteria: Higher Rating, then Lower Congestion
+        // Congestion Priority: Quiet > Normal > Crowded
+        const congestionScore = (c) => {
+            const lvl = c.congestion ? (c.congestion.level || c.congestion) : 'normal';
+            if (lvl === 'quiet') return 3;
+            if (lvl === 'normal') return 2;
+            return 1;
+        }
+
+        candidates.sort((a, b) => {
+            const scoreA = congestionScore(a);
+            const scoreB = congestionScore(b);
+            if (scoreA !== scoreB) return scoreB - scoreA; // Valid descending
+
+            const ratingA = a.stats ? a.stats.rating : (a.rating || 0);
+            const ratingB = b.stats ? b.stats.rating : (b.rating || 0);
+            return ratingB - ratingA;
+        });
+
+        const recommendations = candidates.slice(0, 5); // Top 5
+
+        // Render List
+        if (recommendations.length === 0) {
+            this.compRecommendList.innerHTML = `<div class="comp-loading"><p>비슷한 조건의 추천 장소가 없습니다.</p></div>`;
+        } else {
+            this.compRecommendList.innerHTML = recommendations.map(rec => {
+                const recLevel = rec.congestion ? (rec.congestion.level || rec.congestion) : 'normal';
+
+                // Determine chips
+                const chips = [];
+                if (recLevel === 'quiet') chips.push('<span class="comp-chip better">쾌적함</span>');
+                const recRating = rec.stats ? rec.stats.rating : (rec.rating || 0);
+                const currentRating = place.stats ? place.stats.rating : (place.rating || 0);
+                if (recRating > currentRating) chips.push('<span class="comp-chip better">평점 높음</span>');
+
+                return `
+                <div class="comp-item" onclick="window.app.openPlaceModal(${rec.id})">
+                    <img src="${rec.images[0]}" class="comp-item__thumb" alt="${rec.name}">
+                    <div class="comp-item__info">
+                        <div class="comp-item__header">
+                            <div class="comp-item__name">${rec.name}</div>
+                            <div class="comp-item__chips">${chips.join('')}</div>
+                        </div>
+                        <div class="comp-item__meta">
+                            <span>★ ${recRating}</span>
+                            <span class="divider">|</span>
+                            <span>${this.getCongestionText(recLevel)}</span>
+                        </div>
+                        <p class="comp-item__desc">${rec.shortDesc || ''}</p>
+                    </div>
+                </div>
+            `}).join('');
+        }
+    }
+
     // 스크롤 이벤트 전파 방지 핸들러
     preventScroll(e) {
         // 모달 콘텐츠 내부가 아니면 스크롤 차단
-        const modalContent = e.target.closest('.place-modal__content');
-        if (!modalContent) {
+        // Allow scroll in both modals
+        const scrollable = e.target.closest('.place-modal__content, .comparison-body');
+        if (!scrollable) {
             e.preventDefault();
         }
     }

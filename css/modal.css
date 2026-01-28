@@ -33,13 +33,13 @@
 
     /* Grid Definition */
     display: grid;
-    grid-template-columns: 1fr 280px;
-    /* Main Content | Right Sidebar */
+    grid-template-columns: 1fr;
+    /* Main Content */
     grid-template-rows: 350px 1fr;
     /* Hero Image | Scrollable Details */
     grid-template-areas:
-        "hero sidebar"
-        "content sidebar";
+        "hero"
+        "content";
 
     position: relative;
     overflow: hidden;
@@ -430,196 +430,13 @@
 
 
 /* --- Area 3: Sidebar (Right) --- */
-.place-modal__sidebar {
-    grid-area: sidebar;
-    background: linear-gradient(to bottom, #1a1a1a, #0d0d0d);
-    /* Subtle gradient depth */
-    border-left: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 100px 25px 30px;
-    /* Top padding increased to clear "Plan Your Trip" title */
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    /* Items start from top */
-    align-items: stretch;
-    /*Changed from center to stretch for left alignment */
-    position: relative;
-    box-shadow: -10px 0 20px rgba(0, 0, 0, 0.2);
-    padding-bottom: 110px;
-    /* Space for the bottom actions */
-}
+
 
 
 
 
 /* --- Mini Planner (Timeline Style) --- */
-.mini-timeline {
-    width: 100%;
-    margin-top: 15px;
-    margin-bottom: 20px;
-    max-height: 300px;
-    overflow-y: auto;
-    padding-right: 5px;
-    /* space for scrollbar */
-}
 
-.mini-timeline-list {
-    position: relative;
-    padding-left: 20px;
-    border-left: 2px solid rgba(255, 255, 255, 0.1);
-    margin-left: 10px;
-}
-
-.mini-timeline-item {
-    position: relative;
-    margin-bottom: 15px;
-    padding: 14px;
-    background: rgba(255, 255, 255, 0.08);
-    /* More visible glass background */
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 12px;
-    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.mini-timeline-item:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(212, 165, 116, 0.5);
-    /* Gold accent on hover */
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-}
-
-.mini-timeline-item::before {
-    content: '';
-    position: absolute;
-    left: -26px;
-    /* 20px padding + 2px border + 4px extra */
-    top: 15px;
-    width: 10px;
-    height: 10px;
-    background: var(--color-accent);
-    border-radius: 50%;
-    box-shadow: 0 0 10px rgba(212, 165, 116, 0.4);
-}
-
-.mini-timeline-item:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateX(2px);
-}
-
-.mini-timeline-item.active {
-    border-color: var(--color-accent);
-    background: rgba(212, 165, 116, 0.1);
-}
-
-.mini-timeline-time {
-    font-size: 0.85rem;
-    color: var(--color-accent);
-    font-weight: 700;
-    margin-bottom: 6px;
-    display: block;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.mini-timeline-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.mini-timeline-title {
-    font-size: 0.95rem;
-    color: var(--text-color);
-    /* Bright Ivory/White */
-    font-weight: 600;
-    letter-spacing: 0.5px;
-}
-
-.btn-remove-mini {
-    background: none;
-    border: none;
-    color: var(--color-gray);
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 0 5px;
-    transition: color 0.2s;
-}
-
-.btn-remove-mini:hover {
-    color: var(--color-crowded);
-    /* Red */
-}
-
-/* Empty State for Sidebar */
-.mini-planner-empty {
-    text-align: center;
-    color: var(--color-gray);
-    padding: 20px 0;
-    font-size: 0.9rem;
-}
-
-
-#modal-add-btn {
-    width: 100%;
-    padding: 16px;
-    font-size: 1rem;
-    font-weight: 700;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    background: linear-gradient(135deg, #D4AF37 0%, #F5E6A3 50%, #D4AF37 100%);
-    color: #1A1A1A;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
-}
-
-#modal-add-btn:hover {
-    background: linear-gradient(135deg, #E4B584 0%, #FFF3C4 50%, #E4B584 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(212, 165, 116, 0.3);
-}
-
-/* Remove State Button (Red/Dark) */
-.btn-remove-state {
-    background: rgba(255, 59, 48, 0.1) !important;
-    border: 1px solid #ff3b30 !important;
-    color: #ff3b30 !important;
-}
-
-.btn-remove-state:hover {
-    background: rgba(255, 59, 48, 0.2) !important;
-    box-shadow: 0 4px 15px rgba(255, 59, 48, 0.2) !important;
-}
-
-#modal-add-btn .icon {
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    display: inline-block;
-}
-
-.btn-remove-state .icon {
-    transform: rotate(45deg);
-}
-
-/* Specific Sidebar Button Style */
-#btn-add-to-plan {
-    background: linear-gradient(135deg, #D4AF37 0%, #F5E6A3 50%, #D4AF37 100%);
-    color: #1A1A1A;
-    border: none;
-    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
-    font-weight: 700;
-}
-
-#btn-add-to-plan:hover {
-    background: linear-gradient(135deg, #E4B584 0%, #FFF3C4 50%, #E4B584 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(212, 165, 116, 0.3);
-}
 
 /* Mobile Responsive */
 @media (max-width: 900px) {
@@ -643,13 +460,5 @@
         flex: 1;
     }
 
-    .place-modal__sidebar {
-        padding: 20px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        border-left: none;
-    }
 
-    .place-modal__sidebar::before {
-        display: none;
-    }
 }

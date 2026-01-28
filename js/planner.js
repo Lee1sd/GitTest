@@ -8,16 +8,11 @@ const firebase = window.firebase;
 class PlannerPage {
   constructor(user) {
   this.user = user;
+ 
+  this.savedPlaces = [];
+  this.timeline = [];
 
-  if (!user) {
-    this.savedPlaces = [];
-    this.timeline = [];
-  } else {
-    this.savedPlaces = this.loadSavedPlaces();//저장된 장소 목록 코드
-    this.timeline = this.loadTimeline();//타임라인(일정)로드
-  }
-
-  this.places = placesData; //장소 데이터 참조
+  this.places = window.app?.places || [];
   this.currentDay = 1; //날짜 기억
 
   this.currentPlanMeta = {
@@ -32,10 +27,35 @@ class PlannerPage {
 
 
   async init() {
+
+    // app places 준비될 때까지 대기
+if (window.app && window.app.places?.length) {
+  this.places = window.app.places;
+} else {
+  // 최대 1초 정도 기다림
+  await new Promise(resolve => {
+    const check = setInterval(() => {
+      if (window.app && window.app.places?.length) {
+        this.places = window.app.places;
+        clearInterval(check);
+        resolve();
+      }
+    }, 100);
+  });
+}
   this.cacheDOMElements();
 
-  if (!this.dateInput || !this.endDateInput) return;
+  if (!this.dateInput || !this.endDateInput) {
+  console.warn('[Planner] date inputs not found, skipping date logic');
+} else {
+  // 날짜 input이 있을 때만 관련 로직 실행
+  this.bindEvents();
+}
 
+ if (this.dateInput.value) {
+    renderDays();
+    this.renderTimeline();
+  }
 
  // 게스트면 여기서 완전히 끝
   if (!this.user) {
@@ -47,17 +67,20 @@ class PlannerPage {
     this.dateInput.value = '';
     this.endDateInput.value = '';
 
+    this.savedPlaces = await this.loadSavedPlaces();
+
     this.renderSavedPlaces();
     this.renderTimeline();
     this.disableGuestUI();
     return;
   }
 
+   this.savedPlaces = await this.loadSavedPlaces(); // Firebase or local
+
 
   await this.restorePlan();//여행일정 복구
   this.renderSavedPlaces(); //저장된 장소 목록 렌더링
   this.renderTimeline(); //타임라인 렌더링
-  this.bindEvents(); // 이벤트 바인딩
   this.initRevealAnimations(); //애니메이션 초기화
   await this.fetchMyPlans(); // 여행일정 firebase에서 가져와서 슬라이드에 저장
 }
@@ -274,6 +297,14 @@ class PlannerPage {
     });
   }
 
+  removeFromSaved(placeId, e) {
+  e.stopPropagation();   // ✅ 부모 클릭 이벤트 차단
+  e.preventDefault();    // ✅ drag / click 기본 동작 차단
+
+  this.savedPlaces = this.savedPlaces.filter(id => id !== placeId);
+  this.saveSavedPlaces?.();
+  this.renderSavedPlaces();
+}
 
 
   renderSavedPlaces() {
@@ -297,7 +328,7 @@ class PlannerPage {
           <p class="planner__saved-name">${place.name}</p>
           <p class="planner__saved-category">${place.category}</p>
         </div>
-        <button class="btn-icon" style="width: 32px; height: 32px; flex-shrink: 0;" 
+        <button class="btn-icon" draggable="false" style="width: 32px; height: 32px; flex-shrink: 0;" 
                 onclick="planner.removeFromSaved(${place.id}, event)" 
                 title="저장 목록에서 제거">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -447,20 +478,34 @@ class PlannerPage {
     this.renderTimeline();
   }
 
-  removeFromSaved(id, event) {
-    event.stopPropagation();
 
-    const index = this.savedPlaces.indexOf(id);
-    if (index > -1) {
-      this.savedPlaces.splice(index, 1);
-      localStorage.setItem('teumsae_saved', JSON.stringify(this.savedPlaces));
-      this.renderSavedPlaces();
-      this.showToast('저장 목록에서 제거했습니다.');
-    }
-  }
+  async syncSavedPlacesFromTimeline() {
+  const user = auth.currentUser;
+  if (!user) return;
 
+  const ref = db
+    .collection('users')
+    .doc(user.uid)
+    .collection('savedPlaces');
+
+  // timeline에 있는 장소 id들만 뽑기 (중복 제거)
+  const placeIds = [...new Set(this.timeline.map(t => t.placeId))];
+
+  const batch = db.batch();
+
+  placeIds.forEach(id => {
+    batch.set(
+      ref.doc(String(id)), 
+      { savedAt: firebase.firestore.FieldValue.serverTimestamp() }
+    );
+  });
+
+  await batch.commit();
+}
+ 
 
   async savePlan() {
+     console.log('🔥 savePlan called');
 
     const user = auth.currentUser;
 
@@ -509,6 +554,9 @@ class PlannerPage {
         .set(planData, { merge: true });
 
     }
+    await this.syncSavedPlacesFromTimeline(); // 
+this.savedPlaces = await this.loadSavedPlaces();
+this.renderSavedPlaces();
 
     await this.fetchMyPlans();   // 🔄 내 일정 다시 불러오기
     this.showToast('일정이 저장되었습니다!');
@@ -654,22 +702,23 @@ class PlannerPage {
   }
 
 
-  loadSavedPlaces() {
-    try {
-      return JSON.parse(localStorage.getItem('teumsae_saved')) || [];
-    } catch {
-      return [];
-    }
+async loadSavedPlaces() {
+  //app 상태 우선 사용
+  if (window.app && Array.isArray(window.app.savedPlaces)) {
+    return window.app.savedPlaces.map(Number);
   }
 
-  loadTimeline() {
-    try {
-      const plan = JSON.parse(localStorage.getItem('teumsae_plan'));
-      return plan?.timeline || [];
-    } catch {
-      return [];
-    }
-  }
+  // fallback (안 써도 됨)
+  if (!this.user) return [];
+
+  const snap = await db
+    .collection('users')
+    .doc(this.user.uid)
+    .collection('savedPlaces')
+    .get();
+
+  return snap.docs.map(doc => Number(doc.id));
+}
 
 
   saveTimeline() {
@@ -843,15 +892,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   //  날짜 변경 이벤트
   startInput.addEventListener('change', () => {
+     if (!planner || !planner.dateInput || !planner.endDateInput) {
+  console.warn('[Planner] date input not ready');
+  return;
+}
     if (planner.isLoadingPlan) return;
     renderDays();
     planner.renderTimeline();
   });
 
-   if (planner.dateInput.value && planner.endDateInput.value) {
-    renderDays();              // Day DOM 생성
-    planner.renderTimeline(); // Day 안에 일정 뿌리기
-  }
 
   if (endInput) {
     endInput.addEventListener('change', () => {

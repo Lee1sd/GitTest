@@ -131,6 +131,15 @@
             padding: 5px 10px;
             border-radius: 4px;
         }
+
+        /* planner 페이지에서는 라이트박스 기본 숨김 */
+  .lightbox-overlay {
+    display: none;
+  }
+
+  .lightbox-overlay.active {
+    display: flex;
+  }
     </style>
 </head>
 
@@ -316,7 +325,7 @@
     <script src="js/map-toggle.js"></script>
     <script src="js/lightbox.js"></script>
     <script src="js/p-ui.js"></script>
-    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
 
     <script>
         // Check login state and update UI

@@ -1856,6 +1856,15 @@
     flex-shrink: 0;
 }
 
-.todo-delete-btn{
-    color: white;
+.todo-delete {
+  background: none;
+  border: none;
+  color: var(--color-white); /* 또는 white */
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.todo-delete:hover {
+  color: var(--color-white);
 }

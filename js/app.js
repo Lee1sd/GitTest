@@ -50,7 +50,7 @@ class TeumsaeApp {
             } else if (window.modalPlanner) {
                 window.modalPlanner.rebind();
             }
-            
+
             if (window.reviewManager) {
                 window.reviewManager.rebind();
             }
@@ -64,6 +64,7 @@ class TeumsaeApp {
         this.modalBackdrop = document.getElementById('place-modal-backdrop');
         this.modalCloseBtn = document.getElementById('place-modal-close');
         this.modalAddBtn = document.getElementById('modal-add-btn');
+        this.modalBookmarkBtn = document.getElementById('btn-bookmark');
     }
 
     // Check URL parameters for direct place access
@@ -166,6 +167,8 @@ class TeumsaeApp {
                 }
             });
         }
+
+        // Bookmark Toggle logic is handled in openPlaceModal
     }
 
     // 메인 섹션으로 스크롤
@@ -468,49 +471,66 @@ class TeumsaeApp {
         return texts[congestion] || '보통';
     }
 
-    // 장소 저장/삭제 토글
     toggleSave(id, event) {
-        event.preventDefault();
-        event.stopPropagation(); // 부모 요소 클릭 이벤트 전파 방지
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
 
-        const index = this.savedPlaces.indexOf(id);
-        const isNowSaved = index === -1;
+        const numericId = Number(id);
+        const index = this.savedPlaces.findIndex(sId => Number(sId) === numericId);
+        const isNowSaving = index === -1;
 
-        if (index > -1) {
+        if (!isNowSaving) {
             this.savedPlaces.splice(index, 1); // 저장 취소
         } else {
-            this.savedPlaces.push(id); // 저장
+            this.savedPlaces.push(numericId); // 저장
         }
 
         this.savePlaces(); // 로컬 스토리지 업데이트
 
-        // UI 즉시 업데이트 (깜빡임 방지)
-        const btn = event.currentTarget;
-        if (btn) {
-            if (isNowSaved) {
+        // UI 즉시 업데이트 - 모든 관련 버튼 동기화 (모달 & 리스트)
+        const allRelevantBtns = [];
+        if (event.currentTarget) allRelevantBtns.push(event.currentTarget);
+
+        const targetId = Number(id);
+        document.querySelectorAll('.place-card__save').forEach(btn => {
+            const card = btn.closest('.place-card');
+            if (card && Number(card.dataset.id) === targetId) {
+                if (!allRelevantBtns.includes(btn)) allRelevantBtns.push(btn);
+            }
+        });
+
+        const modalBtn = document.getElementById('btn-bookmark');
+        if (modalBtn && Number(modalBtn.dataset.id) === targetId) {
+            if (!allRelevantBtns.includes(modalBtn)) allRelevantBtns.push(modalBtn);
+        }
+
+        allRelevantBtns.forEach(btn => {
+            const svg = btn.querySelector('svg');
+            if (isNowSaving) {
                 btn.classList.add('saved');
-                const svg = btn.querySelector('svg');
                 if (svg) svg.setAttribute('fill', 'currentColor');
             } else {
                 btn.classList.remove('saved');
-                const svg = btn.querySelector('svg');
                 if (svg) svg.setAttribute('fill', 'none');
             }
-        }
+        });
 
         // 토스트 알림 표시
-        this.showToast(index > -1 ? '저장 목록에서 제거했습니다.' : '저장 목록에 추가했습니다.');
+        this.showToast(isNowSaving ? '저장 목록에 추가했습니다.' : '저장 목록에서 제거했습니다.');
     }
 
     // 저장 여부 확인
     isSaved(id) {
-        return this.savedPlaces.includes(id);
+        return this.savedPlaces.some(sId => Number(sId) === Number(id));
     }
 
     // 로컬 스토리지에서 저장된 장소 불러오기
     loadSavedPlaces() {
         try {
-            return JSON.parse(localStorage.getItem('teumsae_saved')) || [];
+            const saved = JSON.parse(localStorage.getItem('teumsae_saved')) || [];
+            return saved.map(id => Number(id)); // 숫자로 정규화하여 로드
         } catch {
             return [];
         }
@@ -575,7 +595,33 @@ class TeumsaeApp {
         document.getElementById('modal-hero-image').src = place.images[0];
         document.getElementById('modal-category').textContent = place.category;
         document.getElementById('modal-title').textContent = place.name;
-        document.getElementById('modal-address').textContent = place.address;
+
+        // 주소 데이터 확보를 위한 다각도 탐색
+        let addressVal = place.address;
+
+        if (!addressVal) {
+            // 1. ID를 키로 하는 하위 객체 확인 (사용자 힌트 반영)
+            const idKey = place.id;
+            const nested = place[idKey] || place[String(idKey)];
+            if (nested && nested.address) {
+                addressVal = nested.address;
+            }
+            // 2. 장소 이름을 키로 하는 하위 객체 확인
+            else if (place[place.name] && place[place.name].address) {
+                addressVal = place[place.name].address;
+            }
+            // 3. 모든 속성을 순회하며 address 필드를 가진 하위 객체 찾기
+            else {
+                for (const key in place) {
+                    if (place[key] && typeof place[key] === 'object' && place[key].address) {
+                        addressVal = place[key].address;
+                        break;
+                    }
+                }
+            }
+        }
+
+        document.getElementById('modal-address').textContent = addressVal || '주소 정보 없음';
 
         // 혼잡도 표시
         // 혼잡도 표시
@@ -608,6 +654,25 @@ class TeumsaeApp {
             congestionSpan.classList.add('place-card__badge--quiet');
         } else {
             congestionSpan.classList.add('place-card__badge--normal'); // Default
+        }
+
+        // 북마크 버튼 상태 동기화
+        const bookmarkBtn = document.getElementById('btn-bookmark');
+        if (bookmarkBtn) {
+            bookmarkBtn.dataset.id = place.id; // ID 저장
+            const isSaved = this.isSaved(place.id);
+            const svg = bookmarkBtn.querySelector('svg');
+
+            if (isSaved) {
+                bookmarkBtn.classList.add('saved');
+                svg.setAttribute('fill', 'currentColor');
+            } else {
+                bookmarkBtn.classList.remove('saved');
+                svg.setAttribute('fill', 'none');
+            }
+
+            // 클릭 이벤트 연결
+            bookmarkBtn.onclick = (e) => this.toggleSave(place.id, e);
         }
 
         document.getElementById('modal-description').textContent = place.description;

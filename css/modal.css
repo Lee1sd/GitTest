@@ -111,14 +111,19 @@
 }
 
 /* Header Badges (Top) */
+/* Header Badges (Top) */
 .place-modal__top-badges {
+    position: relative;
+    top: auto;
+    left: auto;
+    z-index: 10;
     margin-bottom: 20px;
+    /* Spacing above title */
     display: flex;
     align-items: center;
-    /* Ensure vertical center alignment */
+    gap: 12px;
+    /* Gap between congestion and address */
     padding-left: 0;
-    /* Remove any potential padding */
-    /* Prevent stretching */
 }
 
 /* Congestion Badge (Exact Pill Style) */
@@ -139,6 +144,40 @@
     color: white;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.place-modal__address-top {
+    font-size: 0.85rem;
+    color: white;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.6);
+    /* Black box with 60% opacity */
+    padding: 6px 14px;
+    border-radius: 50px;
+    /* Pill shape to match congestion badge */
+    backdrop-filter: blur(4px);
+    /* Glassmorphism effect */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.place-modal__address-top .address-icon {
+    flex-shrink: 0;
+    color: var(--accent-color);
+    /* Yellow/Gold marker */
+}
+
+/* Override for bookmark button in modal context */
+#btn-bookmark.place-card__save {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: auto;
+    width: 44px;
+    height: 44px;
+    z-index: 100;
 }
 
 /* Specific Badge Styles (Centralized via variables.css) */
@@ -186,14 +225,23 @@
 }
 
 /* Title */
+/* Title Row */
+.place-modal__title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 15px;
+    margin-bottom: 8px;
+    /* Spacing before address */
+}
+
 /* Title */
 .place-modal__title {
     font-family: var(--font-serif);
     font-size: 3.5rem;
-    line-height: 1.1;
-    margin: 0 0 16px 0;
+    line-height: 1;
+    margin: 0;
+    /* Remove margin as row handles it */
     padding: 0;
-    /* Ensure no padding affects alignment */
     color: var(--text-color);
     text-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
@@ -382,7 +430,7 @@
 
 
 /* --- Area 3: Sidebar (Right) --- */
-.place-modal__footer {
+.place-modal__sidebar {
     grid-area: sidebar;
     background: linear-gradient(to bottom, #1a1a1a, #0d0d0d);
     /* Subtle gradient depth */
@@ -401,51 +449,7 @@
     /* Space for the bottom actions */
 }
 
-/* Fixed Bottom Actions Container */
-.planner-sidebar__actions {
-    position: absolute;
-    bottom: 30px;
-    left: 25px;
-    right: 25px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 10;
-}
 
-.planner-sidebar__header {
-    width: 100%;
-    margin-bottom: 20px;
-    text-align: left;
-}
-
-.planner-sidebar__header h4 {
-    color: var(--text-color);
-    font-size: 1.1rem;
-    margin: 0 0 5px 0;
-    font-weight: 600;
-}
-
-.planner-date {
-    color: var(--color-gray-light);
-    font-size: 0.9rem;
-}
-
-.place-modal__footer>button {
-    /* Legacy selector support removed */
-    display: none;
-}
-
-.place-modal__footer::before {
-    content: 'Plan Your Trip';
-    position: absolute;
-    top: 40px;
-    left: 25px;
-    font-family: var(--font-serif);
-    font-size: 1.5rem;
-    color: var(--color-accent);
-    opacity: 0.9;
-}
 
 
 /* --- Mini Planner (Timeline Style) --- */
@@ -639,13 +643,13 @@
         flex: 1;
     }
 
-    .place-modal__footer {
+    .place-modal__sidebar {
         padding: 20px;
         border-top: 1px solid rgba(255, 255, 255, 0.1);
         border-left: none;
     }
 
-    .place-modal__footer::before {
+    .place-modal__sidebar::before {
         display: none;
     }
 }

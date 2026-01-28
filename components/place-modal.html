@@ -10,17 +10,32 @@
         <div class="place-modal__hero">
             <img src="" alt="" class="place-modal__image" id="modal-hero-image">
             <div class="place-modal__overlay"></div>
+            <button class="place-card__save" id="btn-bookmark" aria-label="저장하기">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                    </path>
+                </svg>
+            </button>
             <div class="place-modal__header">
                 <div class="place-modal__top-badges">
                     <span class="place-modal__congestion" id="modal-congestion">
-                        <!-- JS injects content/classes -->
                         <span id="modal-congestion-text">혼잡도</span>
                     </span>
+                    <div class="place-modal__address-top">
+                        <svg class="address-icon" width="16" height="16" viewBox="0 0 24 24" fill="var(--accent-color)"
+                            stroke="none">
+                            <path
+                                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z">
+                            </path>
+                        </svg>
+                        <span id="modal-address">주소</span>
+                    </div>
                 </div>
-                <h2 class="place-modal__title" id="modal-title">장소 이름</h2>
-                <div class="place-modal__meta">
+
+                <div class="place-modal__title-row">
+                    <h2 class="place-modal__title" id="modal-title">장소 이름</h2>
                     <span class="place-modal__category" id="modal-category">카테고리</span>
-                    <span class="place-modal__address" id="modal-address">주소</span>
                 </div>
             </div>
         </div>
@@ -177,26 +192,8 @@
         </div>
 
         <!-- Planner Sidebar (Right) -->
-        <div class="place-modal__footer" id="modal-planner-sidebar">
-            <div class="planner-sidebar__header">
-                <h4>내 여행 일정</h4>
-                <span class="planner-date" id="mini-plan-date">날짜 없음</span>
-            </div>
+        <div class="place-modal__sidebar" id="modal-planner-sidebar">
 
-            <div class="planner-sidebar__list" id="mini-plan-list">
-                <!-- Items populated by JS -->
-                <div class="planner-empty">
-                    <p>일정이 비어있습니다.</p>
-                    <a href="planner.html" class="link">여행 계획하러 가기 &rarr;</a>
-                </div>
-            </div>
-
-            <div class="planner-sidebar__actions" id="planner-action-area">
-                <p class="planner-status" id="planner-status-msg"></p>
-                <button class="btn btn-accent btn-full" id="btn-add-to-plan">
-                    <span class="icon">➕</span> <span class="btn-text">일정에 담기</span>
-                </button>
-            </div>
         </div>
     </div>
 </div>

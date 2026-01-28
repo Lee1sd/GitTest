@@ -17,55 +17,390 @@
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/animations.css">
-    <link rel="stylesheet" href="css/theme.css?v=6">
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/notification.css">
+
+    <!-- [변경된 부분] 서울 지도 스타일시트 추가 -->
+    <link rel="stylesheet" href="css/seoul-map.css">
+    <link rel="stylesheet" href="css/seoul-map-ui.css">
+    <!-- 모달 및 리뷰 스타일 추가 -->
+    <link rel="stylesheet" href="css/modal.css">
+    <link rel="stylesheet" href="css/reviews.css">
+    <link rel="stylesheet" href="css/lightbox.css">
+    <!-- [변경된 부분] 네이버 지도 API 스크립트 추가 -->
+    <script type="text/javascript"
+        src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=hcs4yltn62&submodules=gl"></script>
+    <!-- [추가된 부분] TopoJSON 라이브러리 추가 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+
 
     <style>
-        /* Map Page Specific Styles */
-        body {
+        /* [변경된 부분] 전체 화면 오버레이에 맞게 서울 지도 섹션 높이 조정 */
+        .seoul-map-section.active {
+            height: 100vh !important;
+            padding: 0 !important;
+        }
+
+        /* [변경된 부분] 배경 투명화 처리 */
+        .map-wrapper {
+            background-color: transparent;
+        }
+
+        /* [추가] iframe 내부 모달이 부모 헤더에 가려지지 않도록 상단 여백 추가 */
+        .place-modal-backdrop {
+            padding-top: 80px;
+            /* 부모 페이지 헤더 높이만큼 여백 */
+            box-sizing: border-box;
+        }
+
+        .place-modal {
+            max-height: calc(90vh - 80px);
+            /* 헤더 높이 고려 */
+        }
+
+        body,
+        html {
+            background-color: transparent;
             overflow: hidden;
-            /* Prevent scrolling for full-screen map */
-        }
-
-        .map-container {
-            width: 100vw;
-            height: 100vh;
-            position: relative;
-            background-color: var(--bg-color);
-        }
-
-        .map-iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        /* Adjust header for map page visibility */
-        .header {
-            background: rgba(44, 44, 44, 0.95);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        /* Embed Mode Styles */
-        body.is-embedded .header {
-            display: none !important;
         }
     </style>
-    <!-- Header (Dynamic) -->
-    <div id="header-placeholder"></div>
+</head>
+
+<body>
+    <!-- Header 제거: 이 페이지는 iframe embed 모드로만 사용되므로 헤더 불필요 -->
 
     <main>
-        <div class="map-container">
-            <iframe class="map-iframe"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d101903.72871963792!2d126.92297529726561!3d37.52664539999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x357ca28b61c565cd%3A0x858aedb4e4ea83eb!2sSeoul!5e0!3m2!1sen!2skr!4v1708000000000!5m2!1sen!2skr"
-                allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
-            </iframe>
+        <!-- [변경된 부분] 기존 구글 지도 iframe을 삭제하고 서울 3D 지도 및 네이버 지도 섹션으로 교체 -->
+        <div id="seoul-map-section" class="seoul-map-section active">
+            <div class="map-wrapper" id="seoul-map-wrapper">
+                <!-- 마커 표시 토글 버튼 (좌측 상단) -->
+                <div class="map-marker-toggle">
+                    <button class="map-toggle-btn active" id="btn-toggle-markers" onclick="SeoulMap.toggleMarkers()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                        </svg>
+                        <span>마커</span>
+                    </button>
+                </div>
+
+                <!-- 동/구 단위 토글 (우측 상단, 순서 변경: 구 단위가 먼저) -->
+                <div class="map-controls">
+                    <button class="map-mode-btn active" id="btn-mode-gu" onclick="SeoulMap.setMode('gu')">구 단위</button>
+                    <button class="map-mode-btn" id="btn-mode-dong" onclick="SeoulMap.setMode('dong')">동
+                        단위</button>
+                </div>
+                <svg class="seoul-map" viewBox="0 0 800 600" id="seoul-svg">
+                    <text x="400" y="300" text-anchor="middle" id="loading-text">지도를 불러오는 중...</text>
+                </svg>
+            </div>
+
+            <div id="naver-map-wrapper" class="naver-map-wrapper">
+                <div id="naver-map" style="width:100%; height:100%;"></div>
+
+                <!-- 검색 및 장소 리스트 패널 -->
+                <div class="map-search-container">
+                    <div class="map-search-box">
+                        <input type="text" id="map-search-input" placeholder="장소 검색 (예: 경복궁, 카페)">
+                        <button id="map-search-btn" aria-label="검색">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="map-category-tags">
+                        <button class="map-tag active" data-cat="all">전체</button>
+                        <button class="map-tag" data-cat="자연">자연</button>
+                        <button class="map-tag" data-cat="문화">문화</button>
+                        <button class="map-tag" data-cat="산책">산책</button>
+                        <button class="map-tag" data-cat="야경">야경</button>
+                        <button class="map-tag" data-cat="카페">카페</button>
+                    </div>
+                    <div class="map-places-list" id="map-places-list">
+                        <!-- 혼잡도별 아코디언 목록 -->
+                        <div class="map-placeholder">
+                            지도에서 구역을 선택하거나<br>장소를 검색해보세요.
+                        </div>
+                    </div>
+
+                    <!-- Notification Button (Visible when logged in) -->
+                    <div class="notification-container">
+                        <button class="notification-btn" aria-label="알림">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                            </svg>
+                        </button>
+                        <div class="notification-dropdown">
+                            <div class="notification-header">
+                                <h3>알림</h3>
+                                <span class="notification-count">0개</span>
+                            </div>
+                            <div class="notification-list">
+                                <!-- Notifications will be rendered here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 편의 기능 버튼 -->
+                <div class="map-floating-btns">
+                    <button class="map-float-btn" id="btn-my-location" title="내 위치">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                    </button>
+                    <!-- 현 지도에서 검색 -->
+                    <button class="map-float-pill hidden" id="btn-search-here">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        현 지도에서 검색
+                    </button>
+                </div>
+
+                <button class="map-back-btn" onclick="SeoulMap.backToSeoul()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7" />
+                    </svg>
+                    전체 지도로
+                </button>
+            </div>
         </div>
     </main>
 
     <!-- Scripts -->
+    <!-- Firebase (v12 CDN - compat) -->
+    <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-auth-compat.js"></script>
+    
+    <script src="js/firebase-config.js"></script>
     <script src="js/auth-guard.js"></script>
+    <script src="js/notification.js"></script>
+
+    <!-- [변경된 부분] 서울 지도 로직 스크립트 연결 및 초기화 -->
+    <script src="js/seoul-map.js"></script>
+
+    <!-- 모달 및 앱 로직 스크립트 추가 -->
+    <script src="js/data.js"></script>
+    <script src="js/reviews.js"></script>
+    <script src="js/modal-planner.js"></script>
+    <script src="js/lightbox.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- 모달 컨테이너 (스크립트 로드 전에 배치되어야 함, 순서상 body 끝부분) -->
+    <div id="modal-container"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            // Firebase는 firebase-config.js에서 자동으로 초기화됨
+            console.log('Firebase 자동 초기화 완료 확인:', {
+                db: !!window.db,
+                auth: !!window.auth,
+                storage: !!window.storage
+            });
+
+            // 페이지 로드 시 서울 지도 초기화
+            if (typeof SeoulMap !== 'undefined' && SeoulMap.init) {
+                SeoulMap.init();
+            }
+        });
+    </script>
+
+    <!-- Scripts -->
     <script src="js/logout.js"></script>
-    <script src="js/components.js?v=5"></script>
-    </body>
+    <script>
+        // Check login state
+        function checkAuth() {
+            const user = localStorage.getItem('teumsae_user') || sessionStorage.getItem('teumsae_user');
+            if (!user) {
+                return { isGuest: true };
+            }
+            return JSON.parse(user);
+        }
+
+        // Update user info
+        function updateUserInfo(user) {
+            const avatar = document.getElementById('user-avatar');
+            const name = document.getElementById('user-name');
+            if (!avatar || !name) return;
+
+            if (user.isGuest) {
+                avatar.textContent = 'G';
+                name.textContent = 'Guest';
+            } else {
+                const initial = user.email ? user.email.charAt(0).toUpperCase() : 'U';
+                avatar.textContent = initial;
+                name.textContent = user.name || user.email.split('@')[0];
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const user = checkAuth();
+            if (user) {
+                updateUserInfo(user);
+            }
+        });
+
+
+        // 혼잡도별 장소 목록 렌더링 함수
+        function renderPlaceList(places) {
+            const listContainer = document.getElementById('map-places-list');
+            if (!listContainer) return;
+
+            // 현재 열려있는 accordion 상태 저장
+            const expandedLevels = new Set();
+            document.querySelectorAll('.congestion-header.active').forEach(header => {
+                expandedLevels.add(header.dataset.level);
+            });
+
+            if (!places || places.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="map-placeholder">
+                        이 지역에는 등록된 장소가 없습니다.<br>다른 지역을 선택해보세요.
+                    </div>
+                `;
+                return;
+            }
+
+            // 혼잡도별로 그룹화
+            const grouped = {
+                quiet: [],
+                normal: [],
+                crowded: []
+            };
+
+            places.forEach(place => {
+                const level = place.congestion || 'unknown';
+                if (level === 'quiet') grouped.quiet.push(place);
+                else if (level === 'normal') grouped.normal.push(place);
+                else if (level === 'crowded' || level === 'very_crowded') grouped.crowded.push(place);
+            });
+
+            // 혼잡도 정보 (아이콘: 고급스러운 SVG 라인 아트)
+            const congestionData = [
+                {
+                    key: 'quiet',
+                    label: '한산함',
+                    // User 1명 (여유)
+                    icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
+                    desc: '여유롭게 둘러볼 수 있어요',
+                    places: grouped.quiet
+                },
+                {
+                    key: 'normal',
+                    label: '보통',
+                    // Users 2명 (적당함)
+                    icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`,
+                    desc: '적당한 사람들이 있어요',
+                    places: grouped.normal
+                },
+                {
+                    key: 'crowded',
+                    label: '혼잡',
+                    // Users 3명 (붐빔/Hot)
+                    icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path><circle cx="16" cy="3.13" r="0.1" fill="none"></circle><path d="M21 3.13a4 4 0 0 1 0 7.75" transform="translate(2,0)"></path></svg>`,
+                    desc: '사람이 많아요',
+                    places: grouped.crowded
+                }
+            ];
+
+            // HTML 생성
+            let html = '';
+            congestionData.forEach(category => {
+                if (category.places.length === 0) return; // 장소가 없으면 스킵
+
+                // 이전에 열려있었거나, 처음 로드 시 자동으로 열기
+                const isExpanded = expandedLevels.has(category.key) || expandedLevels.size === 0;
+
+                html += `
+                    <div class="congestion-category">
+                        <div class="congestion-header ${isExpanded ? 'active' : ''}" data-level="${category.key}">
+                            <div class="congestion-header-left">
+                                <div class="congestion-icon ${category.key}">
+                                    ${category.icon}
+                                </div>
+                                <div class="congestion-info">
+                                    <div class="congestion-label">${category.label}</div>
+                                    <div class="congestion-count">${category.places.length}개 장소 · ${category.desc}</div>
+                                </div>
+                            </div>
+                            <svg class="congestion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                        <div class="congestion-places ${isExpanded ? 'expanded' : ''}" data-level="${category.key}">
+                `;
+
+                // 각 장소 아이템 생성
+                category.places.forEach(place => {
+                    const congestionText = typeof getCongestionText === 'function'
+                        ? getCongestionText(place.congestion)
+                        : place.congestion;
+
+                    html += `
+                        <div class="map-place-item" data-place-id="${place.id}" data-lat="${place.lat}" data-lng="${place.lng}">
+                            <div class="map-place-name">${place.name}</div>
+                            <div class="map-place-desc">${place.shortDesc || place.description || ''}</div>
+                            <div class="map-place-meta">
+                                <span>${place.category || '관광지'}</span>
+                                <span style="color: ${getCongestionColor(place.congestion)}">${congestionText}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            listContainer.innerHTML = html;
+
+            // Accordion 토글 이벤트 리스너
+            document.querySelectorAll('.congestion-header').forEach(header => {
+                header.addEventListener('click', function () {
+                    const level = this.dataset.level;
+                    const placesContainer = document.querySelector(`.congestion-places[data-level="${level}"]`);
+                    const isExpanded = this.classList.contains('active');
+
+                    if (isExpanded) {
+                        // 닫기
+                        this.classList.remove('active');
+                        placesContainer.classList.remove('expanded');
+                    } else {
+                        // 열기
+                        this.classList.add('active');
+                        placesContainer.classList.add('expanded');
+                    }
+                });
+            });
+
+            // 장소 클릭 이벤트
+            document.querySelectorAll('.map-place-item').forEach(item => {
+                item.addEventListener('click', function () {
+                    const placeId = this.dataset.placeId;
+
+                    // 네이버 지도 이동
+                    if (typeof SeoulMap !== 'undefined' && SeoulMap.focusPlace) {
+                        SeoulMap.focusPlace(placeId);
+                    }
+                });
+            });
+        }
+
+        // Global로 노출
+        window.renderPlaceList = renderPlaceList;
+    </script>
+</body>
 
 </html>

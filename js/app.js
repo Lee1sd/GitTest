@@ -33,6 +33,14 @@ class TeumsaeApp {
         } catch (error) {
             console.error("Firestore loading failed:", error);
             this.showToast("데이터를 불러오는 데 실패했습니다. 잠시 후 다시 시도해주세요.");
+            // 실패 시 기존 data.js의 placesData 사용 (Fallback)
+            if (typeof placesData !== 'undefined') {
+                this.places = placesData;
+                this.filteredPlaces = [...this.places];
+                this.renderCategoryFilters();
+                this.renderMoodFilters();
+                this.renderPlaces();
+            }
         }
 
         this.initScrollEffects();
@@ -43,6 +51,13 @@ class TeumsaeApp {
 
     // Load modal HTML from component files (Dual Modal System)
     async loadModalComponent() {
+        const modalContainer = document.getElementById('modal-container');
+
+        // ✅ planner 페이지에서는 모달이 없으므로 그냥 종료
+        if (!modalContainer) {
+            console.log('[TeumsaeApp] modal-container not found, skipping modal load');
+            return;
+        }
         try {
             // Fetch both components in parallel
             const [placeRes, compRes] = await Promise.all([
@@ -92,6 +107,7 @@ class TeumsaeApp {
 
             if (window.reviewManager) window.reviewManager.rebind();
 
+
         } catch (error) {
             console.error('Error loading modal components:', error);
         }
@@ -108,11 +124,37 @@ class TeumsaeApp {
         this.compRecommendList = document.getElementById('comp-recommend-list');
     }
 
-    // Check URL parameters
+
+    // Check URL parameters for direct place access or notification-triggered review access
     checkUrlParams() {
         const params = new URLSearchParams(window.location.search);
         const id = parseInt(params.get('id'));
-        if (id) {
+        const placeId = parseInt(params.get('placeId'));
+        const reviewId = params.get('reviewId');
+
+        if (placeId && reviewId) {
+            // Notification click: open modal and scroll to specific review
+            setTimeout(() => {
+                this.openPlaceModal(placeId);
+                // Wait for modal to open and reviews to load, then scroll to review
+                setTimeout(() => {
+                    const reviewElement = document.getElementById(`review-${reviewId}`);
+                    if (reviewElement) {
+                        reviewElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // Highlight the review briefly
+                        reviewElement.style.backgroundColor = 'rgba(212, 175, 55, 0.1)';
+                        reviewElement.style.border = '2px solid rgba(212, 175, 55, 0.5)';
+                        setTimeout(() => {
+                            reviewElement.style.backgroundColor = '';
+                            reviewElement.style.border = '';
+                        }, 3000);
+                    }
+                }, 1500);
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }, 500);
+        } else if (id) {
+            // Direct place access: open modal normally
             setTimeout(() => {
                 this.openPlaceModal(id);
                 window.history.replaceState({}, document.title, window.location.pathname);
@@ -157,6 +199,10 @@ class TeumsaeApp {
         this.renderPlaces();
         console.log(`Loaded ${this.places.length} places from Firestore.`);
         this.checkUrlParams();
+        // [추가] 지도(SeoulMap)에 데이터 전달 (지도 화면이 있는 경우)
+        if (window.SeoulMap && typeof window.SeoulMap.updatePlaceData === 'function') {
+            window.SeoulMap.updatePlaceData(this.places);
+        }
     }
 
     // Firestore에서 리뷰 통계 로드
@@ -793,7 +839,8 @@ class TeumsaeApp {
 
     // 장소 상세 모달 열기
     openPlaceModal(id) {
-        const place = this.places.find(p => p.id === id);
+        // [변경] 타입 유연성 확보 (== 사용)
+        const place = this.places.find(p => p.id == id);
         if (!place) return;
 
         // 모달 데이터 채우기

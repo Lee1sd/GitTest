@@ -84,9 +84,24 @@ const AuthGuard = {
             const name = document.getElementById('user-name');
             const email = document.getElementById('user-email');
 
-            if (avatar && user.email) avatar.textContent = user.email.charAt(0).toUpperCase();
+            if (avatar) {
+                if (user.photoURL) {
+                    avatar.style.backgroundImage = `url('${user.photoURL}')`;
+                    avatar.textContent = '';
+                    avatar.style.backgroundColor = 'transparent';
+                } else if (user.email) {
+                    avatar.style.backgroundImage = 'none';
+                    avatar.style.backgroundColor = '#D4AF37';
+                    avatar.textContent = user.email.charAt(0).toUpperCase();
+                }
+            }
             if (name) name.textContent = user.name || (user.email ? user.email.split('@')[0] : 'User');
             if (email) email.textContent = user.email;
+
+            // greeting 업데이트
+            const greeting = document.querySelector('.user-greeting');
+            const userName = user.name || (user.email ? user.email.split('@')[0] : 'User');
+            if (greeting) greeting.textContent = `${userName}님 환영합니다!`;
 
         } else {
             // 비로그인 상태: 로그인 버튼 표시, 유저 메뉴 숨김

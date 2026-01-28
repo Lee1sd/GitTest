@@ -11,8 +11,6 @@ class ReviewManager {
 
     // Call this after modal HTML is injected into DOM
     rebind() {
-        console.log('[ReviewManager] rebind() called');
-
         // Cache DOM elements
         this.elements = {
             section: document.getElementById('modal-reviews-section'),
@@ -34,20 +32,6 @@ class ReviewManager {
                 count: document.getElementById('review-count')
             }
         };
-
-        // Debug: Check if elements are found
-        console.log('[ReviewManager] Elements bound:', {
-            section: !!this.elements.section,
-            btnWrite: !!this.elements.btnWrite,
-            form: !!this.elements.form,
-            list: !!this.elements.list,
-            'inputs.text': !!this.elements.inputs?.text,
-            'stats.avg': !!this.elements.stats?.avg
-        });
-
-        if (!this.elements.list) {
-            console.error('[ReviewManager] review-list element not found! Modal HTML may not be loaded yet.');
-        }
 
         this.bindEvents();
     }
@@ -73,28 +57,13 @@ class ReviewManager {
 
     // Called when modal opens
     async loadForPlace(placeId) {
-        console.log(`[ReviewManager] Loading for placeId: ${placeId} (Type: ${typeof placeId})`);
         this.currentPlaceId = placeId;
-
-        // Ensure elements are bound before accessing them
-        if (!this.elements || !this.elements.list) {
-            console.log('[ReviewManager] Elements not bound, calling rebind()...');
-            this.rebind();
-        }
-
         this.resetForm();
         this.toggleForm(false);
-
+        
         try {
             // ✅ Firestore에서 리뷰 로드
-            if (!window.db) {
-                console.error('[ReviewManager] DB not initialized!');
-                throw new Error('Firebase(db) 초기화가 필요합니다.');
-            }
-
-            // Debug: Try fetching all for this place to debug type issues
-            // Note: In production we should use the index, but for debugging let's be cleaner.
-            // We will stick to the existing query but add logs.
+            if (!window.db) throw new Error('Firebase(db) 초기화가 필요합니다.');
 
             const snap = await window.db
                 .collection('reviews')
@@ -103,86 +72,70 @@ class ReviewManager {
                 .limit(50)
                 .get();
 
-            console.log(`[ReviewManager] Found ${snap.size} reviews for placeId ${placeId}`);
-
-            // Fallback: If 0 results and placeId is Number, try String
-            if (snap.empty && typeof placeId === 'number') {
-                console.log(`[ReviewManager] No reviews for Number ID, trying String ID: "${String(placeId)}"`);
-                const snapString = await window.db
-                    .collection('reviews')
-                    .where('placeId', '==', String(placeId))
-                    .orderBy('createdAt', 'desc')
-                    .limit(50)
-                    .get();
-
-                if (!snapString.empty) {
-                    console.log(`[ReviewManager] Found ${snapString.size} reviews using String ID!`);
-                    // Use this snapshot instead
-                    this.processSnapshot(snapString);
-                    return;
+            // Load reviews with comment counts
+            const reviewsWithComments = await Promise.all(snap.docs.map(async d => {
+                const data = d.data() || {};
+                // createdAt: Firestore Timestamp -> ISO
+                let createdAt = data.createdAt;
+                if (createdAt && typeof createdAt.toDate === 'function') {
+                    createdAt = createdAt.toDate().toISOString();
                 }
-            }
 
-            this.processSnapshot(snap);
+                // media: [{url,type,...}] or legacy [url]
+                let media = data.media || [];
+                if (Array.isArray(media) && media.length > 0) {
+                    if (typeof media[0] === 'string') {
+                        media = media.map(u => ({ type: 'image', url: u }));
+                    } else {
+                        media = media
+                            .map(m => ({ type: m?.type || 'image', url: m?.url }))
+                            .filter(m => !!m.url);
+                    }
+                } else {
+                    media = [];
+                }
 
+                // Get comment count
+                let commentCount = 0;
+                try {
+                    const commentsSnap = await window.db
+                        .collection('reviews')
+                        .doc(d.id)
+                        .collection('comments')
+                        .get();
+                    commentCount = commentsSnap.size;
+                } catch (e) {
+                    console.error('Error loading comment count:', e);
+                }
+
+                return {
+                    id: d.id,
+                    ...data,
+                    createdAt,
+                    media,
+                    commentCount
+                };
+            }));
+
+            this.reviews = reviewsWithComments;
+
+            this.updateStats();
+            this.renderReviews();
         } catch (error) {
             console.error("Error loading reviews:", error);
-            if (this.elements && this.elements.list) {
-                this.elements.list.innerHTML = '<div class="review-empty">리뷰를 불러오는 중 오류가 발생했습니다.</div>';
-            }
+            this.elements.list.innerHTML = '<div class="review-empty">리뷰를 불러오는 중 오류가 발생했습니다.</div>';
         }
-    }
-
-    processSnapshot(snap) {
-        this.reviews = snap.docs.map(d => {
-            const data = d.data() || {};
-            // createdAt: Firestore Timestamp -> ISO
-            let createdAt = data.createdAt;
-            if (createdAt && typeof createdAt.toDate === 'function') {
-                createdAt = createdAt.toDate().toISOString();
-            }
-
-            // media: [{url,type,...}] or legacy [url]
-            let media = data.media || [];
-            if (Array.isArray(media) && media.length > 0) {
-                if (typeof media[0] === 'string') {
-                    media = media.map(u => ({ type: 'image', url: u }));
-                } else {
-                    media = media
-                        .map(m => ({ type: m?.type || 'image', url: m?.url }))
-                        .filter(m => !!m.url);
-                }
-            } else {
-                media = [];
-            }
-
-            return {
-                id: d.id,
-                ...data,
-                createdAt,
-                media
-            };
-        });
-
-        this.updateStats();
-        this.renderReviews();
     }
 
     toggleForm(show) {
-        console.log(`[ReviewManager] toggleForm called with show=${show}`);
         if (this.elements.form) {
             this.elements.form.style.display = show ? 'block' : 'none';
-        } else {
-            console.warn('[ReviewManager] form element not found');
         }
-
         if (this.elements.btnWrite) {
-            // show=true (form open) -> hide button
-            // show=false (form closed) -> show button
-            // Use '' to revert to CSS default (block/inline-block/flex)
-            this.elements.btnWrite.style.display = show ? 'none' : '';
-        } else {
-            console.warn('[ReviewManager] btnWrite element not found');
+            // 수정 모드일 때는 '리뷰 작성' 버튼을 숨김 상태로 유지해야 함
+            // 하지만 일반적인 토글(취소 등)에서는 다시 보여야 함
+            // 여기서는 show가 true(폼 열림)이면 버튼 숨김, false(폼 닫힘)이면 버튼 보임
+            this.elements.btnWrite.style.display = show ? 'none' : 'block';
         }
     }
 
@@ -190,29 +143,21 @@ class ReviewManager {
         // 기존 previewUrl 정리
         try {
             this.mediaFiles.forEach(m => m?.previewUrl && URL.revokeObjectURL(m.previewUrl));
-        } catch (e) { }
+        } catch (e) {}
         this.mediaFiles = [];
         this.editingReviewId = null; // 수정 ID 초기화
 
-        // Null 체크 추가
-        if (!this.elements || !this.elements.inputs) {
-            console.warn('[ReviewManager] resetForm: elements not initialized');
-            return;
-        }
-
         if (this.elements.inputs.title) this.elements.inputs.title.value = '';
-        if (this.elements.inputs.text) this.elements.inputs.text.value = '';
-        if (this.elements.inputs.media) this.elements.inputs.media.value = ''; // Reset file input
-        if (this.elements.preview) this.elements.preview.innerHTML = '';
+        this.elements.inputs.text.value = '';
+        this.elements.inputs.media.value = ''; // Reset file input
+        this.elements.preview.innerHTML = '';
         // Reset stars
-        if (this.elements.inputs.stars) {
-            this.elements.inputs.stars.forEach(radio => radio.checked = false);
-        }
-
+        this.elements.inputs.stars.forEach(radio => radio.checked = false);
+        
         // 버튼 텍스트 원복
         if (this.elements.btnSubmit) this.elements.btnSubmit.textContent = '등록하기';
     }
-
+    
     cancelEdit() {
         this.resetForm();
         this.toggleForm(false);
@@ -255,7 +200,7 @@ class ReviewManager {
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-
+                
                 // Compress to JPEG
                 resolve(canvas.toDataURL('image/jpeg', quality));
             };
@@ -286,10 +231,10 @@ class ReviewManager {
             // re-render 방식이 안전하지만, 일단 splice 사용
             const removed = this.mediaFiles.splice(index, 1)[0];
             if (removed?.previewUrl) {
-                try { URL.revokeObjectURL(removed.previewUrl); } catch (e) { }
+                try { URL.revokeObjectURL(removed.previewUrl); } catch (e) {}
             }
             item.remove();
-
+            
             // Re-index remaining items if needed (DOM item references are stable, but data index shifts)
             // 간단히 mediaFiles와 DOM의 싱크가 중요. 
             // 여기서는 새로 추가되는 애들만 index로 넣는데, 삭제 시 index가 밀림.
@@ -314,7 +259,7 @@ class ReviewManager {
                     email: fbUser.email
                 };
             }
-        } catch (e) { }
+        } catch (e) {}
 
         // (B) Local Storage (AuthGuard)
         try {
@@ -322,7 +267,7 @@ class ReviewManager {
             if (localUser && localUser.isLoggedIn) {
                 const email = localUser.email || '';
                 // 변경: 사용자 이름 대신 이메일 전체를 사용 (요청사항)
-                const name = email || localUser.name || '사용자';
+                const name = email || localUser.name || '사용자'; 
                 return {
                     userId: email || name || 'user',
                     userName: name,
@@ -378,7 +323,7 @@ class ReviewManager {
                 // userId, userName은 수정 시 변경하지 않는 것이 원칙이나, 
                 // 없으면 업데이트. (생성 시에는 필수)
             };
-
+            
             if (!this.editingReviewId) {
                 // 새 리뷰일 때만 작성자 정보 추가
                 baseReview.userId = author.userId;
@@ -399,7 +344,7 @@ class ReviewManager {
             // 2) Storage에 파일 업로드 (새로 추가된 파일들)
             const uploaded = [];
             const storage = window.storage || (firebase.storage ? firebase.storage() : null);
-
+            
             if (storage && this.mediaFiles.length > 0) {
                 // 기존 미디어 유지 여부 로직 필요
                 // 여기서는 'mediaFiles'가 새로 추가할 파일만 담고 있다고 가정
@@ -407,7 +352,7 @@ class ReviewManager {
                 // 현재 구조: resetForm() 시 mediaFiles 초기화 -> 사용자가 파일을 추가하면 mediaFiles에 들어감.
                 // 만약 "기존 이미지 삭제" 기능이 없다면, 수정 시 "기존 이미지 + 새 이미지"가 되어야 함.
                 // 일단 간단하게: 수정 시에도 새 파일이 있으면 업로드해서 추가.
-
+                
                 for (let i = 0; i < this.mediaFiles.length; i++) {
                     const m = this.mediaFiles[i];
                     if (!m?.file) continue;
@@ -433,7 +378,7 @@ class ReviewManager {
                 // 만약 UI에서 기존 이미지를 삭제했다면 그건 별도 처리 필요하지만, 
                 // 지금 UI에는 "기존 이미지 삭제" 버튼이 없으므로 "추가"만 가능하게 처리.
                 const finalMedia = [...oldMedia, ...uploaded];
-
+                
                 await docRef.update({
                     ...baseReview,
                     media: finalMedia,
@@ -461,25 +406,19 @@ class ReviewManager {
     }
 
     updateStats() {
-        // Null 체크 추가
-        if (!this.elements || !this.elements.stats) {
-            console.warn('[ReviewManager] updateStats: elements.stats not initialized');
-            return;
-        }
-
         if (this.reviews.length === 0) {
-            if (this.elements.stats.avg) this.elements.stats.avg.textContent = "0.0";
-            if (this.elements.stats.stars) this.elements.stats.stars.textContent = "☆☆☆☆☆";
-            if (this.elements.stats.count) this.elements.stats.count.textContent = "(0)";
+            this.elements.stats.avg.textContent = "0.0";
+            this.elements.stats.stars.textContent = "☆☆☆☆☆";
+            this.elements.stats.count.textContent = "(0)";
             return;
         }
 
         const sum = this.reviews.reduce((acc, r) => acc + (r.rating || 0), 0);
         const avg = (sum / this.reviews.length).toFixed(1);
 
-        if (this.elements.stats.avg) this.elements.stats.avg.textContent = avg;
-        if (this.elements.stats.stars) this.elements.stats.stars.textContent = this.getStarString(avg);
-        if (this.elements.stats.count) this.elements.stats.count.textContent = `(${this.reviews.length})`;
+        this.elements.stats.avg.textContent = avg;
+        this.elements.stats.stars.textContent = this.getStarString(avg);
+        this.elements.stats.count.textContent = `(${this.reviews.length})`;
     }
 
     getStarString(rating) {
@@ -488,7 +427,7 @@ class ReviewManager {
     }
 
     renderReviews() {
-        if (!this.elements || !this.elements.list) return;
+        if (!this.elements.list) return;
 
         if (this.reviews.length === 0) {
             this.elements.list.innerHTML = `
@@ -504,7 +443,7 @@ class ReviewManager {
 
         this.elements.list.innerHTML = this.reviews.map(review => {
             const isOwner = currentUserId && (review.userId === currentUserId);
-
+            
             return `
             <div class="review-item" data-id="${review.id}">
                 <div class="review-header">
@@ -517,6 +456,16 @@ class ReviewManager {
                     </div>
                     <div class="review-header-right" style="display: flex; align-items: center; gap: 8px;">
                         <div class="review-rating">${this.getStarString(review.rating)}</div>
+                        
+                        <!-- Comment Toggle -->
+                        <button class="btn-toggle-comments" onclick="commentManager.toggleComments('${review.id}')">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="margin-top: 2px;">
+                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                            </svg>
+                            <span>댓글</span>
+                            ${review.commentCount > 0 ? `<span class="comment-count-badge">${review.commentCount}</span>` : ''}
+                        </button>
+
                         ${isOwner ? `
                         <div class="review-actions">
                             <button class="btn-text-edit" onclick="reviewManager.editReview('${review.id}')">수정</button>
@@ -529,13 +478,20 @@ class ReviewManager {
                 ${review.media && review.media.length > 0 ? `
                     <div class="review-media">
                         ${review.media.map(m => {
-                const url = (typeof m === 'string') ? m : (m?.url || '');
-                const type = (typeof m === 'string') ? 'image' : (m?.type || 'image');
-                const isVid = type === 'video' || /\.(mp4|webm|ogg)(\?|#|$)/i.test(url);
-                return isVid ? `<video src="${url}" controls></video>` : `<img src="${url}">`;
-            }).join('')}
+                            const url = (typeof m === 'string') ? m : (m?.url || '');
+                            const type = (typeof m === 'string') ? 'image' : (m?.type || 'image');
+                            const isVid = type === 'video' || /\.(mp4|webm|ogg)(\?|#|$)/i.test(url);
+                            return isVid ? `<video src="${url}" controls></video>` : `<img src="${url}">`;
+                        }).join('')}
                     </div>
                 ` : ''}
+                
+                <!-- Comment Section Container -->
+                <div id="comments-${review.id}" class="review-comments-section">
+                    <div class="comment-loading" style="text-align: center; color: #888; font-size: 0.8rem; padding: 10px;">
+                        댓글을 불러오는 중...
+                    </div>
+                </div>
             </div>
         `}).join('');
     }
@@ -547,7 +503,7 @@ class ReviewManager {
     }
 
     // --- Edit / Delete Action Methods --- //
-
+    
     async deleteReview(reviewId) {
         if (!confirm('정말로 이 리뷰를 삭제하시겠습니까?')) return;
 
@@ -566,7 +522,7 @@ class ReviewManager {
         if (!review) return;
 
         this.editingReviewId = reviewId;
-
+        
         // 폼 열기
         this.toggleForm(true);
         // 버튼 텍스트 변경
@@ -575,7 +531,7 @@ class ReviewManager {
         // 값 채우기
         if (this.elements.inputs.title) this.elements.inputs.title.value = review.title || '';
         this.elements.inputs.text.value = review.content || '';
-
+        
         // 별점 채우기
         const ratingVal = review.rating || 5;
         const starInput = document.querySelector(`input[name="rating"][value="${ratingVal}"]`);
@@ -584,6 +540,8 @@ class ReviewManager {
         // 스크롤 이동
         this.elements.form.scrollIntoView({ behavior: 'smooth' });
     }
+
+
 }
 
 // Global Loading Animation (Helper)

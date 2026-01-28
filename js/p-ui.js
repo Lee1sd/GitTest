@@ -56,10 +56,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <input type="checkbox" />
           <input type="text" class="todo-text" placeholder="할 일을 입력하세요" />
         </label>
-        <button class="todo-delete-btn">✕</button>
+        <button class="planner-todo-delete">✕</button>
       `;
 
-      item.querySelector('.todo-delete-btn').onclick = () => item.remove();
+      item.querySelector('.planner-todo-delete').onclick = () => item.remove();
       todoList.appendChild(item);
       item.querySelector('.todo-text').focus();
     });

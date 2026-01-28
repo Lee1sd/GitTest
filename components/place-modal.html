@@ -10,18 +10,22 @@
         <div class="place-modal__hero">
             <img src="" alt="" class="place-modal__image" id="modal-hero-image">
             <div class="place-modal__overlay"></div>
+
+            <!-- 혼잡도: 상단 왼쪽 -->
+            <div class="place-modal__top-badges">
+                <span class="place-modal__congestion" id="modal-congestion">
+                    <!-- JS injects content/classes -->
+                    <span id="modal-congestion-text">혼잡도</span>
+                </span>
+            </div>
+
             <div class="place-modal__header">
-                <div class="place-modal__top-badges">
-                    <span class="place-modal__congestion" id="modal-congestion">
-                        <!-- JS injects content/classes -->
-                        <span id="modal-congestion-text">혼잡도</span>
-                    </span>
-                </div>
-                <h2 class="place-modal__title" id="modal-title">장소 이름</h2>
+                <!-- 카테고리/주소: 제목 위로 -->
                 <div class="place-modal__meta">
                     <span class="place-modal__category" id="modal-category">카테고리</span>
                     <span class="place-modal__address" id="modal-address">주소</span>
                 </div>
+                <h2 class="place-modal__title" id="modal-title">장소 이름</h2>
             </div>
         </div>
 

@@ -114,17 +114,13 @@
 /* Header Badges (Top) */
 /* Header Badges (Top) */
 .place-modal__top-badges {
-    position: relative;
-    top: auto;
-    left: auto;
-    z-index: 10;
-    margin-bottom: 20px;
-    /* Spacing above title */
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    z-index: 100;
     display: flex;
     align-items: center;
     gap: 12px;
-    /* Gap between congestion and address */
-    padding-left: 0;
 }
 
 /* Congestion Badge (Exact Pill Style) */
@@ -257,6 +253,8 @@
     /* Ensure alignment */
     color: var(--color-accent);
     font-size: 1.05rem;
+    margin-bottom: 5px;
+    /* 제목과의 간격 */
 }
 
 .meta-divider {

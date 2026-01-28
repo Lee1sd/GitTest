@@ -1,0 +1,48 @@
+/* Pagination Styles */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 40px;
+    padding-bottom: 60px;
+}
+
+.page-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: var(--color-gray);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.page-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-white);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.page-btn.active {
+    background: var(--accent-color);
+    color: #000;
+    /* 텍스트 가독성을 위해 검정색으로 변경 */
+    border-color: var(--accent-color);
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(250, 176, 5, 0.3);
+    /* 노란색 그림자 */
+}
+
+.page-btn.prev,
+.page-btn.next {
+    width: auto;
+    padding: 0 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}

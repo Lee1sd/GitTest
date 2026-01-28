@@ -13,6 +13,11 @@ class TeumsaeApp {
         this.currentSort = "recommended"; // Default Sort
         this.searchQuery = "";
 
+        // Pagination State
+        this.itemsPerPage = 12; // 3 rows * 4 columns (desktop)
+        this.currentPage = 1;
+        this.isPaginationMode = false; // false: Load More mode, true: Pagination mode
+
         this.init();
     }
 
@@ -444,7 +449,7 @@ class TeumsaeApp {
 
         reveals.forEach(el => {
             const elementTop = el.getBoundingClientRect().top;
-            const revealPoint = 150; // 요소가 화면 하단에서 150px 올라왔을 때
+            const revealPoint = 50; // 요소가 화면 하단에서 50px 올라왔을 때 (150px -> 50px로 완화하여 초기 노출 증대)
 
             if (elementTop < windowHeight - revealPoint) {
                 el.classList.add('revealed');
@@ -480,6 +485,9 @@ class TeumsaeApp {
 
             return categoryMatch && districtMatch && congestionMatch && searchMatch;
         });
+
+        // 필터링 적용 시 페이지 1로 리셋
+        this.currentPage = 1;
 
         // 5. 정렬 Logic
         this.sortPlaces();
@@ -649,7 +657,7 @@ class TeumsaeApp {
 
     // renderMoodFilters Removed
 
-    // 장소 카드 렌더링
+    // 장소 카드 렌더링 (Pagination / Load More Logic)
     renderPlaces() {
         if (!this.placesGrid) return;
 
@@ -661,12 +669,21 @@ class TeumsaeApp {
           <p style="color: var(--color-gray-light); margin-top: 0.5rem;">다른 키워드나 필터를 선택해보세요.</p>
         </div>
       `;
+            this.renderPaginationControls(0); // Hide controls
             return;
         }
 
+        // Calculate items to show
+        // Calculate items to show
+        let displayItems = [];
+        // Always use Pagination Mode logic as requested
+        const start = (this.currentPage - 1) * this.itemsPerPage;
+        const end = start + this.itemsPerPage;
+        displayItems = this.filteredPlaces.slice(start, end);
+
         // 카드 HTML 생성
-        this.placesGrid.innerHTML = this.filteredPlaces.map((place, index) => `
-      <article class="card place-card reveal" style="animation-delay: ${index * 0.1}s" data-id="${place.id}">
+        this.placesGrid.innerHTML = displayItems.map((place, index) => `
+      <article class="card place-card reveal" style="animation-delay: ${index * 0.05}s" data-id="${place.id}">
         <div class="place-card__image">
           <img src="${place.images[0]}" alt="${place.name}" loading="lazy">
           <button class="place-card__save ${this.isSaved(place.id) ? 'saved' : ''}" 
@@ -708,6 +725,63 @@ class TeumsaeApp {
 
         // 렌더링 직후 애니메이션 적용
         setTimeout(() => this.revealOnScroll(), 100);
+
+        // Render Pagination Controls
+        this.renderPaginationControls(this.filteredPlaces.length);
+    }
+
+    // 페이지네이션 컨트롤 렌더링
+    renderPaginationControls(totalItems) {
+        let paginationContainer = document.getElementById('pagination-controls');
+
+        // 없으면 생성
+        if (!paginationContainer) {
+            paginationContainer = document.createElement('div');
+            paginationContainer.id = 'pagination-controls';
+            paginationContainer.className = 'pagination';
+            // placesGrid 다음에 삽입 (grid가 끝난 후)
+            this.placesGrid.parentNode.insertBefore(paginationContainer, this.placesGrid.nextSibling);
+        }
+
+        if (totalItems <= this.itemsPerPage) {
+            paginationContainer.style.display = 'none';
+            return;
+        }
+
+        paginationContainer.style.display = 'flex';
+        const totalPages = Math.ceil(totalItems / this.itemsPerPage);
+
+        // 페이지 버튼 생성 로직
+        let html = '';
+
+        // Prev Button
+        if (this.currentPage > 1) {
+            html += `<button class="page-btn prev" onclick="window.app.changePage(${this.currentPage - 1})">이전</button>`;
+        }
+
+        // Page Numbers (Simple range for now)
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === this.currentPage) {
+                html += `<button class="page-btn active">${i}</button>`;
+            } else {
+                html += `<button class="page-btn" onclick="window.app.changePage(${i})">${i}</button>`;
+            }
+        }
+
+        // Next Button
+        if (this.currentPage < totalPages) {
+            html += `<button class="page-btn next" onclick="window.app.changePage(${this.currentPage + 1})">다음</button>`;
+        }
+
+        paginationContainer.innerHTML = html;
+    }
+
+    changePage(page) {
+        this.currentPage = page;
+        this.renderPlaces();
+        // 스크롤을 목록 상단으로 이동
+        const offset = this.placesGrid.offsetTop - 120;
+        window.scrollTo({ top: offset, behavior: 'smooth' });
     }
 
     // 혼잡도에 따른 CSS 클래스 반환

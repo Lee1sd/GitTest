@@ -263,7 +263,10 @@ a {
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    font-size: 12px;
+    font-size: 13px;
+    background-size: cover;
+    background-position: center;
+
 }
 
 /* 사용자 드롭다운 메뉴 */
@@ -303,7 +306,7 @@ a {
 }
 
 .user-dropdown-header .user-greeting {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--accent-color);
     font-weight: 600;
 }

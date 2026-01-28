@@ -135,12 +135,12 @@
 </head>
 
 <body>
-   <!-- Header -->
+    <!-- Header -->
     <div id="header-placeholder"></div>
 
     <!-- Planner Page -->
     <main class="planner">
-        <div class="container">
+        <div class="p-container">
             <!-- Header -->
             <div class="planner__header reveal">
                 <h1 class="planner__title">나만의 여행 일정</h1>
@@ -170,7 +170,7 @@
                         style="display: none; text-align: center; padding: 2rem; color: var(--color-gray);">
                         <p style="font-size: 2rem; margin-bottom: 0.5rem;">📍</p>
                         <p>저장된 장소가 없습니다</p>
-                        <a href="main.html" class="btn btn-primary btn-sm" style="margin-top: 1rem;">장소 둘러보기</a>
+                        <a href="index.html" class="btn btn-primary btn-sm" style="margin-top: 1rem;">장소 둘러보기</a>
                     </div>
                 </aside>
 
@@ -243,7 +243,8 @@
                         </button>
                     </div>
                 </div>
-                      <!--todolist-->
+
+                 <!--todolist-->
                 <aside class="planner_Todo">
                     <div class="todo-add">
                         <h5>todolist</h5>
@@ -272,12 +273,15 @@
 
                     <div class="myplans-list">
                         <!-- JS가 여기다 일정 카드들을 렌더링함 -->
+
                     </div>
                 </aside>
 
+
             </div>
         </div>
-                <div id="plan-name-modal" class="plan-name-modal">
+
+        <div id="plan-name-modal" class="plan-name-modal">
             <div class="plan-name-box">
                 <span>일정 이름 설정</span>
                 <input type="text" id="plan-name-input" placeholder="예: 사유 3박 4일" />
@@ -288,12 +292,13 @@
             </div>
         </div>
 
-                
+
             </div>
         </div>
     </main>
 
-    <!-- 푸터 (Dynamic) -->
+
+      <!-- 푸터 (Dynamic) -->
     <div id="footer-placeholder"></div>
 
     <!-- Scripts -->
@@ -311,6 +316,7 @@
     <script src="js/map-toggle.js"></script>
     <script src="js/lightbox.js"></script>
     <script src="js/p-ui.js"></script>
+    <script src="js/data.js"></script>
 
     <script>
         // Check login state and update UI
@@ -334,15 +340,11 @@
     </script>
     <script src="js/logout.js"></script>
     <script src="js/map-toggle.js"></script>
+
     <!-- 지도 오버레이 -->
     <div id="map-overlay" class="map-overlay">
         <iframe src="" frameborder="0" loading="lazy"></iframe>
     </div>
 </body>
 
-
 </html>
-
-
-
-

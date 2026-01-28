@@ -27,12 +27,13 @@
     --color-error: #F44336;
 
     /* Congestion Colors */
+    /* Congestion Colors */
     --color-quiet: #4CAF50;
     /* 한산 */
-    --color-normal: #FFC107;
-    /* 보통 */
-    --color-crowded: #FF5722;
-    /* 혼잡 */
+    --color-normal: #FF9800;
+    /* 보통 - Explore Standard */
+    --color-crowded: #E53935;
+    /* 혼잡 - True Red to match Explore Image */
 
     /* Nature Green Palette */
     --color-forest: #2D5A3E;

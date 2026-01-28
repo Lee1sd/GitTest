@@ -424,7 +424,7 @@
 /* ===== PLANNER PAGE ===== */
 .planner {
     min-height: 100vh;
-    padding-top: 80px;
+    padding-top: var(--header-height);
     background: var(--color-light);
 }
 

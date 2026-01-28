@@ -10,18 +10,22 @@
         <div class="place-modal__hero">
             <img src="" alt="" class="place-modal__image" id="modal-hero-image">
             <div class="place-modal__overlay"></div>
+
+            <!-- 혼잡도: 상단 왼쪽 -->
+            <div class="place-modal__top-badges">
+                <span class="place-modal__congestion" id="modal-congestion">
+                    <!-- JS injects content/classes -->
+                    <span id="modal-congestion-text">혼잡도</span>
+                </span>
+            </div>
+
             <div class="place-modal__header">
-                <div class="place-modal__top-badges">
-                    <span class="place-modal__congestion" id="modal-congestion">
-                        <!-- JS injects content/classes -->
-                        <span id="modal-congestion-text">혼잡도</span>
-                    </span>
-                </div>
-                <h2 class="place-modal__title" id="modal-title">장소 이름</h2>
+                <!-- 카테고리/주소: 제목 위로 -->
                 <div class="place-modal__meta">
                     <span class="place-modal__category" id="modal-category">카테고리</span>
                     <span class="place-modal__address" id="modal-address">주소</span>
                 </div>
+                <h2 class="place-modal__title" id="modal-title">장소 이름</h2>
             </div>
         </div>
 
@@ -176,27 +180,6 @@
             </div>
         </div>
 
-        <!-- Planner Sidebar (Right) -->
-        <div class="place-modal__footer" id="modal-planner-sidebar">
-            <div class="planner-sidebar__header">
-                <h4>내 여행 일정</h4>
-                <span class="planner-date" id="mini-plan-date">날짜 없음</span>
-            </div>
 
-            <div class="planner-sidebar__list" id="mini-plan-list">
-                <!-- Items populated by JS -->
-                <div class="planner-empty">
-                    <p>일정이 비어있습니다.</p>
-                    <a href="planner.html" class="link">여행 계획하러 가기 &rarr;</a>
-                </div>
-            </div>
-
-            <div class="planner-sidebar__actions" id="planner-action-area">
-                <p class="planner-status" id="planner-status-msg"></p>
-                <button class="btn btn-accent btn-full" id="btn-add-to-plan">
-                    <span class="icon">➕</span> <span class="btn-text">일정에 담기</span>
-                </button>
-            </div>
-        </div>
     </div>
 </div>

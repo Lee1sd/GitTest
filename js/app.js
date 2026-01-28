@@ -5,7 +5,12 @@ class TeumsaeApp {
         this.places = []; // 초기값 빈 배열
         this.filteredPlaces = [];
         this.savedPlaces = this.loadSavedPlaces();
+
+        // Filter States
         this.currentCategory = "전체";
+        this.currentDistrict = "전체";
+        this.currentCongestion = "all";
+        this.currentSort = "recommended"; // Default Sort
         this.searchQuery = "";
 
         this.init();
@@ -44,42 +49,81 @@ class TeumsaeApp {
         this.checkUrlParams(); // Check for ?id=...
     }
 
-    // Load modal HTML from component file
+    // Load modal HTML from component files (Dual Modal System)
     async loadModalComponent() {
-         const modalContainer = document.getElementById('modal-container');
+        const modalContainer = document.getElementById('modal-container');
 
-    // ✅ planner 페이지에서는 모달이 없으므로 그냥 종료
-    if (!modalContainer) {
-        console.log('[TeumsaeApp] modal-container not found, skipping modal load');
-        return;
-    }
+        // ✅ planner 페이지에서는 모달이 없으므로 그냥 종료
+        if (!modalContainer) {
+            console.log('[TeumsaeApp] modal-container not found, skipping modal load');
+            return;
+        }
         try {
-            const response = await fetch('components/place-modal.html');
-            if (!response.ok) throw new Error('Failed to load modal component');
-            const html = await response.text();
-            document.getElementById('modal-container').innerHTML = html;
+            // Fetch both components in parallel
+            const [placeRes, compRes] = await Promise.all([
+                fetch('components/place-modal.html'),
+                fetch('components/comparison-page.html')
+            ]);
 
-            // Re-bind ModalPlanner and ReviewManager elements now that DOM exists
-            if (this.modalPlanner) {
-                this.modalPlanner.rebind();
-            } else if (window.modalPlanner) {
-                window.modalPlanner.rebind();
-            }
+            if (!placeRes.ok || !compRes.ok) throw new Error('Failed to load modal components');
 
-            if (window.reviewManager) {
-                window.reviewManager.rebind();
-            }
+            const placeHtmlRaw = await placeRes.text();
+            const compHtmlRaw = await compRes.text();
+
+            const parser = new DOMParser();
+            const placeDoc = parser.parseFromString(placeHtmlRaw, 'text/html');
+            const compDoc = parser.parseFromString(compHtmlRaw, 'text/html');
+
+            const placeContent = placeDoc.querySelector('.place-modal').outerHTML;
+            const compContent = compDoc.querySelector('.comparison-modal').outerHTML;
+
+            // Debug: Check if review elements are in the extracted HTML
+            console.log('[loadModalComponent] placeContent includes review-list:', placeContent.includes('review-list'));
+            console.log('[loadModalComponent] placeContent includes btn-write-review:', placeContent.includes('btn-write-review'));
+            console.log('[loadModalComponent] placeContent length:', placeContent.length);
+
+            const dualLayout = `
+                <div class="dual-backdrop" id="dual-backdrop">
+                    <div class="dual-layout">
+                        <section class="dual-left">
+                            ${placeContent}
+                        </section>
+                        <section class="dual-right">
+                            ${compContent}
+                        </section>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('modal-container').innerHTML = dualLayout;
+
+            // Debug: Check if elements exist in DOM after injection
+            console.log('[loadModalComponent] After injection - review-list exists:', !!document.getElementById('review-list'));
+            console.log('[loadModalComponent] After injection - btn-write-review exists:', !!document.getElementById('btn-write-review'));
+
+            // Re-bind sub-components
+            if (this.modalPlanner) this.modalPlanner.rebind();
+            else if (window.modalPlanner) window.modalPlanner.rebind();
+
+            if (window.reviewManager) window.reviewManager.rebind();
+
+
         } catch (error) {
-            console.error('Error loading modal component:', error);
+            console.error('Error loading modal components:', error);
         }
     }
 
     // Cache modal-specific DOM elements
     cacheModalElements() {
-        this.modalBackdrop = document.getElementById('place-modal-backdrop');
-        this.modalCloseBtn = document.getElementById('place-modal-close');
-        this.modalAddBtn = document.getElementById('modal-add-btn');
+        this.modalBackdrop = document.getElementById('dual-backdrop');
+        this.placeCloseBtn = document.getElementById('place-modal-close');
+        this.compCloseBtn = document.getElementById('comparison-modal-close');
+        this.compBottomCloseBtn = document.getElementById('comparison-close-bottom');
+
+        // Comparison Elements (Recommendations only)
+        this.compRecommendList = document.getElementById('comp-recommend-list');
     }
+
 
     // Check URL parameters for direct place access or notification-triggered review access
     checkUrlParams() {
@@ -87,7 +131,7 @@ class TeumsaeApp {
         const id = parseInt(params.get('id'));
         const placeId = parseInt(params.get('placeId'));
         const reviewId = params.get('reviewId');
-        
+
         if (placeId && reviewId) {
             // Notification click: open modal and scroll to specific review
             setTimeout(() => {
@@ -113,7 +157,6 @@ class TeumsaeApp {
             // Direct place access: open modal normally
             setTimeout(() => {
                 this.openPlaceModal(id);
-                // Clean URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             }, 500);
         }
@@ -132,25 +175,89 @@ class TeumsaeApp {
         this.places = [];
         snapshot.forEach(doc => {
             const data = doc.data();
-            // id 필드가 숫자인 경우 처리
             const place = {
                 ...data,
-                id: parseInt(data.id) || data.id // ID 호환성 유지
+                id: parseInt(data.id) || data.id
             };
             this.places.push(place);
         });
 
+        // 리뷰 통계 로드 및 장소 데이터에 추가
+        await this.loadReviewStats();
+
+        // Debugging Data
+        if (this.places.length > 0) {
+            console.log("First place data sample:", this.places[0]);
+            console.log("Checking district field on sample:", this.places[0].district);
+            console.log("Checking address field on sample:", this.places[0].address);
+            console.log("Review stats sample:", this.places[0].reviewStats);
+        }
+
         this.filteredPlaces = [...this.places];
         this.renderCategoryFilters();
-        this.renderMoodFilters();
+        this.renderDistrictFilters();
         this.renderPlaces();
         console.log(`Loaded ${this.places.length} places from Firestore.`);
-
-        // Re-check URL params after data load (in case data took longer)
         this.checkUrlParams();
         // [추가] 지도(SeoulMap)에 데이터 전달 (지도 화면이 있는 경우)
         if (window.SeoulMap && typeof window.SeoulMap.updatePlaceData === 'function') {
             window.SeoulMap.updatePlaceData(this.places);
+        }
+    }
+
+    // Firestore에서 리뷰 통계 로드
+    async loadReviewStats() {
+        try {
+            // 모든 리뷰를 한 번에 가져와서 장소별로 집계
+            const reviewsSnapshot = await db.collection('reviews').get();
+
+            // 장소별 리뷰 통계 계산
+            const statsMap = new Map(); // placeId -> { totalRating, count }
+
+            reviewsSnapshot.forEach(doc => {
+                const review = doc.data();
+                const placeId = review.placeId;
+                const rating = review.rating || 0;
+
+                if (!statsMap.has(placeId)) {
+                    statsMap.set(placeId, { totalRating: 0, count: 0 });
+                }
+
+                const stat = statsMap.get(placeId);
+                stat.totalRating += rating;
+                stat.count += 1;
+            });
+
+            // 각 장소에 리뷰 통계 추가
+            this.places.forEach(place => {
+                // placeId가 숫자 또는 문자열일 수 있으므로 둘 다 확인
+                const numericId = Number(place.id);
+                const stringId = String(place.id);
+
+                let stat = statsMap.get(numericId) || statsMap.get(stringId);
+
+                if (stat && stat.count > 0) {
+                    const avgRating = (stat.totalRating / stat.count).toFixed(1);
+                    place.reviewStats = {
+                        rating: parseFloat(avgRating),
+                        reviewCount: stat.count
+                    };
+                    // 기존 stats 객체가 있으면 병합, 없으면 생성
+                    if (!place.stats) place.stats = {};
+                    place.stats.rating = parseFloat(avgRating);
+                    place.stats.reviewCount = stat.count;
+                } else {
+                    place.reviewStats = { rating: 0, reviewCount: 0 };
+                    if (!place.stats) place.stats = {};
+                    place.stats.rating = place.stats.rating || 0;
+                    place.stats.reviewCount = 0;
+                }
+            });
+
+            console.log(`[loadReviewStats] Processed ${reviewsSnapshot.size} reviews for ${statsMap.size} places`);
+
+        } catch (error) {
+            console.error('[loadReviewStats] Error loading review stats:', error);
         }
     }
 
@@ -159,15 +266,21 @@ class TeumsaeApp {
         // 메인 섹션 요소
         this.main = document.querySelector('.main');
         this.searchInput = document.querySelector('.search-box__input'); // 검색 입력창
-        this.categoryBtns = document.querySelectorAll('.filter-btn[data-category]'); // 카테고리 버튼들
-        this.moodTags = document.querySelectorAll('.filter-btn[data-mood]'); // 분위기 태그 버튼들
         this.placesGrid = document.querySelector('.places-grid'); // 장소 목록 그리드 컨테이너
+
+        // Filter Elements (Updated Selectors for New Design)
+        this.categoryContainer = document.getElementById('category-filters');
+
+        // District Dropdown
+        this.districtSelect = document.getElementById('district-select');
+        this.districtTrigger = document.getElementById('district-trigger');
+        this.districtOptions = document.getElementById('district-options');
+
+        this.congestionBtns = document.querySelectorAll('#congestion-filters .segment-btn');
+        this.sortBtns = document.querySelectorAll('#sort-filters .sort-btn');
 
         // 헤더
         this.header = document.querySelector('.header');
-
-        // 모달 (팝업)
-        // Other elements cached in cacheModalElements()
     }
 
     // 이벤트 리스너 설정
@@ -189,23 +302,63 @@ class TeumsaeApp {
             });
         }
 
-        // 카테고리 필터 클릭 이벤트 -> renderCategoryFilters()에서 처리됨
+        // --- New Filter Events ---
 
+        // 1. Region Dropdown Toggle
+        if (this.districtTrigger) {
+            this.districtTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.districtSelect.classList.toggle('active');
+            });
+        }
 
-        // 분위기 태그 클릭 이벤트 -> renderMoodFilters()에서 처리됨
+        // Close dropdown when clicking outside
+        window.addEventListener('click', (e) => {
+            if (this.districtSelect && !this.districtSelect.contains(e.target)) {
+                this.districtSelect.classList.remove('active');
+            }
+        });
+
+        // 2. Congestion Filter (Segment Control)
+        if (this.congestionBtns) {
+            this.congestionBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this.congestionBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    this.currentCongestion = btn.dataset.congestion;
+                    this.filterPlaces();
+                });
+            });
+        }
+
+        // 3. Sort Filter (Text Buttons)
+        if (this.sortBtns) {
+            this.sortBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this.sortBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    this.currentSort = btn.dataset.sort;
+                    this.filterPlaces();
+                });
+            });
+        }
 
         // 스크롤 이벤트 (헤더 스타일 변경 및 요소 등장 효과)
         window.addEventListener('scroll', () => this.handleScroll());
 
         // 모달 닫기 이벤트
-        if (this.modalCloseBtn) {
-            this.modalCloseBtn.addEventListener('click', () => this.closePlaceModal());
-        }
+        const closeModals = () => this.closePlaceModal();
+
+        if (this.modalCloseBtn) this.modalCloseBtn.addEventListener('click', closeModals); // Place close
+        if (this.placeCloseBtn) this.placeCloseBtn.addEventListener('click', closeModals); // Alias for place close
+        if (this.compCloseBtn) this.compCloseBtn.addEventListener('click', closeModals);   // Comp close
+        if (this.compBottomCloseBtn) this.compBottomCloseBtn.addEventListener('click', closeModals); // Bottom close
+
         if (this.modalBackdrop) {
             this.modalBackdrop.addEventListener('click', (e) => {
-                // 배경 클릭 시 닫기
-                if (e.target === this.modalBackdrop) {
-                    this.closePlaceModal();
+                // 배경 클릭 시 닫기 (배경 자체 or backdrop wrapper)
+                if (e.target === this.modalBackdrop || e.target.id === 'dual-backdrop') {
+                    closeModals();
                 }
             });
         }
@@ -291,144 +444,202 @@ class TeumsaeApp {
         });
     }
 
-    // 장소 필터링 로직 (카테고리, 검색어, 태그 조합)
+    // 장소 필터링 로직
     filterPlaces() {
-        // 활성화된 분위기 태그 목록 수집
-        const activeMoods = [...document.querySelectorAll('.filter-btn[data-mood].active')]
-            .map(tag => tag.dataset.mood);
-
-        const query = this.searchQuery.replace('#', '').trim(); // 검색어에서 # 제거 및 공백 제거
+        const query = this.searchQuery.replace('#', '').trim(); // 검색어
 
         this.filteredPlaces = this.places.filter(place => {
             // 1. 카테고리 일치 여부
             const categoryMatch = this.currentCategory === "전체" ||
                 place.category === this.currentCategory;
 
-            // 2. 검색어 포함 여부 (이름, 설명, 태그)
-            // 태그 검색 기능 강화: 검색어가 태그 중 하나라도 포함하거나 일치하면 매칭
+            // 2. 지역 일치 여부
+            const placeDistrict = this.extractDistrict(place);
+            const districtMatch = this.currentDistrict === "전체" ||
+                placeDistrict === this.currentDistrict;
+
+            // 3. 혼잡도 일치 여부
+            const placeLevel = place.congestion ? (place.congestion.level || place.congestion) : 'normal';
+            // Simple mapping if needed, assuming direct value match for now
+            const congestionMatch = this.currentCongestion === "all" ||
+                placeLevel === this.currentCongestion;
+
+            // 4. 검색어 포함 여부
             const searchMatch = !query ||
                 place.name.toLowerCase().includes(query) ||
                 place.description.toLowerCase().includes(query) ||
                 place.tags.some(tag => tag.toLowerCase().includes(query));
 
-            // 3. 분위기 태그 일치 여부 (선택된 태그를 모두 포함해야 통과 - AND 조건)
-            const moodMatch = activeMoods.length === 0 ||
-                activeMoods.every(mood =>
-                    place.tags.some(tag => tag.includes(mood)) ||
-                    place.description.includes(mood)
-                );
-
-            return categoryMatch && searchMatch && moodMatch;
+            return categoryMatch && districtMatch && congestionMatch && searchMatch;
         });
+
+        // 5. 정렬 Logic
+        this.sortPlaces();
 
         this.renderPlaces(); // 필터링 결과 렌더링
     }
 
+    // 정렬 함수
+    sortPlaces() {
+        if (this.currentSort === 'recommended') {
+            // Custom Recommendation Score
+            // Priority: High Rating > Quiet > Normal > Crowded
+            this.filteredPlaces.sort((a, b) => {
+                const getScore = (p) => {
+                    let score = 0;
+                    const rating = p.stats ? p.stats.rating : (p.rating || 0);
+                    score += rating * 20; // 5.0 -> 100
 
-    // 카테고리 필터 버튼 동적 생성
+                    const lvl = p.congestion ? (p.congestion.level || p.congestion) : 'normal';
+                    if (lvl === 'quiet') score += 15;
+                    else if (lvl === 'normal') score += 5;
+                    // crowded = 0
+
+                    return score;
+                };
+                return getScore(b) - getScore(a);
+            });
+        } else if (this.currentSort === 'rating') {
+            this.filteredPlaces.sort((a, b) => {
+                const ratingA = a.stats ? a.stats.rating : (a.rating || 0);
+                const ratingB = b.stats ? b.stats.rating : (b.rating || 0);
+                return ratingB - ratingA; // Descending
+            });
+        } else if (this.currentSort === 'reviews') {
+            this.filteredPlaces.sort((a, b) => {
+                const reviewsA = a.stats ? a.stats.reviewCount : 0;
+                const reviewsB = b.stats ? b.stats.reviewCount : 0;
+                return reviewsB - reviewsA; // Descending
+            });
+        }
+    }
+
+    // 주소에서 구 추출 Helper
+    extractDistrict(place) {
+        // 1. Try to find the district or address from the flat object first
+        if (place.district) return place.district;
+        let addressVal = place.address;
+
+        // 2. If not found, use the deep search logic from openPlaceModal
+        if (!addressVal && !place.district) {
+            // Check nested by ID
+            const idKey = place.id;
+            const nested = place[idKey] || place[String(idKey)];
+            if (nested) {
+                if (nested.district) return nested.district;
+                if (nested.address) addressVal = nested.address;
+            }
+
+            // Check nested by Name
+            if (!addressVal && place[place.name]) {
+                if (place[place.name].district) return place[place.name].district;
+                if (place[place.name].address) addressVal = place[place.name].address;
+            }
+
+            // Fallback: Scan all properties
+            if (!addressVal) {
+                for (const key in place) {
+                    if (place[key] && typeof place[key] === 'object') {
+                        if (place[key].district) return place[key].district;
+                        if (place[key].address) {
+                            addressVal = place[key].address;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!addressVal) {
+            // console.warn(`Could not find address for place id: ${place.id}`);
+            return "기타";
+        }
+
+        // '서울 종로구 ...', '경기도 ...', '강남구 ...'
+        const match = addressVal.match(/([가-힣]+구)/);
+
+        if (match) {
+            return match[1];
+        }
+
+        // console.warn(`Could not extract district from address: ${addressVal}`);
+        return "기타";
+    }
+
+    // 카테고리 필터 버튼 동적 생성 (New Chips Style)
     renderCategoryFilters() {
         const filterContainer = document.getElementById('category-filters');
         if (!filterContainer) return;
 
-        // 1. 현재 데이터에서 사용된 카테고리 추출 (중복 제거)
+        // 1. 카테고리 추출
         const uniqueCategories = new Set(['전체']);
         this.places.forEach(place => {
             if (place.category) uniqueCategories.add(place.category);
         });
 
-        // 2. 버튼 HTML 생성
+        // 2. HTML 생성 (Using .category-chip)
         filterContainer.innerHTML = Array.from(uniqueCategories).map(category => {
             const isActive = category === this.currentCategory;
-            return `<button class="filter-btn ${isActive ? 'active' : ''}" data-category="${category}">${category}</button>`;
+            return `<button class="category-chip ${isActive ? 'active' : ''}" data-category="${category}">${category}</button>`;
         }).join('');
 
-        // 3. 이벤트 리스너 다시 연결
-        const newCategoryBtns = filterContainer.querySelectorAll('.filter-btn');
-        newCategoryBtns.forEach(btn => {
+        // 3. 이번트 리스너
+        const chips = filterContainer.querySelectorAll('.category-chip');
+        chips.forEach(btn => {
             btn.addEventListener('click', () => {
-                // UI 업데이트
-                newCategoryBtns.forEach(b => b.classList.remove('active'));
+                chips.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
 
-                // 상태 업데이트 및 필터링
                 this.currentCategory = btn.dataset.category;
                 this.filterPlaces();
             });
         });
     }
 
-    // 분위기 필터 버튼 동적 생성 (더보기 기능 추가)
-    renderMoodFilters() {
-        const filterContainer = document.getElementById('mood-filters');
-        if (!filterContainer) return;
+    // 지역(구) 필터 (Custom Select Options)
+    renderDistrictFilters() {
+        const optionsContainer = document.getElementById('district-options');
+        if (!optionsContainer) return;
 
-        // 1. 현재 데이터에서 사용된 태그 추출 확인
-        const tagCounts = {};
+        // 1. 데이터 추출
+        const districts = new Set(['전체']); // Use '전체' as value, trigger displays '전체 지역'
         this.places.forEach(place => {
-            if (place.tags && Array.isArray(place.tags)) {
-                place.tags.forEach(tag => {
-                    const cleanTag = tag.replace('#', '').trim();
-                    if (cleanTag) {
-                        tagCounts[cleanTag] = (tagCounts[cleanTag] || 0) + 1;
-                    }
-                });
-            }
+            const gu = this.extractDistrict(place);
+            if (gu && gu !== "기타") districts.add(gu);
         });
 
-        // 2. 많이 사용된 순으로 정렬
-        const sortedTags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
+        const sortedDistricts = Array.from(districts).filter(d => d !== "전체").sort();
+        const displayList = ["전체", ...sortedDistricts];
 
-        // 3. 버튼 렌더링 함수 (내부 함수로 정의하여 상태 유지)
-        const renderBtns = (showAll = false) => {
-            const initialCount = 10; // 처음에 보여줄 개수
-            const displayTags = showAll ? sortedTags : sortedTags.slice(0, initialCount);
+        // 2. HTML 생성
+        optionsContainer.innerHTML = displayList.map(district => {
+            const label = district === "전체" ? "전체 지역" : district;
+            return `<div class="select-option" data-value="${district}">${label}</div>`;
+        }).join('');
 
-            // 태그 버튼 HTML 생성
-            let html = displayTags.map(tag => {
-                // 이미 활성화된 태그인지 확인 (재렌더링 시 상태 유지)
-                const isActive = document.querySelector(`.filter-btn[data-mood="${tag}"].active`);
-                return `<button class="filter-btn ${isActive ? 'active' : ''}" data-mood="${tag}">${tag}</button>`;
-            }).join('');
+        // 3. 이벤트 리스너
+        optionsContainer.querySelectorAll('.select-option').forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                e.stopPropagation(); // prevent closing immediately if needed, but here we want to close
+                const value = opt.dataset.value;
+                const label = opt.textContent;
 
-            // '더 보기' 또는 '접기' 버튼 추가
-            if (sortedTags.length > initialCount) {
-                if (showAll) {
-                    html += `<button class="filter-btn more-btn" id="filter-show-less" style="color: var(--accent-color); border-color: var(--accent-color);">− 접기</button>`;
-                } else {
-                    html += `<button class="filter-btn more-btn" id="filter-show-more" style="color: var(--accent-color); border-color: var(--accent-color);">+ 더 보기</button>`;
-                }
-            }
+                // Update Trigger Text
+                if (this.districtTrigger) this.districtTrigger.textContent = label;
 
-            filterContainer.innerHTML = html;
+                // Update State
+                this.currentDistrict = value;
 
-            // 이벤트 리스너 연결
-            filterContainer.querySelectorAll('.filter-btn[data-mood]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    btn.classList.toggle('active');
-                    this.filterPlaces();
-                });
+                // Close Dropdown
+                this.districtSelect.classList.remove('active');
+
+                // Filter
+                this.filterPlaces();
             });
-
-            // 더 보기 버튼 이벤트
-            const moreBtn = document.getElementById('filter-show-more');
-            if (moreBtn) {
-                moreBtn.addEventListener('click', () => {
-                    renderBtns(true); // 전체 보기로 다시 렌더링
-                });
-            }
-
-            // 접기 버튼 이벤트
-            const lessBtn = document.getElementById('filter-show-less');
-            if (lessBtn) {
-                lessBtn.addEventListener('click', () => {
-                    renderBtns(false); // 요약 보기로 다시 렌더링
-                });
-            }
-        };
-
-        // 초기 렌더링
-        renderBtns(false);
+        });
     }
+
+    // renderMoodFilters Removed
 
     // 장소 카드 렌더링
     renderPlaces() {
@@ -439,7 +650,7 @@ class TeumsaeApp {
             this.placesGrid.innerHTML = `
         <div class="places-empty" style="grid-column: 1 / -1; text-align: center; padding: 4rem;">
           <p style="font-size: 1.25rem; color: var(--color-gray);">검색 결과가 없습니다.</p>
-          <p style="color: var(--color-gray-light); margin-top: 0.5rem;">다른 키워드로 검색해보세요.</p>
+          <p style="color: var(--color-gray-light); margin-top: 0.5rem;">다른 키워드나 필터를 선택해보세요.</p>
         </div>
       `;
             return;
@@ -511,49 +722,66 @@ class TeumsaeApp {
         return texts[congestion] || '보통';
     }
 
-    // 장소 저장/삭제 토글
     toggleSave(id, event) {
-        event.preventDefault();
-        event.stopPropagation(); // 부모 요소 클릭 이벤트 전파 방지
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
 
-        const index = this.savedPlaces.indexOf(id);
-        const isNowSaved = index === -1;
+        const numericId = Number(id);
+        const index = this.savedPlaces.findIndex(sId => Number(sId) === numericId);
+        const isNowSaving = index === -1;
 
-        if (index > -1) {
+        if (!isNowSaving) {
             this.savedPlaces.splice(index, 1); // 저장 취소
         } else {
-            this.savedPlaces.push(id); // 저장
+            this.savedPlaces.push(numericId); // 저장
         }
 
         this.savePlaces(); // 로컬 스토리지 업데이트
 
-        // UI 즉시 업데이트 (깜빡임 방지)
-        const btn = event.currentTarget;
-        if (btn) {
-            if (isNowSaved) {
+        // UI 즉시 업데이트 - 모든 관련 버튼 동기화 (모달 & 리스트)
+        const allRelevantBtns = [];
+        if (event.currentTarget) allRelevantBtns.push(event.currentTarget);
+
+        const targetId = Number(id);
+        document.querySelectorAll('.place-card__save').forEach(btn => {
+            const card = btn.closest('.place-card');
+            if (card && Number(card.dataset.id) === targetId) {
+                if (!allRelevantBtns.includes(btn)) allRelevantBtns.push(btn);
+            }
+        });
+
+        const modalBtn = document.getElementById('btn-bookmark');
+        if (modalBtn && Number(modalBtn.dataset.id) === targetId) {
+            if (!allRelevantBtns.includes(modalBtn)) allRelevantBtns.push(modalBtn);
+        }
+
+        allRelevantBtns.forEach(btn => {
+            const svg = btn.querySelector('svg');
+            if (isNowSaving) {
                 btn.classList.add('saved');
-                const svg = btn.querySelector('svg');
                 if (svg) svg.setAttribute('fill', 'currentColor');
             } else {
                 btn.classList.remove('saved');
-                const svg = btn.querySelector('svg');
                 if (svg) svg.setAttribute('fill', 'none');
             }
-        }
+        });
 
         // 토스트 알림 표시
-        this.showToast(index > -1 ? '저장 목록에서 제거했습니다.' : '저장 목록에 추가했습니다.');
+        this.showToast(isNowSaving ? '저장 목록에 추가했습니다.' : '저장 목록에서 제거했습니다.');
     }
 
     // 저장 여부 확인
     isSaved(id) {
-        return this.savedPlaces.includes(id);
+        return this.savedPlaces.some(sId => Number(sId) === Number(id));
     }
 
     // 로컬 스토리지에서 저장된 장소 불러오기
     loadSavedPlaces() {
         try {
-            return JSON.parse(localStorage.getItem('teumsae_saved')) || [];
+            const saved = JSON.parse(localStorage.getItem('teumsae_saved')) || [];
+            return saved.map(id => Number(id)); // 숫자로 정규화하여 로드
         } catch {
             return [];
         }
@@ -619,7 +847,33 @@ class TeumsaeApp {
         document.getElementById('modal-hero-image').src = place.images[0];
         document.getElementById('modal-category').textContent = place.category;
         document.getElementById('modal-title').textContent = place.name;
-        document.getElementById('modal-address').textContent = place.address;
+
+        // 주소 데이터 확보를 위한 다각도 탐색
+        let addressVal = place.address;
+
+        if (!addressVal) {
+            // 1. ID를 키로 하는 하위 객체 확인 (사용자 힌트 반영)
+            const idKey = place.id;
+            const nested = place[idKey] || place[String(idKey)];
+            if (nested && nested.address) {
+                addressVal = nested.address;
+            }
+            // 2. 장소 이름을 키로 하는 하위 객체 확인
+            else if (place[place.name] && place[place.name].address) {
+                addressVal = place[place.name].address;
+            }
+            // 3. 모든 속성을 순회하며 address 필드를 가진 하위 객체 찾기
+            else {
+                for (const key in place) {
+                    if (place[key] && typeof place[key] === 'object' && place[key].address) {
+                        addressVal = place[key].address;
+                        break;
+                    }
+                }
+            }
+        }
+
+        document.getElementById('modal-address').textContent = addressVal || '주소 정보 없음';
 
         // 혼잡도 표시
         // 혼잡도 표시
@@ -652,6 +906,25 @@ class TeumsaeApp {
             congestionSpan.classList.add('place-card__badge--quiet');
         } else {
             congestionSpan.classList.add('place-card__badge--normal'); // Default
+        }
+
+        // 북마크 버튼 상태 동기화
+        const bookmarkBtn = document.getElementById('btn-bookmark');
+        if (bookmarkBtn) {
+            bookmarkBtn.dataset.id = place.id; // ID 저장
+            const isSaved = this.isSaved(place.id);
+            const svg = bookmarkBtn.querySelector('svg');
+
+            if (isSaved) {
+                bookmarkBtn.classList.add('saved');
+                svg.setAttribute('fill', 'currentColor');
+            } else {
+                bookmarkBtn.classList.remove('saved');
+                svg.setAttribute('fill', 'none');
+            }
+
+            // 클릭 이벤트 연결
+            bookmarkBtn.onclick = (e) => this.toggleSave(place.id, e);
         }
 
         document.getElementById('modal-description').textContent = place.description;
@@ -749,14 +1022,18 @@ class TeumsaeApp {
 
         // 갤러리 이미지 클릭 이벤트는 lightbox.js에서 이벤트 위임으로 처리됨
 
-        // 모달 표시
-        this.modalBackdrop.classList.add('active');
-        document.body.style.overflow = 'hidden'; // 배경 스크롤 방지
-        document.documentElement.style.overflow = 'hidden';
+        // 비교 페이지 업데이트 Logic
+        this.updateComparison(place);
 
-        // 모달 내부 스크롤 시 배경 스크롤 전파 방지
-        this.modalBackdrop.addEventListener('wheel', this.preventScroll, { passive: false });
-        this.modalBackdrop.addEventListener('touchmove', this.preventScroll, { passive: false });
+        // 모달 표시
+        if (this.modalBackdrop) {
+            this.modalBackdrop.classList.add('active');
+            document.body.style.overflow = 'hidden'; // 배경 스크롤 방지
+            document.documentElement.style.overflow = 'hidden';
+            // 모달 내부 스크롤 시 배경 스크롤 전파 방지
+            this.modalBackdrop.addEventListener('wheel', this.preventScroll, { passive: false });
+            this.modalBackdrop.addEventListener('touchmove', this.preventScroll, { passive: false });
+        }
 
         // 리뷰 데이터 로드
         if (this.reviewManager) {
@@ -769,11 +1046,79 @@ class TeumsaeApp {
         }
     }
 
+    // 비교 데이터 업데이트
+    updateComparison(place) {
+        if (!this.compRecommendList) return;
+
+        // Find Recommendations
+        // Filter: Same category, not same ID
+        const candidates = this.places.filter(p => p.category === place.category && p.id !== place.id);
+
+        // Sort by "Better" criteria: Higher Rating, then Lower Congestion
+        // Congestion Priority: Quiet > Normal > Crowded
+        const congestionScore = (c) => {
+            const lvl = c.congestion ? (c.congestion.level || c.congestion) : 'normal';
+            if (lvl === 'quiet') return 3;
+            if (lvl === 'normal') return 2;
+            return 1;
+        }
+
+        candidates.sort((a, b) => {
+            const scoreA = congestionScore(a);
+            const scoreB = congestionScore(b);
+            if (scoreA !== scoreB) return scoreB - scoreA; // Valid descending
+
+            const ratingA = a.stats ? a.stats.rating : (a.rating || 0);
+            const ratingB = b.stats ? b.stats.rating : (b.rating || 0);
+            return ratingB - ratingA;
+        });
+
+        const recommendations = candidates.slice(0, 5); // Top 5
+
+        // Render List
+        if (recommendations.length === 0) {
+            this.compRecommendList.innerHTML = `<div class="comp-loading"><p>비슷한 조건의 추천 장소가 없습니다.</p></div>`;
+        } else {
+            this.compRecommendList.innerHTML = recommendations.map(rec => {
+                const recLevel = rec.congestion ? (rec.congestion.level || rec.congestion) : 'normal';
+
+                // Determine chips
+                const chips = [];
+                if (recLevel === 'quiet') chips.push('<span class="comp-chip better">쾌적함</span>');
+                const recRating = rec.stats ? rec.stats.rating : (rec.rating || 0);
+                const currentRating = place.stats ? place.stats.rating : (place.rating || 0);
+                if (recRating > currentRating) chips.push('<span class="comp-chip better">평점 높음</span>');
+
+                const recReviewCount = rec.stats ? rec.stats.reviewCount : (rec.reviewCount || 0);
+
+                return `
+                <div class="comp-item" onclick="window.app.openPlaceModal(${rec.id})">
+                    <img src="${rec.images[0]}" class="comp-item__thumb" alt="${rec.name}">
+                    <div class="comp-item__info">
+                        <div class="comp-item__header">
+                            <div class="comp-item__name">${rec.name}</div>
+                            <div class="comp-item__chips">${chips.join('')}</div>
+                        </div>
+                        <div class="comp-item__meta">
+                            <span>★ ${recRating}</span>
+                            <span class="divider">|</span>
+                            <span>리뷰 ${recReviewCount}개</span>
+                            <span class="divider">|</span>
+                            <span>${this.getCongestionText(recLevel)}</span>
+                        </div>
+                        <p class="comp-item__desc">${rec.shortDesc || ''}</p>
+                    </div>
+                </div>
+            `}).join('');
+        }
+    }
+
     // 스크롤 이벤트 전파 방지 핸들러
     preventScroll(e) {
         // 모달 콘텐츠 내부가 아니면 스크롤 차단
-        const modalContent = e.target.closest('.place-modal__content');
-        if (!modalContent) {
+        // Allow scroll in both modals
+        const scrollable = e.target.closest('.place-modal__content, .comparison-body');
+        if (!scrollable) {
             e.preventDefault();
         }
     }

@@ -155,10 +155,15 @@ class ComponentLoader {
 
     /**
      * 지도 오버레이 주입
+     * 이미 페이지에 존재하면 추가하지 않음 (중복 방지)
      */
     loadMapOverlay() {
-        if (document.getElementById('map-overlay')) return;
+        // 이미 존재하는 경우 아무것도 하지 않음
+        if (document.getElementById('map-overlay')) {
+            return;
+        }
 
+        // 존재하지 않을 때만 새로 생성
         const overlay = document.createElement('div');
         overlay.id = 'map-overlay';
         overlay.className = 'map-overlay';

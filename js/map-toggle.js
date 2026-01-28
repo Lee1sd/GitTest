@@ -47,7 +47,17 @@ function toggleMap() {
             if (header) header.classList.add('map-open');
         } else {
             document.body.style.overflow = '';
-            if (header) header.classList.remove('map-open');
+            if (header) {
+                header.classList.remove('map-open');
+                // 지도를 닫을 때 스크롤 위치에 따라 scrolled 클래스도 제거
+                if (window.scrollY <= 50) {
+                    header.classList.remove('scrolled');
+                }
+            }
         }
     }
 }
+
+// 전역 객체에 할당 (HTML onclick 속성에서 접근 가능하도록)
+window.toggleMap = toggleMap;
+

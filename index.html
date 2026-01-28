@@ -522,25 +522,8 @@
         </div>
     </main>
 
-    <!-- 푸터 -->
-    <footer class="footer">
-        <div class="footer__content">
-            <a href="index.html" class="footer__logo">
-                <img src="images/logo.png" alt="틈새 Teumsae" class="logo-img">
-            </a>
-            <p class="footer__desc">Seoul's Hidden Sanctuary</p>
-            <div class="footer__links">
-                <a href="#">소개</a>
-                <a href="#">이용약관</a>
-                <a href="#">개인정보처리방침</a>
-                <a href="#">문의하기</a>
-            </div>
-            <div class="footer__copy">
-                &copy; 2026 Teumsae. All rights reserved.
-            </div>
-        </div>
-    </footer>
-
+    <!-- 푸터 (Dynamic) -->
+    <div id="footer-placeholder"></div>
 
     <!-- Scripts -->
     <!-- Firebase (v12 CDN - compat) -->
@@ -552,6 +535,7 @@
     <script src="js/auth-guard.js"></script>
     <script src="js/logout.js"></script>
     <script src="js/notification.js"></script>
+    <script src="js/components.js"></script>
     <script>
         // 로그인 상태 확인 및 헤더 처리
         document.addEventListener('DOMContentLoaded', function () {
@@ -587,11 +571,6 @@
         });
     </script>
     <script src="js/map-toggle.js"></script>
-
-    <!-- 지도 오버레이 -->
-    <div id="map-overlay" class="map-overlay">
-        <iframe src="" frameborder="0" loading="lazy"></iframe>
-    </div>
 </body>
 
 </html>

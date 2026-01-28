@@ -246,7 +246,7 @@
 
     <!-- Planner Page -->
     <main class="planner">
-        <div class="container">
+        <div class="p-container">
             <!-- Header -->
             <div class="planner__header reveal">
                 <h1 class="planner__title">나만의 여행 일정</h1>
@@ -296,7 +296,13 @@
                         <div class="planner__date-picker">
                             <label for="travel-date" style="font-size: 0.875rem; color: var(--color-gray);">날짜:</label>
                             <input type="date" id="travel-date" class="planner__date-input">
+                            <span>~</span>
+                            <input type="date" id="end-date" class="planner__date-input">
                         </div>
+                        <button class="planner__myplans-btn" id="open-myplans" title="저장된 일정 보기">
+                            <img width="27" height="27"
+                                src="https://img.icons8.com/ios-filled/50/FAB005/calendar--v1.png" alt="calendar--v1" />
+                        </button>
                     </div>
 
                     <div class="planner__timeline-items" id="timeline-items">
@@ -343,40 +349,81 @@
                         </button>
                     </div>
                 </div>
+
+                 <!--todolist-->
+                <aside class="planner_Todo">
+                    <div class="todo-add">
+                        <h5>todolist</h5>
+                        <button class="todo-add-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!--체크 박스 쌓일 영역-->
+                    <div class="todo-list">
+                    </div>
+                </aside>
+
+                <!-- 내 일정 슬라이드 패널 -->
+                <aside id="myplans-panel" class="myplans-panel">
+                    <div class="myplans-header">
+                        <h3>내 일정</h3>
+                        <button id="close-myplans" aria-label="닫기">✕</button>
+                    </div>
+
+                    <button class="myplans-new-btn">＋ 새로 일정 만들기</button>
+
+                    <div class="myplans-list">
+                        <!-- JS가 여기다 일정 카드들을 렌더링함 -->
+
+                    </div>
+                </aside>
+
+
+            </div>
+        </div>
+
+        <div id="plan-name-modal" class="plan-name-modal">
+            <div class="plan-name-box">
+                <span>일정 이름 설정</span>
+                <input type="text" id="plan-name-input" placeholder="예: 사유 3박 4일" />
+                <div class="plan-name-actions">
+                    <button id="cancel-plan-name" class="btn btn-glass">취소</button>
+                    <button id="confirm-plan-name" class="btn btn-primary">저장</button>
+                </div>
+            </div>
+        </div>
+
+
             </div>
         </div>
     </main>
 
-    <!-- 푸터 -->
-    <footer class="footer">
-        <div class="footer__content">
-            <a href="index.html" class="footer__logo">
-                <img src="images/logo.png" alt="틈새 Teumsae" class="logo-img">
-            </a>
-            <p class="footer__desc">Seoul's Hidden Sanctuary</p>
-            <div class="footer__links">
-                <a href="#">소개</a>
-                <a href="#">이용약관</a>
-                <a href="#">개인정보처리방침</a>
-                <a href="#">문의하기</a>
-            </div>
-            <div class="footer__copy">
-                &copy; 2026 Teumsae. All rights reserved.
-            </div>
-        </div>
-    </footer>
+
+      <!-- 푸터 (Dynamic) -->
+    <div id="footer-placeholder"></div>
 
     <!-- Scripts -->
-    <!-- Firebase SDK -->
     <!-- Firebase (v12 CDN - compat) -->
     <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-auth-compat.js"></script> 
+<script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-storage-compat.js"></script>
+
     <script src="js/firebase-config.js?v=4"></script>
     <script src="js/auth-guard.js"></script>
-    <script src="js/data.js"></script>
     <script src="js/planner.js"></script>
     <script src="js/notification.js"></script>
+    <script src="js/logout.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/map-toggle.js"></script>
+    <script src="js/lightbox.js"></script>
+    <script src="js/p-ui.js"></script>
+    <script src="js/data.js"></script>
     <script>
         // Check login state and update UI
         document.addEventListener('DOMContentLoaded', () => {

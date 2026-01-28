@@ -26,7 +26,8 @@ class TeumsaeApp {
         try {
             await this.fetchPlacesFromFirestore();
         } catch (error) {
-            console.error("Firestore loading failed, falling back to local data:", error);
+            console.error("Firestore loading failed:", error);
+            this.showToast("데이터를 불러오는 데 실패했습니다. 잠시 후 다시 시도해주세요.");
             // 실패 시 기존 data.js의 placesData 사용 (Fallback)
             if (typeof placesData !== 'undefined') {
                 this.places = placesData;
@@ -57,7 +58,7 @@ class TeumsaeApp {
             } else if (window.modalPlanner) {
                 window.modalPlanner.rebind();
             }
-            
+
             if (window.reviewManager) {
                 window.reviewManager.rebind();
             }
@@ -140,6 +141,10 @@ class TeumsaeApp {
 
         // Re-check URL params after data load (in case data took longer)
         this.checkUrlParams();
+        // [추가] 지도(SeoulMap)에 데이터 전달 (지도 화면이 있는 경우)
+        if (window.SeoulMap && typeof window.SeoulMap.updatePlaceData === 'function') {
+            window.SeoulMap.updatePlaceData(this.places);
+        }
     }
 
     // 자주 사용하는 DOM 요소를 변수에 저장하여 성능 최적화
@@ -599,7 +604,8 @@ class TeumsaeApp {
 
     // 장소 상세 모달 열기
     openPlaceModal(id) {
-        const place = this.places.find(p => p.id === id);
+        // [변경] 타입 유연성 확보 (== 사용)
+        const place = this.places.find(p => p.id == id);
         if (!place) return;
 
         // 모달 데이터 채우기

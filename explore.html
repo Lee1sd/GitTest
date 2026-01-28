@@ -28,7 +28,7 @@
     <style>
         /* Explore 페이지 전용 스타일 */
         .explore-container {
-            padding-top: 100px;
+            padding-top: var(--header-height);
             min-height: 100vh;
         }
 
@@ -468,27 +468,16 @@
         </div>
     </main>
 
-    <!-- 푸터 -->
-    <footer class="footer">
-        <div class="footer__content">
-            <a href="index.html" class="footer__logo">
-                <img src="images/logo.png" alt="틈새 Teumsae" class="logo-img">
-            </a>
-            <p class="footer__desc">Seoul's Hidden Sanctuary</p>
-            <div class="footer__links">
-                <a href="#">소개</a>
-                <a href="#">이용약관</a>
-                <a href="#">개인정보처리방침</a>
-                <a href="#">문의하기</a>
-            </div>
-            <div class="footer__copy">
-                &copy; 2026 Teumsae. All rights reserved.
-            </div>
-        </div>
-    </footer>
+    <!-- 푸터 (Dynamic) -->
+    <div id="footer-placeholder"></div>
 
     <!-- 모달 컨테이너 -->
     <div id="modal-container"></div>
+
+    <!-- 지도 오버레이 (헤더 '지도' 버튼 클릭 시 표시) -->
+    <div id="map-overlay" class="map-overlay">
+        <iframe src="" frameborder="0" loading="lazy"></iframe>
+    </div>
 
     <!-- Firebase (v12 CDN - compat) -->
     <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-app-compat.js"></script>
@@ -503,6 +492,7 @@
     <script src="js/app.js?v=3"></script>
     <script src="js/auth-guard.js"></script>
     <script src="js/logout.js"></script>
+    <script src="js/components.js"></script>
     <script src="js/map-toggle.js"></script>
     <script src="js/lightbox.js"></script>
     <script src="js/notification.js"></script>
@@ -513,16 +503,6 @@
             if (window.AuthGuard) {
                 AuthGuard.updateHeaderUI();
             }
-            // User info update handled by AuthGuard now
-
-            // Scroll header effect
-
-            // Scroll header effect
-            const header = document.querySelector('.header');
-            window.addEventListener('scroll', () => {
-                if (window.scrollY > 50) header.classList.add('scrolled');
-                else header.classList.remove('scrolled');
-            });
         });
     </script>
 </body>

@@ -1,0 +1,376 @@
+/* Seoul Map Component Styles */
+
+.seoul-map-section {
+    width: 100%;
+    height: 0;
+    overflow: hidden;
+    transition: height 0.8s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.5s ease;
+    opacity: 0;
+    position: relative;
+    /* Background removed to match main theme */
+    /* background: linear-gradient(to bottom, #f8f9fa, #e9ecef); */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.seoul-map-section.active {
+    height: 100vh !important;
+    opacity: 1;
+    box-sizing: border-box;
+}
+
+/* Standalone 모드 (map.html 직접 접근 시)에서만 헤더 여백 적용 */
+body:not(.embed-mode) .seoul-map-section.active {
+    height: calc(100vh - 80px) !important;
+    margin-top: 80px !important;
+}
+
+.map-wrapper {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    perspective: 1000px;
+    transition: opacity 0.5s ease, visibility 0.5s;
+    opacity: 1;
+    visibility: visible;
+}
+
+.map-wrapper.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.naver-map-wrapper {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s;
+    z-index: 20;
+}
+
+.naver-map-wrapper.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+#naver-map {
+    width: 100%;
+    height: 100%;
+}
+
+.map-back-btn {
+    position: absolute;
+    right: 45px;
+    /* 우측 상단 */
+    top: 20px;
+    z-index: 1000;
+    background: var(--color-white);
+    padding: 10px 20px;
+    border-radius: 50px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--color-dark);
+    transition: all 0.2s;
+}
+
+.map-back-btn:hover {
+    background: var(--color-primary);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* CSS 정리 */
+
+/* Map Controls (Dong/Gu Toggle) */
+.map-controls {
+    position: absolute;
+    top: 20px;
+    /* 헤더 아래 여백 */
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    padding: 5px;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Marker Toggle (좌측 상단) */
+.map-marker-toggle {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+}
+
+.map-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.map-toggle-btn svg {
+    transition: transform 0.3s ease;
+}
+
+.map-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.map-toggle-btn.active {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: rgba(212, 175, 55, 0.5);
+    color: #D4AF37;
+}
+
+.map-toggle-btn.active svg {
+    transform: scale(1.1);
+}
+
+.map-mode-btn {
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: transparent;
+    color: var(--color-white);
+    /* Assuming dark theme background */
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.map-mode-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.map-mode-btn.active {
+    background: var(--color-white);
+    color: #333;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+
+/* Abstract SVG Map Styles */
+svg.seoul-map {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.2));
+    transform: rotateX(10deg);
+    /* Slight tilt for depth */
+    transition: transform 0.5s;
+    overflow: visible;
+}
+
+/* 지도 구역 스타일 (JS에서 색상 오버라이드 됨) */
+.district-path {
+    fill: rgba(97, 97, 97, 0.4);
+    /* 기본값: Unknown */
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 0.5px;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    cursor: pointer;
+}
+
+/* Hover Effect: Pop up with Gold Glow */
+/* JS onmouseenter가 우선되지만, CSS에서도 폴백으로 설정 */
+.district-path:hover {
+    fill: rgba(212, 175, 55, 0.35);
+    /* Gold Accent */
+    stroke: rgba(212, 175, 55, 0.8);
+    transform: translateY(-5px) scale(1.01);
+    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4));
+    z-index: 100;
+}
+
+/* 구 이름 레이블 스타일 */
+.district-label {
+    font-family: 'Noto Sans KR', sans-serif;
+    /* 현대적인 산세리프체 */
+    font-size: 18px;
+    font-weight: 700;
+    fill: url(#labelGradient);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+    /* 클릭 이벤트 무시 */
+    user-select: none;
+    letter-spacing: 2px;
+    opacity: 1;
+    /* 완전 불투명 */
+}
+
+/* Loading Text */
+#loading-text {
+    font-family: var(--font-main);
+    font-size: 1.2rem;
+    fill: var(--color-gray);
+}
+
+/* Map Markers (Pins) - Premium Design */
+.map-marker-group {
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+}
+
+.map-marker-group:hover .map-pin path {
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 20px currentColor);
+}
+
+.map-marker-group:hover .map-pin-glow {
+    opacity: 0.8;
+    transform: scale(1.3);
+}
+
+/* Pin Shape - Enhanced with gradients */
+.map-pin {
+    transform-origin: bottom center;
+    animation: pinFloat 3s ease-in-out infinite;
+    transition: all 0.3s ease;
+}
+
+.map-pin path {
+    stroke: rgba(255, 255, 255, 0.9);
+    stroke-width: 1.5px;
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4));
+    transition: filter 0.3s ease;
+}
+
+/* Pin Inner Glow Effect */
+.map-pin-glow {
+    opacity: 0.4;
+    transition: all 0.4s ease;
+    animation: glowPulse 2s ease-in-out infinite;
+}
+
+/* Pin Shadow - More realistic */
+.map-pin-shadow {
+    fill: rgba(0, 0, 0, 0.25);
+    transform-origin: center;
+    animation: shadowFloat 3s ease-in-out infinite;
+    filter: blur(2px);
+}
+
+/* Congestion Level Specific Styles */
+.marker-quiet .map-pin path {
+    fill: url(#gradientQuiet);
+}
+
+.marker-normal .map-pin path {
+    fill: url(#gradientNormal);
+}
+
+.marker-crowded .map-pin path {
+    fill: url(#gradientCrowded);
+}
+
+.marker-very-crowded .map-pin path {
+    fill: url(#gradientVeryCrowded);
+}
+
+/* Premium Floating Animation */
+@keyframes pinFloat {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+@keyframes shadowFloat {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.25;
+    }
+
+    50% {
+        transform: scale(0.7);
+        opacity: 0.15;
+    }
+}
+
+@keyframes glowPulse {
+
+    0%,
+    100% {
+        opacity: 0.3;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* Marker Tooltip Enhancement */
+.map-marker-tooltip {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 13px;
+    font-weight: 600;
+    fill: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+}
+
+/* Active State */
+.map-marker-group.active .map-pin {
+    animation: pinBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes pinBounce {
+
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+    }
+
+    50% {
+        transform: translateY(-15px) scale(1.1);
+    }
+}
+
+/* Premium Badge for marker (congestion indicator) */
+.marker-badge {
+    font-size: 10px;
+    font-weight: 700;
+    fill: #ffffff;
+    text-anchor: middle;
+    pointer-events: none;
+}
+
+.marker-badge-bg {
+    fill: rgba(0, 0, 0, 0.6);
+    rx: 8;
+    stroke: rgba(255, 255, 255, 0.3);
+    stroke-width: 1;
+}

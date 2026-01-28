@@ -46,6 +46,13 @@ class TeumsaeApp {
 
     // Load modal HTML from component file
     async loadModalComponent() {
+         const modalContainer = document.getElementById('modal-container');
+
+    // ✅ planner 페이지에서는 모달이 없으므로 그냥 종료
+    if (!modalContainer) {
+        console.log('[TeumsaeApp] modal-container not found, skipping modal load');
+        return;
+    }
         try {
             const response = await fetch('components/place-modal.html');
             if (!response.ok) throw new Error('Failed to load modal component');

@@ -292,7 +292,7 @@
 
 <body>
     <!-- 헤더 -->
-    <header class="header">
+    <header class="header header--transparent">
         <div class="container">
             <div class="header__inner">
                 <a href="index.html" class="header__logo">
@@ -530,7 +530,7 @@
     <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-storage-compat.js"></script>
-    
+
     <script src="js/firebase-config.js"></script>
     <script src="js/auth-guard.js"></script>
     <script src="js/logout.js"></script>
@@ -547,7 +547,9 @@
             const header = document.querySelector('.header');
             if (header) {
                 window.addEventListener('scroll', () => {
-                    if (window.scrollY > 50) header.classList.add('scrolled');
+                    // 히어로 섹션(100vh)을 벗어나기 직전에 배경이 나타나도록 임계값 조정
+                    const threshold = window.innerHeight - 100;
+                    if (window.scrollY > threshold) header.classList.add('scrolled');
                     else header.classList.remove('scrolled');
                 });
             }

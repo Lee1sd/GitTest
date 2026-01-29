@@ -477,11 +477,13 @@ class TeumsaeApp {
             const congestionMatch = this.currentCongestion === "all" ||
                 placeLevel === this.currentCongestion;
 
-            // 4. 검색어 포함 여부
+            // 4. 검색어 포함 여부 (이름, 설명, 태그, 주소[Deep Search])
+            const address = this.extractAddress(place);
             const searchMatch = !query ||
-                place.name.toLowerCase().includes(query) ||
-                place.description.toLowerCase().includes(query) ||
-                place.tags.some(tag => tag.toLowerCase().includes(query));
+                (place.name && place.name.toLowerCase().includes(query)) ||
+                (place.description && place.description.toLowerCase().includes(query)) ||
+                (address && address.toLowerCase().includes(query)) ||
+                (place.tags && place.tags.some(tag => tag.toLowerCase().includes(query)));
 
             return categoryMatch && districtMatch && congestionMatch && searchMatch;
         });
@@ -530,44 +532,43 @@ class TeumsaeApp {
         }
     }
 
-    // 주소에서 구 추출 Helper
-    extractDistrict(place) {
-        // 1. Try to find the district or address from the flat object first
-        if (place.district) return place.district;
-        let addressVal = place.address;
+    // [New] 주소 추출 Helper (검색 및 구 추출용)
+    extractAddress(place) {
+        if (place.address) return place.address;
 
-        // 2. If not found, use the deep search logic from openPlaceModal
-        if (!addressVal && !place.district) {
-            // Check nested by ID
-            const idKey = place.id;
-            const nested = place[idKey] || place[String(idKey)];
-            if (nested) {
-                if (nested.district) return nested.district;
-                if (nested.address) addressVal = nested.address;
-            }
+        let addressVal = null;
 
-            // Check nested by Name
-            if (!addressVal && place[place.name]) {
-                if (place[place.name].district) return place[place.name].district;
-                if (place[place.name].address) addressVal = place[place.name].address;
-            }
+        // Check nested by ID
+        const idKey = place.id;
+        const nestedById = place[idKey] || place[String(idKey)];
+        if (nestedById && nestedById.address) {
+            return nestedById.address;
+        }
 
-            // Fallback: Scan all properties
-            if (!addressVal) {
-                for (const key in place) {
-                    if (place[key] && typeof place[key] === 'object') {
-                        if (place[key].district) return place[key].district;
-                        if (place[key].address) {
-                            addressVal = place[key].address;
-                            break;
-                        }
-                    }
-                }
+        // Check nested by Name
+        if (place.name && place[place.name] && place[place.name].address) {
+            return place[place.name].address;
+        }
+
+        // Fallback: Scan all properties
+        for (const key in place) {
+            if (place[key] && typeof place[key] === 'object' && place[key].address) {
+                return place[key].address;
             }
         }
 
+        return "";
+    }
+
+    // 주소에서 구 추출 Helper
+    extractDistrict(place) {
+        // 1. Try to find the district directly first
+        if (place.district) return place.district;
+
+        // 2. Use helper to find address
+        const addressVal = this.extractAddress(place);
+
         if (!addressVal) {
-            // console.warn(`Could not find address for place id: ${place.id}`);
             return "기타";
         }
 
@@ -578,7 +579,6 @@ class TeumsaeApp {
             return match[1];
         }
 
-        // console.warn(`Could not extract district from address: ${addressVal}`);
         return "기타";
     }
 

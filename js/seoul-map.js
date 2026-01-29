@@ -743,6 +743,25 @@ const SeoulMap = (function () {
     function updateNaverMarkers(category, keyword = null) {
         if (!naverMap) return;
 
+        // [Helper] 주소 추출 logic (app.js와 동일)
+        const extractAddress = (place) => {
+            if (place.address) return place.address;
+
+            // Check nested by ID
+            const idKey = place.id;
+            const nestedById = place[idKey] || place[String(idKey)];
+            if (nestedById && nestedById.address) return nestedById.address;
+
+            // Check nested by Name
+            if (place.name && place[place.name] && place[place.name].address) return place[place.name].address;
+
+            // Fallback
+            for (const key in place) {
+                if (place[key] && typeof place[key] === 'object' && place[key].address) return place[key].address;
+            }
+            return "";
+        };
+
         // 기존 마커 제거
         naverMarkers.forEach(marker => marker.setMap(null));
         naverMarkers = [];
@@ -756,11 +775,15 @@ const SeoulMap = (function () {
 
         if (keyword) {
             const lowKey = keyword.toLowerCase();
-            filtered = filtered.filter(p =>
-                (p.name && p.name.toLowerCase().includes(lowKey)) ||
-                (p.category && p.category.toLowerCase().includes(lowKey)) ||
-                (p.features && p.features.some(f => f.toLowerCase().includes(lowKey)))
-            );
+            filtered = filtered.filter(p => {
+                const address = extractAddress(p).toLowerCase();
+                return (
+                    (p.name && p.name.toLowerCase().includes(lowKey)) ||
+                    (p.category && p.category.toLowerCase().includes(lowKey)) ||
+                    (address && address.includes(lowKey)) ||
+                    (p.features && p.features.some(f => f.toLowerCase().includes(lowKey)))
+                );
+            });
         }
 
         // 새 마커 생성

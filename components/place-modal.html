@@ -11,10 +11,12 @@
             <img src="" alt="" class="place-modal__image" id="modal-hero-image">
             <div class="place-modal__overlay"></div>
 
-            <!-- 혼잡도: 상단 왼쪽 -->
+            <!-- 즐겨찾기 및 혼잡도 그룹 -->
             <div class="place-modal__top-badges">
+                <!-- 즐겨찾기 버튼이 왼쪽으로 이동 -->
+                <button class="place-card__save" id="btn-bookmark" aria-label="저장하기"></button>
+
                 <span class="place-modal__congestion" id="modal-congestion">
-                    <!-- JS injects content/classes -->
                     <span id="modal-congestion-text">혼잡도</span>
                 </span>
             </div>
@@ -27,6 +29,8 @@
                 </div>
                 <h2 class="place-modal__title" id="modal-title">장소 이름</h2>
             </div>
+            <!-- View on Map Button -->
+            <button class="place-modal__map-btn" id="btn-view-map">지도로 보기 🗺️</button>
         </div>
 
         <div class="place-modal__content">

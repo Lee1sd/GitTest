@@ -3,7 +3,7 @@
  * Map Overlay Toggle Functionality
  */
 
-function toggleMap() {
+function toggleMap(placeId = null) {
     const overlay = document.getElementById('map-overlay');
     const mapBtn = document.querySelector('.header__map-btn');
 
@@ -16,7 +16,28 @@ function toggleMap() {
 
         const isOpen = overlay.classList.toggle('open');
 
+        // [추가] 특정 장소로 이동 요청 (오버레이가 열릴 때만)
+        if (isOpen && placeId && iframe) {
+            const sendFocusMessage = () => {
+                iframe.contentWindow.postMessage({
+                    type: 'FOCUS_PLACE',
+                    placeId: placeId
+                }, '*');
+            };
+
+            // 이미 로드되었으면 바로 전송, 아니면 로드 대기
+            if (iframe.contentWindow && iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
+                // 약간의 지연을 두어 지도 초기화 시간 확보
+                setTimeout(sendFocusMessage, 300);
+            } else {
+                iframe.onload = () => {
+                    setTimeout(sendFocusMessage, 500);
+                };
+            }
+        }
+
         if (mapBtn) {
+            // ... (rest of the button toggle logic)
             const chevron = mapBtn.querySelector('.chevron');
             if (isOpen) {
                 mapBtn.classList.add('active');

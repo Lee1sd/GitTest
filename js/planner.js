@@ -7,74 +7,111 @@ const firebase = window.firebase;
 
 class PlannerPage {
   constructor(user) {
-  this.user = user;
- 
-  this.savedPlaces = [];
-  this.timeline = [];
+    this.user = user;
 
-  this.places = window.app?.places || [];
-  this.currentDay = 1; //날짜 기억
+    this.savedPlaces = [];
+    this.timeline = [];
 
-  this.currentPlanMeta = {
-    id: null,
-    name: '',
-    createdAt: null
-  };
+    this.places = window.app?.places || [];
+    this.currentDay = 1; //날짜 기억
 
-  this.savedPlans = [];
-  this.init();
-}
+    this.currentPlanMeta = {
+      id: null,
+      name: '',
+      createdAt: null
+    };
+
+    this.savedPlans = [];
+    this.init();
+  }
 
 
   async init() {
 
     // app places 준비될 때까지 대기
-if (window.app && window.app.places?.length) {
-  this.places = window.app.places;
-} else {
-  // 최대 1초 정도 기다림
-  await new Promise(resolve => {
-    const check = setInterval(() => {
-      if (window.app && window.app.places?.length) {
-        this.places = window.app.places;
-        clearInterval(check);
-        resolve();
+    if (window.app && window.app.places?.length) {
+      this.places = window.app.places;
+    } else {
+      // 최대 1초 정도 기다림
+      await new Promise(resolve => {
+        const check = setInterval(() => {
+          if (window.app && window.app.places?.length) {
+            this.places = window.app.places;
+            clearInterval(check);
+            resolve();
+          }
+        }, 100);
+      });
+    }
+    this.cacheDOMElements();
+
+    if (!this.dateInput || !this.endDateInput) {
+      console.warn('[Planner] date inputs not found, skipping date logic');
+    } else {
+      // 날짜 input이 있을 때만 관련 로직 실행
+      this.bindEvents();
+    }
+
+    if (this.dateInput.value) {
+      renderDays();
+      this.renderTimeline();
+    }
+
+    // 게스트면 여기서 완전히 끝
+    if (!this.user) {
+      this.timeline = [];
+      this.savedPlaces = [];
+      this.savedPlans = [];
+
+      // 중요: 날짜도 비워버리기
+      this.dateInput.value = '';
+      this.endDateInput.value = '';
+
+      this.savedPlaces = await this.loadSavedPlaces();
+
+      this.renderSavedPlaces();
+      this.renderTimeline();
+      this.disableGuestUI();
+      return;
+    }
+
+    this.savedPlaces = await this.loadSavedPlaces(); // Firebase or local
+
+
+    await this.restorePlan();//여행일정 복구
+    this.renderSavedPlaces(); //저장된 장소 목록 렌더링
+    this.renderTimeline(); //타임라인 렌더링
+    this.initRevealAnimations(); //애니메이션 초기화
+    await this.fetchMyPlans(); // 여행일정 firebase에서 가져와서 슬라이드에 저장
+
+    // ✅ 다른 탭/현재 페이지의 app.js에서 즐겨찾기 변경 시 즉시 UI 동기화
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'teumsae_saved') {
+        this.syncWithApp();
       }
-    }, 100);
-  });
-}
-  this.cacheDOMElements();
+    });
 
-  if (!this.dateInput || !this.endDateInput) {
-  console.warn('[Planner] date inputs not found, skipping date logic');
-} else {
-  // 날짜 input이 있을 때만 관련 로직 실행
-  this.bindEvents();
-}
-
- if (this.dateInput.value) {
-    renderDays();
-    this.renderTimeline();
+    // 현재 페이지의 app 인스턴스 변경 감지 (같은 탭 내 업데이트용)
+    const originalSavePlaces = window.app?.savePlaces;
+    if (window.app && originalSavePlaces) {
+      window.app.savePlaces = () => {
+        originalSavePlaces.call(window.app);
+        this.syncWithApp();
+      };
+    }
   }
 
- // 게스트면 여기서 완전히 끝
-  if (!this.user) {
-    this.timeline = [];
-    this.savedPlaces = [];
-    this.savedPlans = [];
-
-    // 중요: 날짜도 비워버리기
-    this.dateInput.value = '';
-    this.endDateInput.value = '';
-
-    this.savedPlaces = await this.loadSavedPlaces();
-
-    this.renderSavedPlaces();
-    this.renderTimeline();
-    this.disableGuestUI();
-    return;
+  /**
+   * 전역 app 인스턴스 또는 스토리지와 데이터 동기화 후 다시 렌더링
+   */
+  syncWithApp() {
+    if (window.app && Array.isArray(window.app.savedPlaces)) {
+      this.savedPlaces = [...window.app.savedPlaces.map(Number)];
+      this.renderSavedPlaces();
+    }
   }
 
+<<<<<<< HEAD
    this.savedPlaces = await this.loadSavedPlaces(); // Firebase or local
 
 
@@ -97,6 +134,8 @@ if (!window.__plannerStorageBound) {
 }
 }
 
+=======
+>>>>>>> 58c34351c057bb6924647fc75363843ca3fad189
   cacheDOMElements() { //자주 쓰는 DOM 저장
     this.savedList = document.getElementById('saved-list');
     this.emptySaved = document.getElementById('empty-saved');
@@ -244,7 +283,7 @@ if (!window.__plannerStorageBound) {
 
 
   async restorePlan() {
-     if (!this.dateInput || !this.endDateInput) return;
+    if (!this.dateInput || !this.endDateInput) return;
 
       const localPlan = JSON.parse(localStorage.getItem('teumsae_plan'));
 
@@ -273,8 +312,16 @@ if (!window.__plannerStorageBound) {
     this.renderTimeline();
     return;
   }
+    // 로그아웃 상태면 일정 복원 안 함
+    if (!this.user) {
+      this.setDefaultDate();
+      renderDays();
+      this.timeline = [];
+      this.renderTimeline();
+      return;
+    }
 
-  const userId = this.user.uid;
+    const userId = this.user.uid;
 
     const snap = await db
       .collection('users')
@@ -341,29 +388,74 @@ if (!window.__plannerStorageBound) {
     });
   }
 
-  removeFromSaved(placeId, e) {
-  e.stopPropagation();   // ✅ 부모 클릭 이벤트 차단
-  e.preventDefault();    // ✅ drag / click 기본 동작 차단
+  async removeFromSaved(placeId, e) {
+    if (e) {
+      e.stopPropagation();   // ✅ 부모 클릭 이벤트 차단
+      e.preventDefault();    // ✅ drag / click 기본 동작 차단
+    }
 
-  this.savedPlaces = this.savedPlaces.filter(id => id !== placeId);
-  this.saveSavedPlaces?.();
-  this.renderSavedPlaces();
-}
+    // 1. 로컬 상태 업데이트
+    this.savedPlaces = this.savedPlaces.filter(id => id !== placeId);
+
+    // 2. 로컬 스토리지 및 전역 상태(TeumsaeApp) 동기화
+    this.saveSavedPlaces();
+
+    // 3. Firebase 업데이트 (로그인 시)
+    if (this.user) {
+      try {
+        await db.collection('users')
+          .doc(this.user.uid)
+          .collection('savedPlaces')
+          .doc(String(placeId))
+          .delete();
+      } catch (err) {
+        console.error('[Planner] Firebase 삭제 실패:', err);
+      }
+    }
+
+    this.renderSavedPlaces();
+  }
+
+  /**
+   * 저장된 장소 목록을 로컬 스토리지와 전역 앱 인스턴스에 동기화
+   */
+  saveSavedPlaces() {
+    // 탐색 페이지(TeumsaeApp)에서 사용하는 로컬 스토리지 키 업데이트
+    localStorage.setItem('teumsae_saved', JSON.stringify(this.savedPlaces));
+
+    // 만약 한 페이지 내에 app 인스턴스가 있다면 즉시 UI 업데이트
+    if (window.app) {
+      window.app.savedPlaces = [...this.savedPlaces.map(Number)];
+      if (typeof window.app.updateBookmarkButtons === 'function') {
+        window.app.updateBookmarkButtons();
+      }
+    }
+  }
 
 
   renderSavedPlaces() {
-    if (this.savedPlaces.length === 0) {
-      this.savedList.style.display = 'none';
-      this.emptySaved.style.display = 'block';
+    // 1. 유효한 데이터 필터링
+    const savedPlacesData = this.savedPlaces
+      .map(id => this.places.find(p => p.id === Number(id)))
+      .filter(Boolean);
+
+    // 2. 실제 렌더링할 장소가 없으면 빈 상태 표시
+    if (savedPlacesData.length === 0) {
+      if (this.savedList) this.savedList.style.display = 'none';
+      if (this.emptySaved) {
+        this.emptySaved.style.display = 'block';
+        this.emptySaved.innerHTML = `
+          <p style="font-size: 2rem; margin-bottom: 0.5rem;">📍</p>
+          <p>저장된 장소가 없습니다</p>
+          <a href="explore.html" class="btn btn-primary btn-sm" style="margin-top: 1rem;">장소 둘러보기</a>
+        `;
+      }
       return;
     }
 
-    this.savedList.style.display = 'flex';
-    this.emptySaved.style.display = 'none';
-
-    const savedPlacesData = this.savedPlaces
-      .map(id => this.places.find(p => p.id === id))
-      .filter(Boolean);
+    // 3. 데이터가 있으면 목록 표시
+    if (this.savedList) this.savedList.style.display = 'flex';
+    if (this.emptySaved) this.emptySaved.style.display = 'none';
 
     this.savedList.innerHTML = savedPlacesData.map(place => `
       <div class="planner__saved-item" data-id="${place.id}" draggable="true">
@@ -525,40 +617,41 @@ if (!window.__plannerStorageBound) {
 
 
   async syncSavedPlacesFromTimeline() {
-  const user = auth.currentUser;
-  if (!user) return;
+    const user = auth.currentUser;
+    if (!user) return;
 
-  const ref = db
-    .collection('users')
-    .doc(user.uid)
-    .collection('savedPlaces');
+    const ref = db
+      .collection('users')
+      .doc(user.uid)
+      .collection('savedPlaces');
 
-  // timeline에 있는 장소 id들만 뽑기 (중복 제거)
-  const placeIds = [...new Set(this.timeline.map(t => t.placeId))];
+    // timeline에 있는 장소 id들만 뽑기 (중복 제거)
+    const placeIds = [...new Set(this.timeline.map(t => t.placeId))];
 
-  const batch = db.batch();
+    const batch = db.batch();
 
-  placeIds.forEach(id => {
-    batch.set(
-      ref.doc(String(id)), 
-      { savedAt: firebase.firestore.FieldValue.serverTimestamp() }
-    );
-  });
+    placeIds.forEach(id => {
+      batch.set(
+        ref.doc(String(id)),
+        { savedAt: firebase.firestore.FieldValue.serverTimestamp() }
+      );
+    });
 
-  await batch.commit();
-}
- 
+    await batch.commit();
+  }
+
 
   async savePlan() {
+    console.log('🔥 savePlan called');
 
     const user = auth.currentUser;
 
-   if (!user) {
-    this.showToast('로그인 후에만 일정 저장이 가능해요');
-    return;
-  }
+    if (!user) {
+      this.showToast('로그인 후에만 일정 저장이 가능해요');
+      return;
+    }
 
-  const userId = user.uid;
+    const userId = user.uid;
 
     const todos = [...document.querySelectorAll('.todo-item')].map(item => ({
       text: item.querySelector('input[type="text"]')?.value || '',
@@ -598,9 +691,15 @@ if (!window.__plannerStorageBound) {
         .set(planData, { merge: true });
 
     }
+<<<<<<< HEAD
   
 this.savedPlaces = await this.loadSavedPlaces();
 this.renderSavedPlaces();
+=======
+    await this.syncSavedPlacesFromTimeline(); // 
+    this.savedPlaces = await this.loadSavedPlaces();
+    this.renderSavedPlaces();
+>>>>>>> 58c34351c057bb6924647fc75363843ca3fad189
 
     await this.fetchMyPlans();   // 🔄 내 일정 다시 불러오기
     this.showToast('일정이 저장되었습니다!');
@@ -659,14 +758,14 @@ this.renderSavedPlaces();
     }
   }
 
-   // 클립보드 복사
-    copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            this.showToast('일정이 클립보드에 복사되었습니다!');
-        }).catch(() => {
-            this.showToast('복사에 실패했습니다.');
-        });
-    }
+  // 클립보드 복사
+  copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      this.showToast('일정이 클립보드에 복사되었습니다!');
+    }).catch(() => {
+      this.showToast('복사에 실패했습니다.');
+    });
+  }
 
 
   //저장된 여러 여행 일정을 슬라이드 패널에 렌더링하는 역할
@@ -746,23 +845,23 @@ this.renderSavedPlaces();
   }
 
 
-async loadSavedPlaces() {
-  //app 상태 우선 사용
-  if (window.app && Array.isArray(window.app.savedPlaces)) {
-    return window.app.savedPlaces.map(Number);
+  async loadSavedPlaces() {
+    //app 상태 우선 사용
+    if (window.app && Array.isArray(window.app.savedPlaces)) {
+      return window.app.savedPlaces.map(Number);
+    }
+
+    // fallback (안 써도 됨)
+    if (!this.user) return [];
+
+    const snap = await db
+      .collection('users')
+      .doc(this.user.uid)
+      .collection('savedPlaces')
+      .get();
+
+    return snap.docs.map(doc => Number(doc.id));
   }
-
-  // fallback (안 써도 됨)
-  if (!this.user) return [];
-
-  const snap = await db
-    .collection('users')
-    .doc(this.user.uid)
-    .collection('savedPlaces')
-    .get();
-
-  return snap.docs.map(doc => Number(doc.id));
-}
 
 
   saveTimeline() {
@@ -873,24 +972,31 @@ async loadSavedPlaces() {
      localStorage.setItem('teumsae_cleared', 'true');
     // Day DOM 제거
     this.timelineItems.innerHTML = '';
+    if (confirm('정말 일정을 초기화하시겠습니까?')) {
+      this.timeline = [];
+      this.currentDay = 1;
 
-    // 투두 초기화
-    const todoList = document.querySelector('.todo-list');
-    if (todoList) todoList.innerHTML = '';
+      // Day DOM 제거
+      this.timelineItems.innerHTML = '';
 
-    if (!silent) {
-      this.endDateInput.value = '';
+      // 투두 초기화
+      const todoList = document.querySelector('.todo-list');
+      if (todoList) todoList.innerHTML = '';
+
+      if (!silent) {
+        this.endDateInput.value = '';
+      }
+
+      // localStorage 단일 편집 데이터 제거
+      localStorage.removeItem('teumsae_plan');
+
+      this.timelineEmpty.style.display = 'block';
+      this.timelineActions.style.display = 'none';
+
+      this.showToast('일정이 초기화되었습니다.');
     }
 
-    // localStorage 단일 편집 데이터 제거
-    localStorage.removeItem('teumsae_plan');
-
-    this.timelineEmpty.style.display = 'block';
-    this.timelineActions.style.display = 'none';
-
-    this.showToast('일정이 초기화되었습니다.');
   }
-
   initRevealAnimations() {
     const reveals = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
 
@@ -932,55 +1038,55 @@ document.addEventListener('DOMContentLoaded', () => {
     const startInput = document.getElementById('travel-date');
     const endInput = document.getElementById('end-date');
 
-  if (!startInput) {
-    console.error('start date input not found');
-    return;
-  }
+    if (!startInput) {
+      console.error('start date input not found');
+      return;
+    }
 
-  //  날짜 변경 이벤트
-  startInput.addEventListener('change', () => {
-     if (!planner || !planner.dateInput || !planner.endDateInput) {
-  console.warn('[Planner] date input not ready');
-  return;
-}
-    if (planner.isLoadingPlan) return;
-    renderDays();
-    planner.renderTimeline();
-  });
-
-
-  if (endInput) {
-    endInput.addEventListener('change', () => {
+    //  날짜 변경 이벤트
+    startInput.addEventListener('change', () => {
+      if (!planner || !planner.dateInput || !planner.endDateInput) {
+        console.warn('[Planner] date input not ready');
+        return;
+      }
       if (planner.isLoadingPlan) return;
-      planner.timeline = [];
       renderDays();
       planner.renderTimeline();
     });
-  }
 
-  //  내 일정 리스트 클릭
-  const myPlansList = document.querySelector('.myplans-list');
-  if (myPlansList) {
-    myPlansList.addEventListener('click', (e) => {
-      // 삭제
-      if (e.target.classList.contains('myplans-delete-btn')) {
-        e.stopPropagation();
+
+    if (endInput) {
+      endInput.addEventListener('change', () => {
+        if (planner.isLoadingPlan) return;
+        planner.timeline = [];
+        renderDays();
+        planner.renderTimeline();
+      });
+    }
+
+    //  내 일정 리스트 클릭
+    const myPlansList = document.querySelector('.myplans-list');
+    if (myPlansList) {
+      myPlansList.addEventListener('click', (e) => {
+        // 삭제
+        if (e.target.classList.contains('myplans-delete-btn')) {
+          e.stopPropagation();
+          const item = e.target.closest('.myplans-item');
+          if (!item) return;
+
+          if (confirm('이 일정을 삭제할까요?')) {
+            planner.deletePlanById(item.dataset.id);
+          }
+          return;
+        }
+
+        // 불러오기
         const item = e.target.closest('.myplans-item');
         if (!item) return;
 
-        if (confirm('이 일정을 삭제할까요?')) {
-          planner.deletePlanById(item.dataset.id);
-        }
-        return;
-      }
-
-      // 불러오기
-      const item = e.target.closest('.myplans-item');
-      if (!item) return;
-
-      planner.loadPlanById(item.dataset.id);
-    });
-  }
+        planner.loadPlanById(item.dataset.id);
+      });
+    }
 
   // 새 일정 만들기
   const newBtn = document.querySelector('.myplans-new-btn');
@@ -993,25 +1099,31 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!ok) return;
       planner.clearPlan({ silent: true });
       planner.resetCurrentPlanMeta();
+    // 새 일정 만들기
+    const newBtn = document.querySelector('.myplans-new-btn');
+    if (newBtn) {
+      newBtn.addEventListener('click', () => {
+        planner.clearPlan({ silent: true });
+        planner.resetCurrentPlanMeta();
 
-      planner.timelineItems.innerHTML = '';
-      planner.timelineEmpty.style.display = 'block';
-      planner.timelineActions.style.display = 'none';
+        planner.timelineItems.innerHTML = '';
+        planner.timelineEmpty.style.display = 'block';
+        planner.timelineActions.style.display = 'none';
 
-      planner.dateInput.value = '';
-      if (planner.endDateInput) planner.endDateInput.value = '';
+        planner.dateInput.value = '';
+        if (planner.endDateInput) planner.endDateInput.value = '';
 
-      document.getElementById('myplans-panel').classList.remove('is-open');
-      planner.showToast('새 일정 작성을 시작했어요!');
-    });
-  }
+        document.getElementById('myplans-panel').classList.remove('is-open');
+        planner.showToast('새 일정 작성을 시작했어요!');
+      });
+    }
 
-  // 이미 날짜가 있으면 복원
-  if (planner.user && planner.dateInput.value) {
-  renderDays();
-  planner.renderTimeline();
-}
- });
+    // 이미 날짜가 있으면 복원
+    if (planner.user && planner.dateInput.value) {
+      renderDays();
+      planner.renderTimeline();
+    }
+  });
 });
 
 
@@ -1065,8 +1177,8 @@ function renderDays() {
     });
 
     dayItem.addEventListener('dragleave', () => {
-  dayItem.classList.remove('drag-over');
-}); 
+      dayItem.classList.remove('drag-over');
+    });
 
     dayItem.addEventListener('drop', (e) => {
       e.preventDefault();

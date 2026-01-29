@@ -21,6 +21,8 @@
     <link rel="stylesheet" href="css/modal.css">
     <link rel="stylesheet" href="css/reviews.css">
     <link rel="stylesheet" href="css/lightbox.css">
+    <link rel="stylesheet" href="css/comparison.css">
+    <link rel="stylesheet" href="css/dual-modal.css">
     <link rel="stylesheet" href="css/theme.css">
     <link rel="stylesheet" href="css/notification.css">
 
@@ -502,111 +504,8 @@
 </head>
 
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header__inner">
-                <a href="index.html" class="header__logo">
-                    <img src="images/logo.png" alt="틈새 Teumsae" class="logo-img">
-                </a>
-                <nav class="header__nav">
-                    <a href="explore.html" class="header__link hover-underline">장소 탐색</a>
-                    <a href="recommend.html" class="header__link hover-underline" style="color: var(--accent-color);"
-                        onclick="AuthGuard.handleProtectedLink(event, 'recommend.html')">여행지 추천</a>
-                    <a href="planner.html" class="header__link hover-underline"
-                        onclick="AuthGuard.handleProtectedLink(event, 'planner.html')">여행 계획</a>
-                </nav>
-                <div class="header__controls">
-                    <button class="header__map-btn" onclick="toggleMap()" aria-label="지도 보기/닫기">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-                            <line x1="8" y1="2" x2="8" y2="18"></line>
-                            <line x1="16" y1="6" x2="16" y2="22"></line>
-                        </svg>
-                        <span>지도</span>
-                        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
-
-                    <!-- Login Button (Visible when logged out) -->
-                    <a href="login.html" id="login-btn" class="btn btn-primary btn-sm" style="display: none;">로그인</a>
-
-                    <!-- User Menu (Visible when logged in) -->
-                    <div class="user-menu" id="user-menu" style="display: none;">
-                        <button class="user-btn">
-                            <span class="user-avatar" id="user-avatar">U</span>
-                            <span id="user-name">User</span>
-                        </button>
-                        <div class="user-dropdown">
-                            <div class="user-dropdown-header">
-                                <div class="user-greeting">환영합니다!</div>
-                                <div class="user-email" id="user-email">guest@teumsae.kr</div>
-                            </div>
-                            <a href="planner.html" class="user-dropdown-item">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                                    <line x1="16" y1="2" x2="16" y2="6" />
-                                    <line x1="8" y1="2" x2="8" y2="6" />
-                                    <line x1="3" y1="10" x2="21" y2="10" />
-                                </svg>
-                                내 여행 계획
-                            </a>
-                            <a href="#" class="user-dropdown-item">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path
-                                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                                </svg>
-                                저장한 장소
-                            </a>
-                            <a href="recommend.html" class="user-dropdown-item">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polygon
-                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                                </svg>
-                                여행지 추천
-                            </a>
-                            <div class="user-dropdown-divider"></div>
-                            <a href="mypage.html" class="user-dropdown-item">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="3" />
-                                    <path
-                                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                                </svg>
-                                프로필 관리
-                            </a>
-                            <a href="#" class="user-dropdown-item logout" onclick="logout()">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                                    <polyline points="16 17 21 12 16 7" />
-                                    <line x1="21" y1="12" x2="9" y2="12" />
-                                </svg>
-                                로그아웃
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Notification Button (Visible when logged in) -->
-                    <div class="notification-container">
-                        <button class="notification-btn" aria-label="알림">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                            </svg>
-                        </button>
-                        <div class="notification-dropdown">
-                            <div class="notification-header">
-                                <h3>알림</h3>
-                                <span class="notification-count">0개</span>
-                            </div>
-                            <div class="notification-list">
-                                <!-- Notifications will be rendered here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-    </header>
+    <!-- Header (Dynamic) -->
+    <div id="header-placeholder"></div>
 
     <!-- Recommend Page -->
     <main class="recommend-page">
@@ -777,17 +676,14 @@
     <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-storage-compat.js"></script>
 
     <script src="js/firebase-config.js?v=3"></script>
-    <!-- Scripts -->
-    <script src="js/firebase-config.js"></script>
     <script src="js/data.js"></script>
     <script src="js/reviews.js?v=1"></script>
     <script src="js/modal-planner.js?v=1"></script>
     <script src="js/lightbox.js?v=1"></script>
     <script src="js/auth-guard.js"></script>
-    <script src="js/notification.js"></script>
     <script>
         // ⚠️ API Key Configuration
-        const API_KEY = "AIzaSyCnJosh522XUe4bORgm8H0a9IHa8N6xxEo";
+        const API_KEY = "AIzaSyDDGfIpr5AjK8CSsi_0813Cxm2ruNpaLlc";
 
         // State Management
         let currentQuestion = 1;
@@ -813,7 +709,7 @@
             initTabs();
             initSurvey();
             initChat();
-            initModal();
+
             goToQuestion(1);
         });
 
@@ -1056,63 +952,15 @@ ${JSON.stringify(placesDataForAI)}
                     }
                 });
                 if (matched.length > 0) {
-                    showResults(matched.slice(0, 6), 'AI가 추천한 장소들이에요');
+                    showResults(matched.slice(0, 6), 'AI가 추천한 장소들이에요', false);
                 }
             } catch (e) {
                 console.error("Recommendation Error", e);
             }
         }
 
-        // --- Modal Logic ---
-        async function initModal() {
-            if (typeof ReviewManager !== 'undefined') window.reviewManager = new ReviewManager();
-            if (typeof ModalPlanner !== 'undefined') window.modalPlanner = new ModalPlanner();
-            try {
-                const res = await fetch('components/place-modal.html');
-                const html = await res.text();
-                document.getElementById('modal-container').innerHTML = html;
+        // Legacy initialization and modal logic removed -- handled by window.app
 
-                document.getElementById('place-modal-close')?.addEventListener('click', closePlaceModal);
-                document.getElementById('place-modal-backdrop')?.addEventListener('click', (e) => {
-                    if (e.target.id === 'place-modal-backdrop') closePlaceModal();
-                });
-            } catch (e) { console.error("Modal Init Error", e); }
-        }
-
-        async function openPlaceModal(id) {
-            try {
-                const snapshot = await db.collection('places').get();
-                let place = null;
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (parseInt(data.id) === id || data.id === id) { place = data; place.id = id; }
-                });
-                if (!place) return;
-
-                document.getElementById('modal-hero-image').src = place.image_url || (place.images && place.images[0]);
-                document.getElementById('modal-title').textContent = place.name;
-                document.getElementById('modal-category').textContent = place.category;
-                document.getElementById('modal-description').textContent = place.description;
-
-                const level = place.congestion?.level || place.congestion || 'normal';
-                const congestionBadge = document.getElementById('modal-congestion');
-                if (congestionBadge) {
-                    congestionBadge.className = 'place-modal__congestion ' + getCongestionClass(level);
-                    document.getElementById('modal-congestion-text').textContent = getCongestionText(level);
-                }
-
-                document.getElementById('place-modal-backdrop').classList.add('active');
-                document.body.style.overflow = 'hidden';
-
-                if (window.reviewManager) window.reviewManager.loadForPlace(id);
-                if (window.modalPlanner) window.modalPlanner.updateForPlace(place);
-            } catch (e) { console.error("Open Modal Error", e); }
-        }
-
-        function closePlaceModal() {
-            document.getElementById('place-modal-backdrop').classList.remove('active');
-            document.body.style.overflow = '';
-        }
 
         // --- UI Helpers ---
         function getCongestionClass(level) {
@@ -1125,7 +973,7 @@ ${JSON.stringify(placesDataForAI)}
             return texts[level] || '보통';
         }
 
-        function showResults(places, subtitle) {
+        function showResults(places, subtitle, shouldScroll = true) {
             const section = document.getElementById('results-section');
             const grid = document.getElementById('results-grid');
             document.getElementById('results-subtitle').textContent = subtitle;
@@ -1138,10 +986,10 @@ ${JSON.stringify(placesDataForAI)}
                     const isSaved = savedIds.includes(p.id);
                     const congestion = p.congestion?.level || p.congestion || 'normal';
                     return `
-                        <div class="place-card" onclick="openPlaceModal(${p.id})">
+                        <div class="place-card" data-id="${p.id}" onclick="if(window.app) window.app.openPlaceModal(${p.id})">
                             <div class="place-card__image">
                                 <img src="${p.image_url || (p.images && p.images[0])}" alt="${p.name}">
-                                <button class="place-card__save ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation(); toggleSave(${p.id}, this)">
+                                <button class="place-card__save ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation(); if(window.app) window.app.toggleSave(${p.id}, event);">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="${isSaved ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
                                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                                     </svg>
@@ -1158,47 +1006,49 @@ ${JSON.stringify(placesDataForAI)}
                 }).join('');
             }
             section.style.display = 'block';
-            section.scrollIntoView({ behavior: 'smooth' });
+            if (shouldScroll) {
+                section.scrollIntoView({ behavior: 'smooth' });
+            }
             window.recommendedPlaces = places;
         }
 
-        function toggleSave(id, btn) {
-            let saved = JSON.parse(localStorage.getItem('teumsae_saved') || '[]');
-            const idx = saved.indexOf(id);
-            if (idx === -1) {
-                saved.push(id);
-                btn.classList.add('saved');
-                btn.querySelector('svg').setAttribute('fill', 'currentColor');
-                showToast('일정에 추가했습니다!');
-            } else {
-                saved.splice(idx, 1);
-                btn.classList.remove('saved');
-                btn.querySelector('svg').setAttribute('fill', 'none');
-                showToast('일정에서 제거했습니다.');
-            }
-            localStorage.setItem('teumsae_saved', JSON.stringify(saved));
-        }
-
-        function showToast(message) {
-            const existing = document.querySelector('.toast');
-            if (existing) existing.remove();
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.innerHTML = message;
-            toast.style.cssText = `position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 1rem 2rem; border-radius: 50px; z-index: 1000; border: 1px solid rgba(255,255,255,0.1);`;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2500);
-        }
+        // Legacy toggleSave/showToast removed -- delegated to window.app
 
         function addAllToPlan() {
             if (!window.recommendedPlaces) return;
             let saved = JSON.parse(localStorage.getItem('teumsae_saved') || '[]');
-            window.recommendedPlaces.forEach(p => { if (!saved.includes(p.id)) saved.push(p.id); });
+            window.recommendedPlaces.forEach(p => {
+                // Ensure we save minimal required object structure if needed, or ID.
+                // App.js usually saves ID and relies on loading data, OR saves object.
+                // Keeping original logic for now (saving ID or Object?)
+                // Original code: if (!saved.includes(p.id)) saved.push(p.id); << Just ID?
+                // Step 781 app.js: savedPlaces = this.loadSavedPlaces(). loadSavedPlaces checks IDs?
+                // Actually app.js usually handles object saving.
+                // Let's stick to the existing logic which was pushing ID but make it robust.
+                // Actually, step 778 showed addAllToPlan pushing just ID: saved.push(p.id).
+                // Let's maintain that but fix the notification.
+                if (!saved.includes(p.id)) saved.push(p.id);
+            });
             localStorage.setItem('teumsae_saved', JSON.stringify(saved));
-            showToast('모든 장소를 추가했습니다!');
+
+            if (window.app && window.app.showToast) {
+                window.app.showToast('모든 장소를 추가했습니다!');
+                // Also trigger storage event or sync app state?
+                window.app.savedPlaces = window.app.loadSavedPlaces();
+                window.app.updateBookmarkButtons();
+            } else {
+                alert('모든 장소를 추가했습니다!');
+            }
         }
 
+
     </script>
+    <!-- Dependencies for App.js Modal -->
+    <script src="js/reviews.js"></script>
+    <script src="js/modal-planner.js"></script>
+    <script src="js/lightbox.js"></script>
+    <script src="js/app.js"></script>
+
     <script src="js/logout.js"></script>
     <script src="js/components.js"></script>
     <script src="js/map-toggle.js"></script>

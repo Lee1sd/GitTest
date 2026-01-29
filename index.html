@@ -292,7 +292,7 @@
 
 <body>
     <!-- 헤더 -->
-    <header class="header">
+    <header class="header header--transparent">
         <div class="container">
             <div class="header__inner">
                 <a href="index.html" class="header__logo">
@@ -340,13 +340,6 @@
                                     <line x1="3" y1="10" x2="21" y2="10" />
                                 </svg>
                                 내 여행 계획
-                            </a>
-                            <a href="#" class="user-dropdown-item">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path
-                                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                                </svg>
-                                저장한 장소
                             </a>
                             <a href="recommend.html" class="user-dropdown-item">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -530,7 +523,7 @@
     <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-storage-compat.js"></script>
-    
+
     <script src="js/firebase-config.js"></script>
     <script src="js/auth-guard.js"></script>
     <script src="js/logout.js"></script>
@@ -547,7 +540,9 @@
             const header = document.querySelector('.header');
             if (header) {
                 window.addEventListener('scroll', () => {
-                    if (window.scrollY > 50) header.classList.add('scrolled');
+                    // 히어로 섹션(100vh)을 벗어나기 직전에 배경이 나타나도록 임계값 조정
+                    const threshold = window.innerHeight - 100;
+                    if (window.scrollY > threshold) header.classList.add('scrolled');
                     else header.classList.remove('scrolled');
                 });
             }

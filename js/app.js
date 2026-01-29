@@ -13,6 +13,11 @@ class TeumsaeApp {
         this.currentSort = "recommended"; // Default Sort
         this.searchQuery = "";
 
+        // Pagination State
+        this.itemsPerPage = 12; // 3 rows * 4 columns (desktop)
+        this.currentPage = 1;
+        this.isPaginationMode = false; // false: Load More mode, true: Pagination mode
+
         this.init();
     }
 
@@ -47,6 +52,14 @@ class TeumsaeApp {
         this.initIntroAnimation();
         this.checkHash();
         this.checkUrlParams(); // Check for ?id=...
+
+        // ✅ 다른 탭/페이지(예: 여행계획)에서 즐겨찾기 변경 시 UI 즉시 동기화
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'teumsae_saved') {
+                this.savedPlaces = this.loadSavedPlaces();
+                this.updateBookmarkButtons();
+            }
+        });
     }
 
     // Load modal HTML from component files (Dual Modal System)
@@ -436,7 +449,7 @@ class TeumsaeApp {
 
         reveals.forEach(el => {
             const elementTop = el.getBoundingClientRect().top;
-            const revealPoint = 150; // 요소가 화면 하단에서 150px 올라왔을 때
+            const revealPoint = 50; // 요소가 화면 하단에서 50px 올라왔을 때 (150px -> 50px로 완화하여 초기 노출 증대)
 
             if (elementTop < windowHeight - revealPoint) {
                 el.classList.add('revealed');
@@ -464,14 +477,19 @@ class TeumsaeApp {
             const congestionMatch = this.currentCongestion === "all" ||
                 placeLevel === this.currentCongestion;
 
-            // 4. 검색어 포함 여부
+            // 4. 검색어 포함 여부 (이름, 설명, 태그, 주소[Deep Search])
+            const address = this.extractAddress(place);
             const searchMatch = !query ||
-                place.name.toLowerCase().includes(query) ||
-                place.description.toLowerCase().includes(query) ||
-                place.tags.some(tag => tag.toLowerCase().includes(query));
+                (place.name && place.name.toLowerCase().includes(query)) ||
+                (place.description && place.description.toLowerCase().includes(query)) ||
+                (address && address.toLowerCase().includes(query)) ||
+                (place.tags && place.tags.some(tag => tag.toLowerCase().includes(query)));
 
             return categoryMatch && districtMatch && congestionMatch && searchMatch;
         });
+
+        // 필터링 적용 시 페이지 1로 리셋
+        this.currentPage = 1;
 
         // 5. 정렬 Logic
         this.sortPlaces();
@@ -514,44 +532,43 @@ class TeumsaeApp {
         }
     }
 
-    // 주소에서 구 추출 Helper
-    extractDistrict(place) {
-        // 1. Try to find the district or address from the flat object first
-        if (place.district) return place.district;
-        let addressVal = place.address;
+    // [New] 주소 추출 Helper (검색 및 구 추출용)
+    extractAddress(place) {
+        if (place.address) return place.address;
 
-        // 2. If not found, use the deep search logic from openPlaceModal
-        if (!addressVal && !place.district) {
-            // Check nested by ID
-            const idKey = place.id;
-            const nested = place[idKey] || place[String(idKey)];
-            if (nested) {
-                if (nested.district) return nested.district;
-                if (nested.address) addressVal = nested.address;
-            }
+        let addressVal = null;
 
-            // Check nested by Name
-            if (!addressVal && place[place.name]) {
-                if (place[place.name].district) return place[place.name].district;
-                if (place[place.name].address) addressVal = place[place.name].address;
-            }
+        // Check nested by ID
+        const idKey = place.id;
+        const nestedById = place[idKey] || place[String(idKey)];
+        if (nestedById && nestedById.address) {
+            return nestedById.address;
+        }
 
-            // Fallback: Scan all properties
-            if (!addressVal) {
-                for (const key in place) {
-                    if (place[key] && typeof place[key] === 'object') {
-                        if (place[key].district) return place[key].district;
-                        if (place[key].address) {
-                            addressVal = place[key].address;
-                            break;
-                        }
-                    }
-                }
+        // Check nested by Name
+        if (place.name && place[place.name] && place[place.name].address) {
+            return place[place.name].address;
+        }
+
+        // Fallback: Scan all properties
+        for (const key in place) {
+            if (place[key] && typeof place[key] === 'object' && place[key].address) {
+                return place[key].address;
             }
         }
 
+        return "";
+    }
+
+    // 주소에서 구 추출 Helper
+    extractDistrict(place) {
+        // 1. Try to find the district directly first
+        if (place.district) return place.district;
+
+        // 2. Use helper to find address
+        const addressVal = this.extractAddress(place);
+
         if (!addressVal) {
-            // console.warn(`Could not find address for place id: ${place.id}`);
             return "기타";
         }
 
@@ -562,7 +579,6 @@ class TeumsaeApp {
             return match[1];
         }
 
-        // console.warn(`Could not extract district from address: ${addressVal}`);
         return "기타";
     }
 
@@ -641,7 +657,7 @@ class TeumsaeApp {
 
     // renderMoodFilters Removed
 
-    // 장소 카드 렌더링
+    // 장소 카드 렌더링 (Pagination / Load More Logic)
     renderPlaces() {
         if (!this.placesGrid) return;
 
@@ -653,12 +669,21 @@ class TeumsaeApp {
           <p style="color: var(--color-gray-light); margin-top: 0.5rem;">다른 키워드나 필터를 선택해보세요.</p>
         </div>
       `;
+            this.renderPaginationControls(0); // Hide controls
             return;
         }
 
+        // Calculate items to show
+        // Calculate items to show
+        let displayItems = [];
+        // Always use Pagination Mode logic as requested
+        const start = (this.currentPage - 1) * this.itemsPerPage;
+        const end = start + this.itemsPerPage;
+        displayItems = this.filteredPlaces.slice(start, end);
+
         // 카드 HTML 생성
-        this.placesGrid.innerHTML = this.filteredPlaces.map((place, index) => `
-      <article class="card place-card reveal" style="animation-delay: ${index * 0.1}s" data-id="${place.id}">
+        this.placesGrid.innerHTML = displayItems.map((place, index) => `
+      <article class="card place-card reveal" style="animation-delay: ${index * 0.05}s" data-id="${place.id}">
         <div class="place-card__image">
           <img src="${place.images[0]}" alt="${place.name}" loading="lazy">
           <button class="place-card__save ${this.isSaved(place.id) ? 'saved' : ''}" 
@@ -700,6 +725,63 @@ class TeumsaeApp {
 
         // 렌더링 직후 애니메이션 적용
         setTimeout(() => this.revealOnScroll(), 100);
+
+        // Render Pagination Controls
+        this.renderPaginationControls(this.filteredPlaces.length);
+    }
+
+    // 페이지네이션 컨트롤 렌더링
+    renderPaginationControls(totalItems) {
+        let paginationContainer = document.getElementById('pagination-controls');
+
+        // 없으면 생성
+        if (!paginationContainer) {
+            paginationContainer = document.createElement('div');
+            paginationContainer.id = 'pagination-controls';
+            paginationContainer.className = 'pagination';
+            // placesGrid 다음에 삽입 (grid가 끝난 후)
+            this.placesGrid.parentNode.insertBefore(paginationContainer, this.placesGrid.nextSibling);
+        }
+
+        if (totalItems <= this.itemsPerPage) {
+            paginationContainer.style.display = 'none';
+            return;
+        }
+
+        paginationContainer.style.display = 'flex';
+        const totalPages = Math.ceil(totalItems / this.itemsPerPage);
+
+        // 페이지 버튼 생성 로직
+        let html = '';
+
+        // Prev Button
+        if (this.currentPage > 1) {
+            html += `<button class="page-btn prev" onclick="window.app.changePage(${this.currentPage - 1})">이전</button>`;
+        }
+
+        // Page Numbers (Simple range for now)
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === this.currentPage) {
+                html += `<button class="page-btn active">${i}</button>`;
+            } else {
+                html += `<button class="page-btn" onclick="window.app.changePage(${i})">${i}</button>`;
+            }
+        }
+
+        // Next Button
+        if (this.currentPage < totalPages) {
+            html += `<button class="page-btn next" onclick="window.app.changePage(${this.currentPage + 1})">다음</button>`;
+        }
+
+        paginationContainer.innerHTML = html;
+    }
+
+    changePage(page) {
+        this.currentPage = page;
+        this.renderPlaces();
+        // 스크롤을 목록 상단으로 이동
+        const offset = this.placesGrid.offsetTop - 120;
+        window.scrollTo({ top: offset, behavior: 'smooth' });
     }
 
     // 혼잡도에 따른 CSS 클래스 반환
@@ -740,36 +822,50 @@ class TeumsaeApp {
 
         this.savePlaces(); // 로컬 스토리지 업데이트
 
-        // UI 즉시 업데이트 - 모든 관련 버튼 동기화 (모달 & 리스트)
-        const allRelevantBtns = [];
-        if (event.currentTarget) allRelevantBtns.push(event.currentTarget);
+        // UI 즉시 업데이트
+        this.updateBookmarkButtons(numericId);
 
-        const targetId = Number(id);
-        document.querySelectorAll('.place-card__save').forEach(btn => {
-            const card = btn.closest('.place-card');
-            if (card && Number(card.dataset.id) === targetId) {
-                if (!allRelevantBtns.includes(btn)) allRelevantBtns.push(btn);
-            }
-        });
+        // 토스트 알림 표시
+        this.showToast(isNowSaving ? '저장 목록에 추가했습니다.' : '저장 목록에서 제거했습니다.');
+    }
 
+    /**
+     * 화면상의 모든 북마크 버튼 상태를 현재 savedPlaces 데이터에 맞춰 동기화
+     * @param {number} targetId 특정 ID만 업데이트하고 싶을 때 사용 (선택 사항)
+     */
+    updateBookmarkButtons(targetId = null) {
+        const buttons = document.querySelectorAll('.place-card__save');
         const modalBtn = document.getElementById('btn-bookmark');
-        if (modalBtn && Number(modalBtn.dataset.id) === targetId) {
-            if (!allRelevantBtns.includes(modalBtn)) allRelevantBtns.push(modalBtn);
-        }
 
-        allRelevantBtns.forEach(btn => {
+        const updateBtn = (btn, id) => {
+            const isSaved = this.isSaved(id);
             const svg = btn.querySelector('svg');
-            if (isNowSaving) {
+
+            if (isSaved) {
                 btn.classList.add('saved');
                 if (svg) svg.setAttribute('fill', 'currentColor');
             } else {
                 btn.classList.remove('saved');
                 if (svg) svg.setAttribute('fill', 'none');
             }
+        };
+
+        // 리스트 카드 버튼들 업데이트
+        buttons.forEach(btn => {
+            const card = btn.closest('.place-card');
+            const id = card ? Number(card.dataset.id) : Number(btn.dataset.id);
+            if (id && (!targetId || id === targetId)) {
+                updateBtn(btn, id);
+            }
         });
 
-        // 토스트 알림 표시
-        this.showToast(isNowSaving ? '저장 목록에 추가했습니다.' : '저장 목록에서 제거했습니다.');
+        // 상세 모달 버튼 업데이트
+        if (modalBtn) {
+            const id = Number(modalBtn.dataset.id);
+            if (id && (!targetId || id === targetId)) {
+                updateBtn(modalBtn, id);
+            }
+        }
     }
 
     // 저장 여부 확인
@@ -908,24 +1004,7 @@ class TeumsaeApp {
             congestionSpan.classList.add('place-card__badge--normal'); // Default
         }
 
-        // 북마크 버튼 상태 동기화
-        const bookmarkBtn = document.getElementById('btn-bookmark');
-        if (bookmarkBtn) {
-            bookmarkBtn.dataset.id = place.id; // ID 저장
-            const isSaved = this.isSaved(place.id);
-            const svg = bookmarkBtn.querySelector('svg');
 
-            if (isSaved) {
-                bookmarkBtn.classList.add('saved');
-                svg.setAttribute('fill', 'currentColor');
-            } else {
-                bookmarkBtn.classList.remove('saved');
-                svg.setAttribute('fill', 'none');
-            }
-
-            // 클릭 이벤트 연결
-            bookmarkBtn.onclick = (e) => this.toggleSave(place.id, e);
-        }
 
         document.getElementById('modal-description').textContent = place.description;
 
@@ -1043,6 +1122,39 @@ class TeumsaeApp {
         // 플래너 사이드바 업데이트
         if (this.modalPlanner) {
             this.modalPlanner.updateForPlace(place);
+        }
+
+        // 즐겨찾기(save) 버튼 연동 - 최하단에서 클래스만 제어 (안정성 최우선)
+        const bookmarkBtn = document.getElementById('btn-bookmark');
+        if (bookmarkBtn) {
+            bookmarkBtn.dataset.id = place.id;
+            const isSaved = this.isSaved(place.id);
+
+            // SVG 조작 없이 클래스만 교체 (CSS에서 배경 이미지 제어)
+            if (isSaved) {
+                bookmarkBtn.classList.add('saved');
+            } else {
+                bookmarkBtn.classList.remove('saved');
+            }
+
+            bookmarkBtn.onclick = (e) => {
+                this.toggleSave(place.id, e);
+                // toggleSave가 전역적으로 .saved 클래스를 업데이트하므로 별도 처리 최소화
+            };
+        }
+
+        // 지도로 보기 버튼 연동
+        const viewMapBtn = document.getElementById('btn-view-map');
+        if (viewMapBtn) {
+            viewMapBtn.onclick = () => {
+                this.closePlaceModal(); // 모달 닫기
+                if (typeof toggleMap === 'function') {
+                    // [수정됨] place.id를 전달하여 해당 장소로 자동 이동
+                    toggleMap(place.id);
+                } else {
+                    alert('지도가 이미 열려있습니다.');
+                }
+            };
         }
     }
 

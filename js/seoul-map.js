@@ -48,11 +48,78 @@ const SeoulMap = (function () {
         await loadAndRender();
     }
 
+    // [추가] 대기 중인 포커스 요청 저장
+    let pendingFocusRequest = null;
+
+    // [추가] 포커스 요청 처리 핸들러 (Refactored)
+    function handleFocusRequest(placeId) {
+        const place = allPlaces.find(p => p.id == placeId);
+        if (place) {
+            console.log(`지도 포커스 실행: ${place.name}`);
+
+            // 1. 해당 장소의 구 폴리곤 찾기
+            const guName = place.gu || (place.address ? place.address.split(' ')[1] : '');
+            let districtPath = document.querySelector(`.district-path[data-name="${guName}"]`);
+
+            if (!districtPath && guName) {
+                const potentialMatches = document.querySelectorAll('.district-path');
+                for (let path of potentialMatches) {
+                    if (path.getAttribute('data-name').includes(guName) || guName.includes(path.getAttribute('data-name'))) {
+                        districtPath = path;
+                        break;
+                    }
+                }
+            }
+
+            if (districtPath) {
+                console.log(`Simulating click on district: ${guName}`);
+                districtPath.dispatchEvent(new Event('click'));
+
+                setTimeout(() => {
+                    if (naverMap) {
+                        const loc = new naver.maps.LatLng(place.lat, place.lng);
+                        naverMap.morph(loc, 17);
+                    }
+                }, 600);
+            } else {
+                console.warn(`District polygon not found for ${guName}, falling back to direct call.`);
+                showNaverMap(guName || '서울', place.lat, place.lng);
+
+                if (naverMap) {
+                    const loc = new naver.maps.LatLng(place.lat, place.lng);
+                    naverMap.morph(loc, 17);
+                }
+            }
+        }
+    }
+
+    // [중요] 메시지 리스너를 init() 외부로 이동하여 스크립트 로드 즉시 수신 대기 (Race Condition 해결)
+    window.addEventListener('message', (event) => {
+        if (event.data.type === 'FOCUS_PLACE' && event.data.placeId) {
+            // 초기화 전이거나 데이터가 없으면 큐에 저장
+            if (!isInitialized || allPlaces.length === 0) {
+                console.log('장소 데이터 로드 전 요청 대기 (Global Listener):', event.data.placeId);
+                pendingFocusRequest = event.data.placeId;
+                return;
+            }
+            // 로드 완료 상태면 즉시 실행
+            handleFocusRequest(event.data.placeId);
+        }
+    });
+
     // Init function (Entry Point)
     async function init() {
         if (isInitialized) return;
+
         await loadAndRender();
         isInitialized = true;
+
+        // [추가] 대기 중인 요청이 있으면 처리
+        if (pendingFocusRequest) {
+            console.log('대기 중인 포커스 요청 처리:', pendingFocusRequest);
+            handleFocusRequest(pendingFocusRequest);
+            pendingFocusRequest = null;
+        }
     }
 
     // Core Load & Render Logic
@@ -676,6 +743,25 @@ const SeoulMap = (function () {
     function updateNaverMarkers(category, keyword = null) {
         if (!naverMap) return;
 
+        // [Helper] 주소 추출 logic (app.js와 동일)
+        const extractAddress = (place) => {
+            if (place.address) return place.address;
+
+            // Check nested by ID
+            const idKey = place.id;
+            const nestedById = place[idKey] || place[String(idKey)];
+            if (nestedById && nestedById.address) return nestedById.address;
+
+            // Check nested by Name
+            if (place.name && place[place.name] && place[place.name].address) return place[place.name].address;
+
+            // Fallback
+            for (const key in place) {
+                if (place[key] && typeof place[key] === 'object' && place[key].address) return place[key].address;
+            }
+            return "";
+        };
+
         // 기존 마커 제거
         naverMarkers.forEach(marker => marker.setMap(null));
         naverMarkers = [];
@@ -689,11 +775,15 @@ const SeoulMap = (function () {
 
         if (keyword) {
             const lowKey = keyword.toLowerCase();
-            filtered = filtered.filter(p =>
-                (p.name && p.name.toLowerCase().includes(lowKey)) ||
-                (p.category && p.category.toLowerCase().includes(lowKey)) ||
-                (p.features && p.features.some(f => f.toLowerCase().includes(lowKey)))
-            );
+            filtered = filtered.filter(p => {
+                const address = extractAddress(p).toLowerCase();
+                return (
+                    (p.name && p.name.toLowerCase().includes(lowKey)) ||
+                    (p.category && p.category.toLowerCase().includes(lowKey)) ||
+                    (address && address.includes(lowKey)) ||
+                    (p.features && p.features.some(f => f.toLowerCase().includes(lowKey)))
+                );
+            });
         }
 
         // 새 마커 생성
@@ -809,10 +899,10 @@ const SeoulMap = (function () {
             const loc = new naver.maps.LatLng(place.lat, place.lng);
             naverMap.morph(loc, 17); // 줌인 & 이동
 
-            // [수정됨] 리스트 클릭 시에는 모달을 띄우지 않고 지도 이동만 수행
-            // if (typeof showPlaceDetail === 'function') {
-            //     showPlaceDetail(place);
-            // }
+            // [수정됨] 리스트 클릭 시에도 모달을 띄우도록 변경 (장소 탐색 페이지와 일관성)
+            if (typeof showPlaceDetail === 'function') {
+                showPlaceDetail(place);
+            }
         }
     }
 

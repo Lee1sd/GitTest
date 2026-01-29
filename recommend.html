@@ -21,7 +21,10 @@
     <link rel="stylesheet" href="css/modal.css">
     <link rel="stylesheet" href="css/reviews.css">
     <link rel="stylesheet" href="css/lightbox.css">
+    <link rel="stylesheet" href="css/comparison.css">
+    <link rel="stylesheet" href="css/dual-modal.css">
     <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/notification.css">
 
     <style>
         /* Recommend Page Specifics */
@@ -706,7 +709,7 @@
             initTabs();
             initSurvey();
             initChat();
-            initModal();
+
             goToQuestion(1);
         });
 
@@ -956,56 +959,8 @@ ${JSON.stringify(placesDataForAI)}
             }
         }
 
-        // --- Modal Logic ---
-        async function initModal() {
-            if (typeof ReviewManager !== 'undefined') window.reviewManager = new ReviewManager();
-            if (typeof ModalPlanner !== 'undefined') window.modalPlanner = new ModalPlanner();
-            try {
-                const res = await fetch('components/place-modal.html');
-                const html = await res.text();
-                document.getElementById('modal-container').innerHTML = html;
+        // Legacy initialization and modal logic removed -- handled by window.app
 
-                document.getElementById('place-modal-close')?.addEventListener('click', closePlaceModal);
-                document.getElementById('place-modal-backdrop')?.addEventListener('click', (e) => {
-                    if (e.target.id === 'place-modal-backdrop') closePlaceModal();
-                });
-            } catch (e) { console.error("Modal Init Error", e); }
-        }
-
-        async function openPlaceModal(id) {
-            try {
-                const snapshot = await db.collection('places').get();
-                let place = null;
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (parseInt(data.id) === id || data.id === id) { place = data; place.id = id; }
-                });
-                if (!place) return;
-
-                document.getElementById('modal-hero-image').src = place.image_url || (place.images && place.images[0]);
-                document.getElementById('modal-title').textContent = place.name;
-                document.getElementById('modal-category').textContent = place.category;
-                document.getElementById('modal-description').textContent = place.description;
-
-                const level = place.congestion?.level || place.congestion || 'normal';
-                const congestionBadge = document.getElementById('modal-congestion');
-                if (congestionBadge) {
-                    congestionBadge.className = 'place-modal__congestion ' + getCongestionClass(level);
-                    document.getElementById('modal-congestion-text').textContent = getCongestionText(level);
-                }
-
-                document.getElementById('place-modal-backdrop').classList.add('active');
-                document.body.style.overflow = 'hidden';
-
-                if (window.reviewManager) window.reviewManager.loadForPlace(id);
-                if (window.modalPlanner) window.modalPlanner.updateForPlace(place);
-            } catch (e) { console.error("Open Modal Error", e); }
-        }
-
-        function closePlaceModal() {
-            document.getElementById('place-modal-backdrop').classList.remove('active');
-            document.body.style.overflow = '';
-        }
 
         // --- UI Helpers ---
         function getCongestionClass(level) {
@@ -1031,10 +986,10 @@ ${JSON.stringify(placesDataForAI)}
                     const isSaved = savedIds.includes(p.id);
                     const congestion = p.congestion?.level || p.congestion || 'normal';
                     return `
-                        <div class="place-card" onclick="openPlaceModal(${p.id})">
+                        <div class="place-card" data-id="${p.id}" onclick="if(window.app) window.app.openPlaceModal(${p.id})">
                             <div class="place-card__image">
                                 <img src="${p.image_url || (p.images && p.images[0])}" alt="${p.name}">
-                                <button class="place-card__save ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation(); toggleSave(${p.id}, this)">
+                                <button class="place-card__save ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation(); if(window.app) window.app.toggleSave(${p.id}, event);">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="${isSaved ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
                                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                                     </svg>
@@ -1057,43 +1012,43 @@ ${JSON.stringify(placesDataForAI)}
             window.recommendedPlaces = places;
         }
 
-        function toggleSave(id, btn) {
-            let saved = JSON.parse(localStorage.getItem('teumsae_saved') || '[]');
-            const idx = saved.indexOf(id);
-            if (idx === -1) {
-                saved.push(id);
-                btn.classList.add('saved');
-                btn.querySelector('svg').setAttribute('fill', 'currentColor');
-                showToast('일정에 추가했습니다!');
-            } else {
-                saved.splice(idx, 1);
-                btn.classList.remove('saved');
-                btn.querySelector('svg').setAttribute('fill', 'none');
-                showToast('일정에서 제거했습니다.');
-            }
-            localStorage.setItem('teumsae_saved', JSON.stringify(saved));
-        }
-
-        function showToast(message) {
-            const existing = document.querySelector('.toast');
-            if (existing) existing.remove();
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.innerHTML = message;
-            toast.style.cssText = `position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 1rem 2rem; border-radius: 50px; z-index: 1000; border: 1px solid rgba(255,255,255,0.1);`;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2500);
-        }
+        // Legacy toggleSave/showToast removed -- delegated to window.app
 
         function addAllToPlan() {
             if (!window.recommendedPlaces) return;
             let saved = JSON.parse(localStorage.getItem('teumsae_saved') || '[]');
-            window.recommendedPlaces.forEach(p => { if (!saved.includes(p.id)) saved.push(p.id); });
+            window.recommendedPlaces.forEach(p => {
+                // Ensure we save minimal required object structure if needed, or ID.
+                // App.js usually saves ID and relies on loading data, OR saves object.
+                // Keeping original logic for now (saving ID or Object?)
+                // Original code: if (!saved.includes(p.id)) saved.push(p.id); << Just ID?
+                // Step 781 app.js: savedPlaces = this.loadSavedPlaces(). loadSavedPlaces checks IDs?
+                // Actually app.js usually handles object saving.
+                // Let's stick to the existing logic which was pushing ID but make it robust.
+                // Actually, step 778 showed addAllToPlan pushing just ID: saved.push(p.id).
+                // Let's maintain that but fix the notification.
+                if (!saved.includes(p.id)) saved.push(p.id);
+            });
             localStorage.setItem('teumsae_saved', JSON.stringify(saved));
-            showToast('모든 장소를 추가했습니다!');
+
+            if (window.app && window.app.showToast) {
+                window.app.showToast('모든 장소를 추가했습니다!');
+                // Also trigger storage event or sync app state?
+                window.app.savedPlaces = window.app.loadSavedPlaces();
+                window.app.updateBookmarkButtons();
+            } else {
+                alert('모든 장소를 추가했습니다!');
+            }
         }
 
+
     </script>
+    <!-- Dependencies for App.js Modal -->
+    <script src="js/reviews.js"></script>
+    <script src="js/modal-planner.js"></script>
+    <script src="js/lightbox.js"></script>
+    <script src="js/app.js"></script>
+
     <script src="js/logout.js"></script>
     <script src="js/components.js"></script>
     <script src="js/map-toggle.js"></script>

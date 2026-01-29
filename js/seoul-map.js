@@ -48,11 +48,78 @@ const SeoulMap = (function () {
         await loadAndRender();
     }
 
+    // [추가] 대기 중인 포커스 요청 저장
+    let pendingFocusRequest = null;
+
+    // [추가] 포커스 요청 처리 핸들러 (Refactored)
+    function handleFocusRequest(placeId) {
+        const place = allPlaces.find(p => p.id == placeId);
+        if (place) {
+            console.log(`지도 포커스 실행: ${place.name}`);
+
+            // 1. 해당 장소의 구 폴리곤 찾기
+            const guName = place.gu || (place.address ? place.address.split(' ')[1] : '');
+            let districtPath = document.querySelector(`.district-path[data-name="${guName}"]`);
+
+            if (!districtPath && guName) {
+                const potentialMatches = document.querySelectorAll('.district-path');
+                for (let path of potentialMatches) {
+                    if (path.getAttribute('data-name').includes(guName) || guName.includes(path.getAttribute('data-name'))) {
+                        districtPath = path;
+                        break;
+                    }
+                }
+            }
+
+            if (districtPath) {
+                console.log(`Simulating click on district: ${guName}`);
+                districtPath.dispatchEvent(new Event('click'));
+
+                setTimeout(() => {
+                    if (naverMap) {
+                        const loc = new naver.maps.LatLng(place.lat, place.lng);
+                        naverMap.morph(loc, 17);
+                    }
+                }, 600);
+            } else {
+                console.warn(`District polygon not found for ${guName}, falling back to direct call.`);
+                showNaverMap(guName || '서울', place.lat, place.lng);
+
+                if (naverMap) {
+                    const loc = new naver.maps.LatLng(place.lat, place.lng);
+                    naverMap.morph(loc, 17);
+                }
+            }
+        }
+    }
+
     // Init function (Entry Point)
     async function init() {
         if (isInitialized) return;
+
+        // [추가] 외부 메시지 리스너 (iframe 제어용)
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'FOCUS_PLACE' && event.data.placeId) {
+                // 데이터 로드 전이면 큐에 저장
+                if (allPlaces.length === 0) {
+                    console.log('장소 데이터 로드 전 요청 대기:', event.data.placeId);
+                    pendingFocusRequest = event.data.placeId;
+                    return;
+                }
+                // 로드 완료 상태면 즉시 실행
+                handleFocusRequest(event.data.placeId);
+            }
+        });
+
         await loadAndRender();
         isInitialized = true;
+
+        // [추가] 대기 중인 요청이 있으면 처리
+        if (pendingFocusRequest) {
+            console.log('대기 중인 포커스 요청 처리:', pendingFocusRequest);
+            handleFocusRequest(pendingFocusRequest);
+            pendingFocusRequest = null;
+        }
     }
 
     // Core Load & Render Logic
@@ -809,10 +876,10 @@ const SeoulMap = (function () {
             const loc = new naver.maps.LatLng(place.lat, place.lng);
             naverMap.morph(loc, 17); // 줌인 & 이동
 
-            // [수정됨] 리스트 클릭 시에는 모달을 띄우지 않고 지도 이동만 수행
-            // if (typeof showPlaceDetail === 'function') {
-            //     showPlaceDetail(place);
-            // }
+            // [수정됨] 리스트 클릭 시에도 모달을 띄우도록 변경 (장소 탐색 페이지와 일관성)
+            if (typeof showPlaceDetail === 'function') {
+                showPlaceDetail(place);
+            }
         }
     }
 

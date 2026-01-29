@@ -169,6 +169,17 @@ if (window.app && window.app.places?.length) {
       return;
     }
 
+    if (this.currentPlanMeta.id) {
+    const isEdit = confirm(
+      '기존 일정을 수정할까요?\n취소를 누르면 새 일정으로 저장됩니다.'
+    );
+
+    if (!isEdit) {
+      // 새 일정으로 저장
+      this.resetCurrentPlanMeta();
+    }
+  }
+
     this.currentPlanMeta.name = name;
     this.savePlan();
 
@@ -220,6 +231,25 @@ if (window.app && window.app.places?.length) {
 
   async restorePlan() {
      if (!this.dateInput || !this.endDateInput) return;
+
+      const localPlan = JSON.parse(localStorage.getItem('teumsae_plan'));
+
+        if (localPlan && localPlan.timeline?.length) {
+    this.timeline = localPlan.timeline;
+
+    if (localPlan.date) this.dateInput.value = localPlan.date;
+    if (localPlan.endDate) this.endDateInput.value = localPlan.endDate;
+
+    renderDays();
+    this.renderTimeline();
+    return; // ✅ 여기서 끝 (Firebase 안 봄)
+  }
+
+       // 사용자가 초기화했으면 자동 복원 금지
+  if (localStorage.getItem('teumsae_cleared') === 'true') {
+    this.resetCurrentPlanMeta();
+    return;
+  }
 
      // 로그아웃 상태면 일정 복원 안 함
   if (!this.user) {
@@ -425,6 +455,7 @@ if (window.app && window.app.places?.length) {
 
   addToTimeline(placeId) {
     // Check if already in timeline
+    
     const hasDay = this.timelineItems.querySelector('.planner__day');
     if (!hasDay) {
       this.showToast('먼저 여행 날짜를 선택해주세요.');
@@ -505,7 +536,6 @@ if (window.app && window.app.places?.length) {
  
 
   async savePlan() {
-     console.log('🔥 savePlan called');
 
     const user = auth.currentUser;
 
@@ -819,10 +849,14 @@ async loadSavedPlaces() {
   }
 
   clearPlan({ silent = false } = {}) {
-   if(confirm('정말 일정을 초기화하시겠습니까?')) {
+   if (!silent) {
+    const ok = confirm('정말 일정을 초기화하시겠습니까?');
+    if (!ok) return;
+  }
     this.timeline = [];
     this.currentDay = 1;
-
+   
+     localStorage.setItem('teumsae_cleared', 'true');
     // Day DOM 제거
     this.timelineItems.innerHTML = '';
 
@@ -843,7 +877,6 @@ async loadSavedPlaces() {
     this.showToast('일정이 초기화되었습니다.');
   }
 
-}
   initRevealAnimations() {
     const reveals = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
 
@@ -939,6 +972,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const newBtn = document.querySelector('.myplans-new-btn');
   if (newBtn) {
     newBtn.addEventListener('click', () => {
+        const ok = confirm(
+    '새 일정을 만들면 이전에 작업하던 내용이 초기화됩니다.\n그래도 새 일정을 시작할까요?'
+  );
+
+  if (!ok) return;
       planner.clearPlan({ silent: true });
       planner.resetCurrentPlanMeta();
 
@@ -975,7 +1013,7 @@ function renderDays() {
   const start = new Date(startInput.value);
   const end = endInput.value
     ? new Date(endInput.value)
-    : new Date(startInput.value); // 🔥 핵심
+    : new Date(startInput.value); // 핵심
 
   start.setHours(0, 0, 0, 0);
   end.setHours(0, 0, 0, 0);
@@ -1028,6 +1066,7 @@ function renderDays() {
 
       planner.currentDay = Number(dayItem.dataset.day);
       planner.addToTimeline(id);
+
     });
 
     timelineItems.appendChild(dayItem);

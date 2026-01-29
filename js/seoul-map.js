@@ -809,10 +809,10 @@ const SeoulMap = (function () {
             const loc = new naver.maps.LatLng(place.lat, place.lng);
             naverMap.morph(loc, 17); // 줌인 & 이동
 
-            // [수정됨] 리스트 클릭 시에는 모달을 띄우지 않고 지도 이동만 수행
-            // if (typeof showPlaceDetail === 'function') {
-            //     showPlaceDetail(place);
-            // }
+            // [수정됨] 리스트 클릭 시에도 모달을 띄우도록 변경 (장소 탐색 페이지와 일관성)
+            if (typeof showPlaceDetail === 'function') {
+                showPlaceDetail(place);
+            }
         }
     }
 

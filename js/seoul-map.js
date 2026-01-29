@@ -93,23 +93,23 @@ const SeoulMap = (function () {
         }
     }
 
+    // [중요] 메시지 리스너를 init() 외부로 이동하여 스크립트 로드 즉시 수신 대기 (Race Condition 해결)
+    window.addEventListener('message', (event) => {
+        if (event.data.type === 'FOCUS_PLACE' && event.data.placeId) {
+            // 초기화 전이거나 데이터가 없으면 큐에 저장
+            if (!isInitialized || allPlaces.length === 0) {
+                console.log('장소 데이터 로드 전 요청 대기 (Global Listener):', event.data.placeId);
+                pendingFocusRequest = event.data.placeId;
+                return;
+            }
+            // 로드 완료 상태면 즉시 실행
+            handleFocusRequest(event.data.placeId);
+        }
+    });
+
     // Init function (Entry Point)
     async function init() {
         if (isInitialized) return;
-
-        // [추가] 외부 메시지 리스너 (iframe 제어용)
-        window.addEventListener('message', (event) => {
-            if (event.data.type === 'FOCUS_PLACE' && event.data.placeId) {
-                // 데이터 로드 전이면 큐에 저장
-                if (allPlaces.length === 0) {
-                    console.log('장소 데이터 로드 전 요청 대기:', event.data.placeId);
-                    pendingFocusRequest = event.data.placeId;
-                    return;
-                }
-                // 로드 완료 상태면 즉시 실행
-                handleFocusRequest(event.data.placeId);
-            }
-        });
 
         await loadAndRender();
         isInitialized = true;

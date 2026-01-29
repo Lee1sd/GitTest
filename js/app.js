@@ -1142,6 +1142,20 @@ class TeumsaeApp {
                 // toggleSave가 전역적으로 .saved 클래스를 업데이트하므로 별도 처리 최소화
             };
         }
+
+        // 지도로 보기 버튼 연동
+        const viewMapBtn = document.getElementById('btn-view-map');
+        if (viewMapBtn) {
+            viewMapBtn.onclick = () => {
+                this.closePlaceModal(); // 모달 닫기
+                if (typeof toggleMap === 'function') {
+                    // [수정됨] place.id를 전달하여 해당 장소로 자동 이동
+                    toggleMap(place.id);
+                } else {
+                    alert('지도가 이미 열려있습니다.');
+                }
+            };
+        }
     }
 
     // 비교 데이터 업데이트

@@ -83,6 +83,18 @@ if (window.app && window.app.places?.length) {
   this.renderTimeline(); //타임라인 렌더링
   this.initRevealAnimations(); //애니메이션 초기화
   await this.fetchMyPlans(); // 여행일정 firebase에서 가져와서 슬라이드에 저장
+
+
+if (!window.__plannerStorageBound) {
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'teumsae_saved' && window.planner) {
+      const updated = JSON.parse(e.newValue || '[]');
+      window.planner.savedPlaces = updated.map(Number);
+      window.planner.renderSavedPlaces();
+    }
+  });
+  window.__plannerStorageBound = true;
+}
 }
 
   cacheDOMElements() { //자주 쓰는 DOM 저장
@@ -112,6 +124,8 @@ if (window.app && window.app.places?.length) {
   }
 
   bindEvents() {
+     if (this._eventsBound) return;
+  this._eventsBound = true;
     // Add place to timeline on click
     this.savedList.addEventListener('click', (e) => {
       const item = e.target.closest('.planner__saved-item');
@@ -584,7 +598,7 @@ if (window.app && window.app.places?.length) {
         .set(planData, { merge: true });
 
     }
-    await this.syncSavedPlacesFromTimeline(); // 
+  
 this.savedPlaces = await this.loadSavedPlaces();
 this.renderSavedPlaces();
 

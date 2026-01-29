@@ -782,7 +782,7 @@
     <script src="js/notification.js"></script>
     <script>
         // ⚠️ API Key Configuration
-        const API_KEY = "AIzaSyCnJosh522XUe4bORgm8H0a9IHa8N6xxEo";
+        const API_KEY = "AIzaSyDi-3iBi4iN7rqYQd9eTw75WGmKe6Ey60E";
 
         // State Management
         let currentQuestion = 1;
@@ -1051,7 +1051,7 @@ ${JSON.stringify(placesDataForAI)}
                     }
                 });
                 if (matched.length > 0) {
-                    showResults(matched.slice(0, 6), 'AI가 추천한 장소들이에요');
+                    showResults(matched.slice(0, 6), 'AI가 추천한 장소들이에요', false);
                 }
             } catch (e) {
                 console.error("Recommendation Error", e);
@@ -1072,7 +1072,7 @@ ${JSON.stringify(placesDataForAI)}
             return texts[level] || '보통';
         }
 
-        function showResults(places, subtitle) {
+        function showResults(places, subtitle, shouldScroll = true) {
             const section = document.getElementById('results-section');
             const grid = document.getElementById('results-grid');
             document.getElementById('results-subtitle').textContent = subtitle;
@@ -1112,7 +1112,9 @@ ${JSON.stringify(placesDataForAI)}
                 }).join('');
             }
             section.style.display = 'block';
-            section.scrollIntoView({ behavior: 'smooth' });
+            if (shouldScroll) {
+                section.scrollIntoView({ behavior: 'smooth' });
+            }
             window.recommendedPlaces = places;
         }
 

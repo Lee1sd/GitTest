@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="틈새 - 장소 탐색">
+    <title>장소 탐색 | 틈새</title>
+
+    <!-- 파비콘 -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+
+    <!-- 스타일시트 -->
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/pages.css">
+    <link rel="stylesheet" href="css/modal.css">
+    <link rel="stylesheet" href="css/theme.css?v=6">
+    <link rel="stylesheet" href="css/reviews.css">
+    <link rel="stylesheet" href="css/comments.css">
+    <link rel="stylesheet" href="css/lightbox.css">
+    <link rel="stylesheet" href="css/comparison.css">
+    <link rel="stylesheet" href="css/dual-modal.css">
+    <link rel="stylesheet" href="css/pagination.css">
+    <link rel="stylesheet" href="css/notification.css">
+
+    <style>
+        /* Explore 페이지 전용 스타일 */
+        .explore-container {
+            padding-top: var(--header-height);
+            min-height: 100vh;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            /* Lighter background */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            /* Less rounded */
+            padding: 12px 20px;
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .search-box:focus-within {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .search-box__icon {
+            color: rgba(255, 255, 255, 0.5);
+            margin-right: 12px;
+        }
+
+        .search-box__input {
+            background: none;
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 1rem;
+            color: var(--text-color);
+            font-family: var(--font-sans);
+        }
+
+        .search-box__input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* --- New Filter Toolbar Design --- */
+        .filter-toolbar {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            /* Reduced from 20px */
+            margin-bottom: 24px;
+            /* Reduced from 30px */
+            background: rgba(30, 30, 30, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            /* Slightly less rounded */
+            padding: 14px 18px;
+            /* Reduced from 20px */
+        }
+
+        /* Row 1: Categories (Chips) */
+        .filter-row.categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            /* Reduced from 10px */
+            padding-bottom: 10px;
+            /* Reduced from 16px */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .category-chip {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            padding: 6px 14px;
+            /* Reduced padding */
+            border-radius: 20px;
+            font-size: 0.85rem;
+            /* Slightly smaller */
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .category-chip:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+        }
+
+        .category-chip.active {
+            background: var(--accent-color);
+            color: #111;
+            /* Dark text for contrast */
+            border-color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        /* Row 2: Controls (Dropdown, Segment, Sort) */
+        .filter-row.controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+            /* Reduced from 24px */
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            /* Reduced from 8px */
+        }
+
+        /* Custom Dropdown (Region) */
+        .custom-select {
+            position: relative;
+            min-width: 130px;
+            /* Reduced min-width */
+        }
+
+        .select-btn {
+            width: 100%;
+            background: #252525;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-color);
+            padding: 8px 12px;
+            /* Reduced padding */
+            border-radius: 6px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .select-btn:after {
+            content: '';
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid rgba(255, 255, 255, 0.5);
+            margin-left: 8px;
+        }
+
+        .select-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: #252525;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            margin-top: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .custom-select.active .select-options {
+            display: block;
+        }
+
+        .select-option {
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .select-option:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--accent-color);
+        }
+
+        /* Segment Control (Congestion) */
+        .segment-control {
+            display: flex;
+            background: #252525;
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            gap: 4px;
+        }
+
+        .segment-btn {
+            padding: 6px 16px;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        /* Color Coding for Congestion */
+        .segment-btn[data-congestion="quiet"]:hover,
+        .segment-btn[data-congestion="quiet"].active {
+            color: #4DB6AC;
+            /* Teal lighten-2 */
+            background: rgba(38, 166, 154, 0.15);
+        }
+
+        .segment-btn[data-congestion="quiet"].active {
+            font-weight: 700;
+            background: rgba(38, 166, 154, 0.25);
+        }
+
+        .segment-btn[data-congestion="normal"]:hover,
+        .segment-btn[data-congestion="normal"].active {
+            color: #FFCA28;
+            /* Amber lighten-1 */
+            background: rgba(255, 179, 0, 0.15);
+        }
+
+        .segment-btn[data-congestion="normal"].active {
+            font-weight: 700;
+            background: rgba(255, 179, 0, 0.25);
+        }
+
+        .segment-btn[data-congestion="crowded"]:hover,
+        .segment-btn[data-congestion="crowded"].active {
+            color: #EF5350;
+            /* Red lighten-1 */
+            background: rgba(229, 57, 53, 0.15);
+        }
+
+        .segment-btn[data-congestion="crowded"].active {
+            font-weight: 700;
+            background: rgba(229, 57, 53, 0.25);
+        }
+
+        /* 'All' state default */
+        .segment-btn[data-congestion="all"].active {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        /* Sort Control */
+        .sort-control {
+            display: flex;
+            gap: 12px;
+        }
+
+        .sort-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.9rem;
+            cursor: pointer;
+            position: relative;
+            padding-bottom: 2px;
+        }
+
+        .sort-btn.active {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .sort-btn.active:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent-color);
+        }
+
+        .spacer {
+            flex: 1;
+        }
+
+
+        /* 분할 뷰 / 지도 토글 로직 */
+        .split-view-container {
+            display: flex;
+            gap: 20px;
+            position: relative;
+        }
+
+        .list-panel {
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .list-panel.shrunk {
+            width: 50%;
+        }
+
+        .map-panel {
+            display: none;
+            width: 50%;
+            position: sticky;
+            top: 100px;
+            height: calc(100vh - 120px);
+            background: #222;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .map-panel.active {
+            display: block;
+        }
+
+        /* 장소 그리드 */
+        .places-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+            padding-bottom: 60px;
+        }
+
+        /* 장소 카드 스타일 */
+        .place-card {
+            background: #333;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .place-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .place-card__image {
+            height: 200px;
+            background: #444;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .place-card__image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .place-card:hover .place-card__image img {
+            transform: scale(1.05);
+        }
+
+        .place-card__save {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            /* Moved to Left */
+            right: auto;
+            background: rgba(0, 0, 0, 0.5);
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
+            z-index: 10;
+        }
+
+        .place-card__save:hover {
+            background: rgba(212, 175, 55, 0.8);
+            transform: scale(1.1);
+        }
+
+        .place-card__save.saved {
+            color: var(--accent-color);
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .place-card__content {
+            padding: 20px;
+        }
+
+        .place-card__title {
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+            color: var(--text-color);
+            font-family: var(--font-serif);
+        }
+
+        .place-card__desc {
+            font-size: 0.9rem;
+            color: rgba(244, 244, 240, 0.6);
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.5;
+        }
+
+        .place-card__tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        /* Badge Base Style Update */
+        .place-card__badge {
+            position: absolute;
+            top: 15px;
+            left: auto;
+            right: 15px;
+            /* Moved to Right */
+            padding: 4px 10px;
+            /* Reduced Size */
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #FFFFFF;
+            z-index: 2;
+            text-transform: uppercase;
+            width: fit-content;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            letter-spacing: 0.5px;
+        }
+
+        .place-card__badge--normal {
+            background: linear-gradient(135deg, #FFB300, #F57F17);
+            /* Vivid Amber Gradient */
+        }
+
+        .place-card__badge--crowded {
+            background: linear-gradient(135deg, #E53935, #C62828);
+            /* Deep Red Gradient */
+        }
+
+        .place-card__badge--quiet {
+            background: linear-gradient(135deg, #26A69A, #00897B);
+            /* Calm Teal Gradient */
+        }
+
+        .place-card__category {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--accent-color);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="container">
+            <div class="header__inner">
+                <a href="index.html" class="header__logo">
+                    <img src="images/logo.png" alt="틈새 Teumsae" class="logo-img">
+                </a>
+                <nav class="header__nav">
+                    <a href="explore.html" class="header__link active hover-underline">장소 탐색</a>
+                    <a href="recommend.html" class="header__link hover-underline"
+                        onclick="AuthGuard.handleProtectedLink(event, 'recommend.html')">여행지 추천</a>
+                    <a href="planner.html" class="header__link hover-underline"
+                        onclick="AuthGuard.handleProtectedLink(event, 'planner.html')">여행 계획</a>
+                </nav>
+                <div class="header__controls">
+                    <button class="header__map-btn" onclick="toggleMap()" aria-label="지도 보기/닫기">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                            <line x1="8" y1="2" x2="8" y2="18"></line>
+                            <line x1="16" y1="6" x2="16" y2="22"></line>
+                        </svg>
+                        <span>지도</span>
+                        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+
+                    <!-- Login Button (Visible when logged out) -->
+                    <a href="login.html" id="login-btn" class="btn btn-primary btn-sm" style="display: none;">로그인</a>
+
+                    <!-- User Menu (Visible when logged in) -->
+                    <div class="user-menu" id="user-menu" style="display: none;">
+                        <button class="user-btn">
+                            <span class="user-avatar" id="user-avatar">U</span>
+                            <span id="user-name">User</span>
+                        </button>
+                        <div class="user-dropdown">
+                            <div class="user-dropdown-header">
+                                <div class="user-greeting">환영합니다!</div>
+                                <div class="user-email" id="user-email">guest@teumsae.kr</div>
+                            </div>
+                            <a href="planner.html" class="user-dropdown-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                    <line x1="16" y1="2" x2="16" y2="6" />
+                                    <line x1="8" y1="2" x2="8" y2="6" />
+                                    <line x1="3" y1="10" x2="21" y2="10" />
+                                </svg>
+                                내 여행 계획
+                            </a>
+                            <a href="recommend.html" class="user-dropdown-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                여행지 추천
+                            </a>
+                            <div class="user-dropdown-divider"></div>
+                            <a href="mypage.html" class="user-dropdown-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="3" />
+                                    <path
+                                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                                </svg>
+                                프로필 관리
+                            </a>
+                            <a href="#" class="user-dropdown-item logout" onclick="logout()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                    <polyline points="16 17 21 12 16 7" />
+                                    <line x1="21" y1="12" x2="9" y2="12" />
+                                </svg>
+                                로그아웃
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Notification Button (Visible when logged in) -->
+                    <div class="notification-container">
+                        <button class="notification-btn" aria-label="알림">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                            </svg>
+                        </button>
+                        <div class="notification-dropdown">
+                            <div class="notification-header">
+                                <h3>알림</h3>
+                                <span class="notification-count">0개</span>
+                            </div>
+                            <div class="notification-list">
+                                <!-- Notifications will be rendered here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="explore-container">
+        <div class="container">
+            <div class="split-view-container">
+                <!-- 리스트 패널 -->
+                <div class="list-panel" id="content-panel">
+
+                    <!-- 검색 박스 -->
+                    <div id="places-search-container"
+                        style="font-size: 0.75rem; color: var(--accent-color); margin-bottom: 0.5rem; letter-spacing: 2px; font-weight: 600;">
+                        SEARCH PLACES</div>
+                    <div class="search-box">
+                        <svg class="search-box__icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" class="search-box__input" placeholder="장소, 분위기, 지역을 검색해보세요">
+                    </div>
+
+                    <!-- New Filter Toolbar -->
+                    <div class="filter-toolbar">
+                        <!-- Row 1: Categories -->
+                        <div class="filter-row categories" id="category-filters">
+                            <!-- JS Populated -->
+                        </div>
+
+                        <!-- Row 2: Controls -->
+                        <div class="filter-row controls">
+                            <!-- Region Dropdown -->
+                            <div class="control-group">
+                                <div class="custom-select" id="district-select">
+                                    <div class="select-btn" id="district-trigger">전체 지역</div>
+                                    <div class="select-options" id="district-options">
+                                        <!-- JS Populated -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Congestion -->
+                            <div class="control-group">
+                                <div class="segment-control" id="congestion-filters">
+                                    <button class="segment-btn active" data-congestion="all">전체</button>
+                                    <button class="segment-btn" data-congestion="quiet">여유</button>
+                                    <button class="segment-btn" data-congestion="normal">보통</button>
+                                    <button class="segment-btn" data-congestion="crowded">혼잡</button>
+                                </div>
+                            </div>
+
+                            <div class="spacer"></div>
+
+                            <!-- Sort -->
+                            <div class="control-group">
+                                <div class="sort-control" id="sort-filters">
+                                    <button class="sort-btn active" data-sort="recommended">추천순</button>
+                                    <button class="sort-btn" data-sort="rating">별점순</button>
+                                    <button class="sort-btn" data-sort="reviews">리뷰순</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 장소 그리드 -->
+                    <div class="places-grid" id="places-grid">
+                        <!-- Populated by JS -->
+                    </div>
+
+                </div>
+
+                <!-- 지도 패널 -->
+                <div class="map-panel" id="map-panel">
+                    <div id="map-view" style="width: 100%; height: 100%; background: #2C2C2C;">
+                        <iframe id="map-iframe"
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d101903.72871963792!2d126.92297529726561!3d37.52664539999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x357ca28b61c565cd%3A0x858aedb4e4ea83eb!2sSeoul!5e0!3m2!1sen!2skr!4v1708000000000!5m2!1sen!2skr"
+                            style="width: 100%; height: 100%; border: 0;" allowfullscreen="" loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 푸터 (Dynamic) -->
+    <div id="footer-placeholder"></div>
+
+    <!-- 모달 컨테이너 -->
+    <div id="modal-container"></div>
+
+    <!-- 지도 오버레이 (헤더 '지도' 버튼 클릭 시 표시) -->
+    <div id="map-overlay" class="map-overlay">
+        <iframe src="" frameborder="0" loading="lazy"></iframe>
+    </div>
+
+    <!-- Firebase (v12 CDN - compat) -->
+    <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-storage-compat.js"></script>
+
+    <script src="js/firebase-config.js?v=3"></script>
+    <script src="js/data.js?v=3"></script>
+    <script src="js/reviews.js?v=4"></script>
+    <script src="js/comments.js?v=1"></script>
+    <script src="js/modal-planner.js?v=1"></script>
+    <script src="js/app.js?v=6"></script>
+    <script src="js/auth-guard.js"></script>
+    <script src="js/logout.js"></script>
+    <script src="js/components.js?v=5"></script>
+    <script src="js/map-toggle.js"></script>
+    <script src="js/lightbox.js"></script>
+    <script src="js/notification.js"></script>
+
+    <script>
+        // 로그인 상태 확인 & 헤더 처리
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.AuthGuard) {
+                AuthGuard.updateHeaderUI();
+            }
+        });
+    </script>
+</body>
+
+</html>

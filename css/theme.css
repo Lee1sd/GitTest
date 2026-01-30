@@ -12,6 +12,9 @@
     /* 강조 색상: 차분한 금색 */
     --accent-color: #D4AF37;
 
+    /* 헤더 높이 표준화 */
+    --header-height: 80px;
+
     /* 테두리 색상: 투명도 있는 흰색 */
     --border-color: rgba(255, 255, 255, 0.1);
 
@@ -83,21 +86,30 @@ a {
     left: 0;
     right: 0;
     z-index: 1000;
-    padding: 20px 0;
+    height: var(--header-height);
+    /* Explicit height to match overlay top */
+    padding: 0;
+    /* Remove padding to strictly respect height */
+    box-sizing: border-box;
+    /* Ensure padding doesn't affect height if added later */
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
-    transition: background 0.3s ease;
+    background: rgba(44, 44, 44, 0.95);
+    /* 항상 회색 배경 유지 */
+    border-bottom: 1px solid var(--border-color);
     width: 100%;
+    transition: background 0.3s ease, border-bottom 0.3s ease, backdrop-filter 0.3s ease;
 }
 
-/* 스크롤 시 헤더 스타일 (배경색 추가) */
-.header.scrolled,
-.header.map-open {
-    background: rgba(44, 44, 44, 0.95);
-    border-bottom: 1px solid var(--border-color);
+/* 메인 페이지 전용: 스크롤 전 투명 상태 */
+.header--transparent:not(.scrolled) {
+    background: transparent !important;
+    border-bottom: 1px solid transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }
+
 
 .header__logo {
     font-family: var(--font-serif);
@@ -108,33 +120,41 @@ a {
     transition: all 0.3s ease;
 }
 
-/* 로고 텍스트 그라데이션 효과 */
+/* 로고 텍스트 그라데이션 효과 (헤더/푸터 공통) */
 .header__logo .logo-teum,
-.header__logo .logo-sae {
+.header__logo .logo-sae,
+.footer__logo .logo-teum,
+.footer__logo .logo-sae {
     background: linear-gradient(135deg, #D4AF37 0%, #F5E6A3 50%, #D4AF37 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
-/* 로고 중앙 장식 라인 */
-/* 로고 중앙 장식 라인 */
-.header__logo .logo-gap {
-    display: inline-block;
-    width: 6px;
-    height: 20px;
-    margin: 0 3px;
-    background: linear-gradient(180deg, transparent 0%, rgba(212, 175, 55, 0.4) 50%, transparent 100%);
-    border-radius: 2px;
-    position: relative;
+/* New Logo Image Style */
+.logo-img {
+    height: 60px;
+    width: auto;
+    transition: transform 0.3s ease;
 }
 
-.header__logo:hover {
-    transform: scale(1.02);
+.header__logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    justify-self: start;
+    /* Prevent stretching in Grid */
 }
 
-.header__logo:hover .logo-gap {
-    background: linear-gradient(180deg, transparent 0%, rgba(212, 175, 55, 0.7) 50%, transparent 100%);
+.header__logo:hover .logo-img {
+    transform: scale(1.1);
+}
+
+/* Remove old gap styles if replacing */
+.header__logo .logo-gap,
+.footer__logo .logo-gap {
+    display: none;
 }
 
 .header__nav {
@@ -146,9 +166,21 @@ a {
 
 .header__link {
     color: rgba(244, 244, 240, 0.8);
-    font-size: 16px;
-    transition: color 0.3s;
+    font-family: var(--font-sans);
+    font-size: var(--text-lg);
+    font-weight: 500;
+    /* Fixed weight to prevent width change */
+    letter-spacing: -0.01em;
+    /* Stabilize kerning */
+    text-rendering: optimizeLegibility;
+    transition: color 0.3s, text-shadow 0.3s;
+    display: inline-block;
+    position: relative;
+    text-align: center;
+    vertical-align: middle;
 }
+
+/* Remove old width-reservation trick as we're using text-shadow now */
 
 .header__link:hover {
     color: var(--text-color);
@@ -156,7 +188,10 @@ a {
 
 .header__link.active {
     color: var(--accent-color);
-    font-weight: 600;
+    font-weight: 500;
+    /* Keep weight same */
+    /* Fake bold using shadow - adds thickness without adding width */
+    text-shadow: 0.5px 0 0 currentColor, -0.5px 0 0 currentColor;
 }
 
 /* 지도 토글 버튼 */
@@ -252,7 +287,10 @@ a {
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    font-size: 12px;
+    font-size: 13px;
+    background-size: cover;
+    background-position: center;
+
 }
 
 /* 사용자 드롭다운 메뉴 */
@@ -292,7 +330,7 @@ a {
 }
 
 .user-dropdown-header .user-greeting {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--accent-color);
     font-weight: 600;
 }
@@ -375,19 +413,96 @@ a {
     height: 100vh;
     z-index: 990;
     /* 헤더(1000) 바로 아래 */
-    background-color: var(--bg-color);
+    background-color: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
     transform: translateY(-100%);
-    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1), visibility 0s 0.6s;
     /* 부드러운 슬라이드 */
     will-change: transform;
+    visibility: hidden;
+    /* 완전히 숨김 */
+    pointer-events: none;
+    /* 클릭 방지 */
 }
+
 
 .map-overlay.open {
     transform: translateY(0);
+    visibility: visible;
+    pointer-events: auto;
+    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1), visibility 0s 0s;
 }
 
 .map-overlay iframe {
     width: 100%;
     height: 100%;
     border: none;
+}
+
+/* ===== 공통 푸터 스타일 (Footer) ===== */
+.footer {
+    background: #111;
+    padding: 40px 0;
+    margin-top: 0;
+    /* Removing the gap */
+    border-top: none;
+    /* Explicitly removed */
+    color: rgba(255, 255, 255, 0.4);
+    text-align: center;
+}
+
+.footer__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding-top: 0;
+    /* Removed extra padding */
+}
+
+.footer__logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    /* Slightly smaller logo */
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    /* Reduced margin */
+    font-family: var(--font-serif);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.footer__desc {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 1.5rem;
+    /* Reduced margin */
+    letter-spacing: 1px;
+}
+
+.footer__links {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 1.5rem;
+    /* Reduced margin */
+}
+
+.footer__links a {
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.2s;
+}
+
+.footer__links a:hover {
+    color: var(--accent-color);
+}
+
+.footer__copy {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
 }

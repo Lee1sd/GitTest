@@ -1,9 +1,0 @@
-PR 테스트 용 txt 입니다.
-
-1. clone 하여 gitTest를 받기
-2. cd Test로 이동
-3. git remote -v 하여 해당 주소로 연결되었는지 확인
-
-4. git add Test.txt
-5. commit
-6.push
